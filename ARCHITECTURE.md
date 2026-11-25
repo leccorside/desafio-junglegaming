@@ -79,7 +79,9 @@ Cada pasta em `features/` concentra os hooks de query e mutation, as query keys,
 | Vite como build | Build rápido, suporte direto do TanStack Router e da Vercel. |
 | Rotas por arquivo no TanStack Router | Search params tipados e validados, e `beforeLoad` para proteger rotas. |
 | Zod nos contratos | Um schema gera o tipo e valida a resposta no limite da rede. |
-| Valores em ETH como string + biblioteca decimal | Evita erro de ponto flutuante e segue o enunciado. |
+| Valores em ETH como string + big.js (`src/lib/eth.ts`) | Evita erro de ponto flutuante e segue o enunciado. O big.js (cerca de 6 kB) cobre soma, multiplicação, comparação e arredondamento. O decimal.js seria 5 vezes maior, com funções que o projeto não usa. |
+| Contratos em `src/api/contracts` como schemas Zod | Um schema gera o tipo e valida a resposta. O mesmo schema serve aos handlers do MSW, aos formulários (React Hook Form) e aos search params da URL do catálogo. |
+| Vitest para regras puras | Aritmética, contratos e reconciliação de eventos se testam melhor isolados. Os fluxos da interface ficam no Playwright. |
 | Banco dos mocks no `localStorage` | Sustenta refresh sem backend, e o reset volta às fixtures. |
 | Carrinho do visitante com `X-Cart-Id` | Permite persistir e depois juntar ao carrinho do usuário no login. |
 | `Idempotency-Key` persistida por tentativa | Recupera o mesmo pedido depois de timeout ou refresh. |

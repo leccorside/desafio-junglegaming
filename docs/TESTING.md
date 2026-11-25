@@ -4,7 +4,16 @@
 
 - Playwright para E2E e regressão visual, em Chromium.
 - `@axe-core/playwright` para checagens automáticas de acessibilidade.
-- Vitest para testes unitários de utilitários (decimal, formatação, aplicação de eventos), se necessário.
+- Vitest para testes unitários de regras puras, em `src/**/*.test.ts` (`npm run test:unit`).
+
+## Testes unitários
+
+| Arquivo | O que cobre |
+| --- | --- |
+| `src/lib/eth.test.ts` | Soma, subtração, multiplicação e porcentagem sem ponto flutuante; 18 casas (1 wei); resumo do carrinho do Figma (26.83 + 0.016 = 26.846 ETH); erros com valor inválido, quantidade fracionária e resultado negativo; `formatEth` com 2 a 4 casas e "< 0.0001 ETH" |
+| `src/api/contracts/contracts.test.ts` | Formato de valor em ETH, status HTTP de todo código de erro, corpo de erro, regras de cadastro e senha, padrões e ida e volta da query string do catálogo, endereço por rede, pedido, estados terminais e envelope dos eventos |
+
+O `vitest.config.ts` é separado do `vite.config.ts`, para os testes não carregarem o plugin de rotas nem o Tailwind.
 
 ## Projetos do Playwright
 

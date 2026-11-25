@@ -27,6 +27,8 @@ Marketplace de NFTs em React e TypeScript, feito para o desafio frontend descrit
 | Componentes | shadcn/ui |
 | Mocking | MSW + `@mswjs/socket.io-binding` |
 | Formulários e validação | React Hook Form + Zod |
+| Valores em ETH | big.js (string decimal, 18 casas) |
+| Testes unitários | Vitest |
 | Testes E2E e regressão visual | Playwright |
 | Auditoria | Lighthouse |
 
@@ -68,6 +70,7 @@ O arquivo `.env.mocks`, versionado, liga os mocks no modo `mocks`, usado pelo `d
 | `npm run typecheck` | Verificação de tipos. |
 | `npm run lint` | ESLint. |
 | `npm run format` / `format:check` | Formata ou confere o código com Prettier. |
+| `npm run test:unit` | Testes unitários (Vitest) das regras puras: aritmética em ETH e contratos. `test:unit:watch` roda em modo observação. |
 | `npm run test:e2e` | Testes Playwright (gera o build com mocks e roda contra o `preview`), com relatório HTML. |
 | `npm run test:e2e:update` | Atualiza as baselines de regressão visual. |
 | `npm run lighthouse` | Auditoria Lighthouse (três medições por página e perfil). |

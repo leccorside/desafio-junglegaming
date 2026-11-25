@@ -4,15 +4,18 @@ Regras aplicadas pela API simulada e respeitadas pela interface. A fonte da verd
 
 ## Valores
 
-- Valores em ETH trafegam como string decimal (exemplo: `"0.125"`) e são calculados com biblioteca decimal.
-- A precisão de cálculo é de 18 casas. A exibição usa até 4 casas, sem arredondar o valor guardado.
+- Valores em ETH trafegam como string decimal (exemplo: `"0.125"`) e são calculados com big.js pelos helpers de `src/lib/eth.ts` (`ethAdd`, `ethSub`, `ethMul`, `ethPercent`, `ethCompare`).
+- A precisão de cálculo é de 18 casas (1 wei), com arredondamento meio para cima. Subtração com resultado negativo é tratada como erro de regra.
+- A exibição (`formatEth`) usa de 2 a 4 casas, como no Figma ("1.19 ETH", "0.016 ETH", "26.846 ETH"), sem alterar o valor guardado. Valor positivo que arredondaria para zero aparece como "< 0.0001 ETH".
 - Quantidades são inteiras e maiores que zero.
 - A cotação da API é a referência para fechar o pedido. Valores calculados na interface servem só para exibição provisória.
 
 ## Catálogo
 
-- Cada NFT tem uma ou mais edições. A disponibilidade é controlada por edição.
+- Cada NFT tem uma ou mais edições ("1/1", "1/10", "1/50" ou "Aberta"), cada uma com preço e estoque próprios. A edição aberta não tem tiragem (`supply: null`).
 - Uma edição pode estar disponível, esgotada ou indisponível para venda.
+- O preço do card (`priceFrom`) é o menor preço entre as edições disponíveis.
+- Cada NFT pertence a uma categoria e a uma rede (Ethereum, Polygon ou Solana), usadas nos filtros do catálogo.
 - Preço e disponibilidade têm `version`, incrementada a cada mudança.
 
 ## Carrinho
@@ -40,8 +43,10 @@ Regras aplicadas pela API simulada e respeitadas pela interface. A fonte da verd
 ## Carteiras
 
 - O usuário pode ter uma carteira principal e uma secundária.
-- O endereço segue o formato EVM (`0x` seguido de 40 caracteres hexadecimais).
-- Redes aceitas nas fixtures: Ethereum, Polygon e Arbitrum (nomes finais conforme o Figma).
+- Redes do Figma: Ethereum, Polygon e Solana.
+- O endereço é validado conforme a rede: `0x` seguido de 40 caracteres hexadecimais em Ethereum e Polygon, base58 com 32 a 44 caracteres em Solana.
+- Tipos de carteira: MetaMask, WalletConnect e Coinbase Wallet.
+- Cada carteira tem apelido e pode ter um nome ENS, digitado sem o ".eth".
 - A conexão da carteira no checkout é simulada e pode terminar em conectada, recusada pelo usuário ou desconectada no meio do fluxo.
 
 ## Pedidos
@@ -55,8 +60,12 @@ Regras aplicadas pela API simulada e respeitadas pela interface. A fonte da verd
 
 ## Conta
 
-- E-mail é único. Cadastro com e-mail existente devolve `409 EMAIL_TAKEN`.
-- Senha com no mínimo 8 caracteres, uma letra maiúscula, uma minúscula, um número e um símbolo.
-- Troca de senha exige a senha atual.
+- E-mail e nome de usuário são únicos. Conflito devolve `409 EMAIL_TAKEN` ou `409 USERNAME_TAKEN`, apontando o campo.
+- O cadastro pede nome de usuário, e-mail, senha e confirmação, como no Figma. O nome de exibição começa igual ao nome de usuário e pode ser alterado no perfil.
+- Nome de usuário: 3 a 30 caracteres, com letras, números, ponto, hífen e sublinhado.
+- Senha com 8 a 72 caracteres, uma letra maiúscula, uma minúscula, um número e um símbolo.
+- Troca de senha exige a senha atual, e a nova precisa ser diferente dela.
+- O e-mail não é editável no perfil.
+- Login com credenciais erradas devolve `401 INVALID_CREDENTIALS`, sem dizer qual campo está errado.
 - Avatar: PNG, JPEG ou WebP, até 2 MB.
 - Senhas ficam guardadas como hash no banco dos mocks.

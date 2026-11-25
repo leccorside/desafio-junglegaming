@@ -19,17 +19,24 @@ A preencher no Passo 8 depois de testar o binding. Pontos a verificar: suporte s
 
 ## Envelope dos eventos
 
+Os schemas ficam em `src/api/contracts/events.ts`. Os nomes dos eventos estão em `REALTIME_EVENTS`, e todo evento recebido passa por `realtimeEventSchema` (união discriminada por `type`) antes de tocar o cache. Evento que não passa no schema é descartado.
+
 ```ts
 type RealtimeEvent<T> = {
   eventId: string           // identidade estável, para descartar duplicados
   type: 'nft.updated' | 'order.updated'
   resource: { type: 'nft' | 'order'; id: string }
   version: number           // versão do recurso depois da mudança
-  occurredAt: string
-  userId: string | null     // dono do recurso, null para eventos públicos
-  data: unknown
+  occurredAt: string        // ISO 8601 com fuso
+  userId: string | null     // dono do recurso
+  data: T
 }
 ```
+
+| Evento | `resource.type` | `userId` |
+| --- | --- | --- |
+| `nft.updated` | `nft` | sempre `null` (catálogo é público) |
+| `order.updated` | `order` | sempre o dono do pedido |
 
 ## Eventos
 
@@ -38,6 +45,7 @@ type RealtimeEvent<T> = {
 ```ts
 type NftUpdatedData = {
   nftId: string
+  priceFrom: string   // ETH, novo menor preço entre as edições disponíveis
   editions: { id: string; price: string; available: number; status: 'available' | 'sold_out' | 'unavailable' }[]
 }
 ```
