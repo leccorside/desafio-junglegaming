@@ -137,6 +137,7 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Busca no desktop | O Figma desktop não tem campo de busca, só a lupa do header. Ela abre um diálogo com o campo, que leva ao catálogo com `?q=`. |
 | Diário da Cunhagem (blog) | Fora do escopo. Os cartões aparecem com o texto do Figma, e o "Ler mais" fica como indisponível. |
 | Carrossel do hero | Troca só pelos pontos (sem rotação automática, que atrapalharia a leitura e o leitor de tela). As imagens vêm de `GET /nfts/featured`. Sem destaques (lista vazia ou falha), entra a imagem fixa `nft-01` do Figma, sem link, para o hero não ficar com metade vazia. |
+| Servidor demorando (timeout) | Depois da primeira tentativa que estoura os 15 s, o status (`aria-live`) troca "Carregando NFTs…" por "O servidor está demorando para responder. Ainda estamos tentando…", em âmbar. Com a página anterior na tela, o mesmo texto substitui o "Atualizando…". Timeout se repete só uma vez, então o erro aparece em cerca de 31 s. |
 | Faixa de preço sem faixa | Catálogo vazio, um único preço ou API fora do ar: "Faixa de preço indisponível no momento.", sem slider e sem "Aplicar" (um slider de 0,00 a 0,00 não deixa escolher nada). |
 | Página 404 e erro de rota | Mesmo layout das outras telas, com o código em `Primary`, texto e botão "Voltar ao início". O erro de rota oferece "Tentar de novo" sem recarregar a página. |
 

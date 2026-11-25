@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { isTimeoutError } from '@/lib/query-client'
 import { cn } from '@/lib/utils'
 
 import { useNftList } from '../queries'
@@ -94,25 +95,38 @@ function MobileSearchBar({
   )
 }
 
+const SLOW_SERVER_NOTICE = 'O servidor está demorando para responder. Ainda estamos tentando…'
+
 function ResultsStatus({
   total,
   fetching,
   failed,
+  slow,
 }: {
   total: number | undefined
   fetching: boolean
   /** Falhou sem nada na tela: não pode continuar anunciando "Carregando". */
   failed: boolean
+  /** Uma tentativa estourou o tempo e a nova tentativa está em andamento. */
+  slow: boolean
 }) {
   return (
     <p className="text-body-sm text-muted-foreground" role="status" aria-live="polite">
-      {total === undefined
-        ? failed
-          ? 'Não foi possível carregar os NFTs.'
-          : 'Carregando NFTs…'
-        : `${total} ${total === 1 ? 'NFT encontrado' : 'NFTs encontrados'}`}
+      {total === undefined ? (
+        failed ? (
+          'Não foi possível carregar os NFTs.'
+        ) : slow ? (
+          <span className="text-warning">{SLOW_SERVER_NOTICE}</span>
+        ) : (
+          'Carregando NFTs…'
+        )
+      ) : (
+        `${total} ${total === 1 ? 'NFT encontrado' : 'NFTs encontrados'}`
+      )}
       {fetching && total !== undefined ? (
-        <span className="ml-2 text-accent-foreground">Atualizando…</span>
+        <span className={cn('ml-2', slow ? 'text-warning' : 'text-accent-foreground')}>
+          {slow ? SLOW_SERVER_NOTICE : 'Atualizando…'}
+        </span>
       ) : null}
     </p>
   )
@@ -140,6 +154,8 @@ export function CatalogSection({ search }: { search: CatalogSearch }) {
   const filtered = hasActiveFilters(search)
   // Falhou e não há página anterior para mostrar (a nova tentativa volta a "pending").
   const failed = query.isError && !data
+  // A tentativa anterior estourou o tempo e a nova ainda roda (o motivo zera a cada busca nova).
+  const slow = query.isFetching && isTimeoutError(query.failureReason)
 
   const filtersButton = (
     <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -209,7 +225,7 @@ export function CatalogSection({ search }: { search: CatalogSearch }) {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <ResultsStatus total={data?.total} fetching={updating} failed={failed} />
+          <ResultsStatus total={data?.total} fetching={updating} failed={failed} slow={slow} />
           {search.q ? (
             <ActiveSearch query={search.q} onClear={() => update({ q: undefined })} />
           ) : null}

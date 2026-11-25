@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 import { setScenario } from '@/mocks/scenarios'
 import { setupMockServer } from '@/mocks/test-utils'
-import { shouldRetry } from '@/lib/query-client'
+import { isTimeoutError, shouldRetry } from '@/lib/query-client'
 
 import { apiClient, apiRequest, configureApiClient } from './client'
 import { nftSchema, sessionSchema } from './contracts'
@@ -142,5 +142,14 @@ describe('política de retry', () => {
     expect(shouldRetry(2, retryable)).toBe(false)
     expect(shouldRetry(0, final)).toBe(false)
     expect(shouldRetry(0, new Error('qualquer'))).toBe(false)
+  })
+
+  it('repete timeout só uma vez (cada tentativa já custa o timeout inteiro)', () => {
+    const timeout = new ApiError({ code: 'TIMEOUT', message: '', retryable: true })
+    expect(shouldRetry(0, timeout)).toBe(true)
+    expect(shouldRetry(1, timeout)).toBe(false)
+    expect(isTimeoutError(timeout)).toBe(true)
+    expect(isTimeoutError(retryable)).toBe(false)
+    expect(isTimeoutError(new Error('timeout'))).toBe(false)
   })
 })

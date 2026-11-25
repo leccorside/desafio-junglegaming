@@ -268,6 +268,45 @@ test.describe('catálogo', () => {
     await expect(alert).toBeHidden()
   })
 
+  test('timeout: avisa a demora, repete só uma vez e se recupera', async ({ page }) => {
+    const attempts: string[] = []
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname === '/api/nfts') attempts.push(request.url())
+    })
+    await setScenario(page, ['timeout'], { routes: ['/nfts'] })
+    // Relógio controlado: os 15 s do timeout do Axios passam sem esperar de verdade.
+    await page.clock.install()
+    attempts.length = 0
+    await page.reload()
+    await waitForApp(page)
+    const status = page.locator('#catalogo [role="status"]').first()
+    const skeleton = page.locator('#catalogo ul[aria-hidden="true"] > li')
+    const notice = 'O servidor está demorando para responder. Ainda estamos tentando…'
+    await expect(status).toHaveText('Carregando NFTs…')
+
+    // 1ª tentativa estoura o tempo: aviso no status (aria-live), skeleton continua.
+    await page.clock.runFor(16_000)
+    await expect(status).toHaveText(notice)
+    await expect(skeleton).toHaveCount(9)
+
+    // 2ª tentativa (a única repetição) estoura também: erro, sem 3ª tentativa.
+    await page.clock.runFor(16_000)
+    const alert = page
+      .getByRole('alert')
+      .filter({ hasText: 'Não foi possível carregar o catálogo.' })
+    await expect(alert).toContainText('O servidor demorou demais para responder.')
+    await expect(status).toHaveText('Não foi possível carregar os NFTs.')
+    await page.clock.runFor(20_000)
+    expect(attempts).toHaveLength(2)
+
+    // A API volta: "Tentar de novo" traz a lista e o aviso some.
+    await page.clock.resume()
+    await setScenario(page, [])
+    await alert.getByRole('button', { name: 'Tentar de novo' }).click()
+    await expectTotal(page, await apiTotal(page))
+    expect(await page.getByText(notice).count()).toBe(0)
+  })
+
   test('no erro, o status e os filtros não dizem que ainda está carregando', async ({
     page,
     isMobile,

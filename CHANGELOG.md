@@ -45,6 +45,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Catálogo com o servidor sem responder: eram 47 s de skeleton sem nenhum aviso (3 tentativas de 15 s) até o erro. Depois da primeira tentativa que estoura o tempo, o status passa a dizer "O servidor está demorando para responder. Ainda estamos tentando…", e timeout se repete só uma vez: o erro aparece em cerca de 31 s. Rede e 503 continuam com 2 repetições.
 - Painel de cenários no mobile: o botão flutuante ficava sobre o conteúdo e cobria o "Tentar de novo" do catálogo. Agora é uma aba estreita colada à esquerda, na margem vazia da barra inferior (antes do ícone Início), com o contador dentro dela; não cobre nada clicável em nenhuma rolagem. No tablet e no desktop continua no canto inferior esquerdo.
 - Painel de cenários: o nome do botão dizia "1 ativos". Agora concorda com o número ("1 ativo", "2 ativos").
 - Catálogo vazio: a faixa de preço mostrava "Preço: 0,00 - 0,00 ETH" com os dois pontos do slider sobrepostos e o botão "Aplicar". Sem faixa para escolher (catálogo vazio, um único preço ou API fora do ar), aparece "Faixa de preço indisponível no momento.", sem slider e sem "Aplicar"; "Limpar preço" continua quando há preço na URL.
