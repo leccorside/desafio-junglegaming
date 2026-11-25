@@ -17,7 +17,13 @@ beforeAll(() => {
   // Em Node não há origem: a base relativa (/api) vira absoluta.
   apiClient.defaults.baseURL = 'http://localhost/api'
 })
-afterEach(() => configureApiClient({ getToken: () => null, onSessionInvalid: () => {} }))
+afterEach(() =>
+  configureApiClient({
+    getToken: () => null,
+    getGuestCartId: () => '',
+    onSessionInvalid: () => {},
+  }),
+)
 
 describe('normalizeError', () => {
   const config = { headers: new AxiosHeaders() }

@@ -34,6 +34,16 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Sessão: um 401 atrasado de requisição feita com token antigo derrubava a sessão nova. Agora só o token atual conta.
+- Sessão: o fim da sessão e o login usavam `clear()`, que deixava as telas montadas com os dados antigos. Agora o cache é reiniciado (cancela, remove o que não está na tela, refaz as buscas do que está), e respostas de visitante atrasadas não aparecem na conta.
+- Sessão: a revalidação cancelada pelo fim da sessão devolvia a sessão já apagada e liberava a rota privada.
+- Sessão: passar o mouse num link privado consultava `/auth/session` (preload) e podia expirar a sessão. Agora o preload só confere a sessão salva.
+- Sessão: a expiração com destino privado mostrava dois avisos (toast e aviso do login). Agora só o do login.
+- Sessão: o aviso de expiração reaparecia muito depois. Ele vale até uma navegação terminar fora das telas de entrada.
+- Sessão: o logout com token já vencido virava "sessão expirou".
+- Carrinho do visitante: fora de contexto seguro (`http://` num IP da rede) não havia `crypto.randomUUID` e toda requisição de visitante falhava. Novo `randomId()` com alternativa.
+- Navegação: "Início" e "Mercado" ficavam ativos juntos em `/#catalogo`.
+- Testes: o reset do cliente HTTP não restaurava o `getGuestCartId`, e o comentário do `--only` do script do Figma não citava `logos`.
 - Item ativo da navegação ficava branco: o `Link` concatenava `text-foreground` e `text-accent-foreground`. As cores de estado foram para `activeClassName`/`inactiveClassName`.
 - `setupMockServer` não desfazia os overrides de `server.use()` entre testes.
 - Mocks: `mutate` passou a persistir e avisar os interessados mesmo quando a regra termina em erro. Antes, a cotação nova e o preço alterado do `QUOTE_OUTDATED` se perdiam no refresh.

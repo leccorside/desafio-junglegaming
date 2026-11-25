@@ -51,6 +51,20 @@ test.describe('layout base', () => {
     )
   })
 
+  test('em /#catalogo só o Mercado fica ativo', async ({ page }) => {
+    test.skip(isMobile(page), 'a navegação principal é do desktop')
+    await page.goto('/#catalogo')
+    const principal = page.getByRole('navigation', { name: 'Principal' })
+    await expect(principal.getByRole('link', { name: 'Mercado' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    await expect(principal.getByRole('link', { name: 'Início' })).not.toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
   test('itens fora do escopo não são links', async ({ page }) => {
     test.skip(isMobile(page), 'a navegação principal fica no menu lateral no mobile')
     await page.goto('/')

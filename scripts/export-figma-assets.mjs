@@ -231,7 +231,8 @@ async function exportImages(token) {
   }
 }
 
-// `--only=icons,shapes,images` exporta só parte (a API do Figma limita requisições).
+// `--only=icons,shapes,logos,images` exporta só parte (a API do Figma limita requisições).
+// `logos` monta os SVGs do Google e do Facebook pela geometria, sem o endpoint /images.
 const only = process.argv
   .find((a) => a.startsWith('--only='))
   ?.slice(7)

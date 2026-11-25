@@ -56,8 +56,15 @@ apiClient.interceptors.response.use(
   (response) => response,
   (rawError) => {
     const error = normalizeError(rawError)
-    const sentToken = Boolean(rawError?.config?.headers?.[HEADERS.authorization])
-    if (sentToken && (error.code === 'SESSION_EXPIRED' || error.code === 'UNAUTHENTICATED')) {
+    // Só a sessão atual pode ser derrubada: um 401 de requisição feita com um
+    // token antigo (antes de um novo login, por exemplo) não conta.
+    const sent: unknown = rawError?.config?.headers?.[HEADERS.authorization]
+    const current = hooks.getToken()
+    const sentCurrentToken = Boolean(current) && sent === `Bearer ${current}`
+    if (
+      sentCurrentToken &&
+      (error.code === 'SESSION_EXPIRED' || error.code === 'UNAUTHENTICATED')
+    ) {
       hooks.onSessionInvalid(error)
     }
     return Promise.reject(error)

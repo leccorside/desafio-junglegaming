@@ -1,4 +1,4 @@
-import type { QueryClient } from '@tanstack/react-query'
+import { CancelledError, type QueryClient } from '@tanstack/react-query'
 
 import { configureApiClient } from '@/api/client'
 import type { Session } from '@/api/contracts'
@@ -36,53 +36,90 @@ interface SessionRuntime {
 
 let runtime: SessionRuntime | null = null
 let expiring = false
+let loggingOut = false
 let lastEndReason: SessionEndReason | null = null
 
-/** Por que a última sessão terminou: a tela de login avisa quando foi expiração. */
+/** Por que a última sessão terminou: a proteção das rotas avisa quando foi expiração. */
 export function lastSessionEndReason(): SessionEndReason | null {
   return lastEndReason
 }
 
 /**
- * Termina a sessão: avisa os interessados (socket), cancela requisições em
- * andamento e apaga todo o cache, para nenhum dado do usuário anterior
- * aparecer para o próximo. Os dados públicos são buscados de novo.
+ * Esquece o motivo do fim da sessão. A tela de login chama ao sair dela: quem
+ * fechou o aviso de expiração e seguiu como visitante não o vê de novo depois.
+ */
+export function clearSessionEndReason() {
+  lastEndReason = null
+}
+
+/**
+ * Troca o dono do cache sem deixar rastro do anterior: cancela as buscas em
+ * andamento (uma resposta atrasada não grava no cache novo), apaga o que não
+ * está na tela e reinicia o que está, que busca de novo já com a sessão atual.
+ * Só `clear()` não basta: as telas montadas continuariam mostrando os dados
+ * antigos, porque ficam presas às queries removidas.
+ */
+async function resetCache() {
+  if (!runtime) return
+  const { queryClient } = runtime
+  await queryClient.cancelQueries()
+  queryClient.removeQueries({ type: 'inactive' })
+  void queryClient.resetQueries({ type: 'active' })
+}
+
+/**
+ * Termina a sessão: avisa os interessados (socket), apaga a sessão e reinicia
+ * o cache, para nenhum dado do usuário anterior aparecer para o próximo.
  */
 export async function endSession(reason: SessionEndReason) {
   lastEndReason = reason
   for (const listener of endListeners) listener(reason)
   clearSession()
-  if (runtime) {
-    await runtime.queryClient.cancelQueries()
-    runtime.queryClient.clear()
-  }
+  await resetCache()
 }
 
-/** Expiração detectada (API ou validade local). Roda uma vez por sessão. */
+/** Expiração detectada (API ou validade local). Roda uma vez por sessão e nunca durante o logout. */
 export function expireSession() {
-  if (expiring || !getSession()) return
+  if (expiring || loggingOut || !getSession()) return
   expiring = true
   void endSession('expired').then(() => runtime?.onExpired())
 }
 
-/** Nova sessão (login ou cadastro). Limpa o cache de quem estava antes. */
+/** Nova sessão (login ou cadastro). Reinicia o cache de quem estava antes, visitante ou outra conta. */
 export async function startSession(session: Session) {
   const previous = getSession()
-  if (previous && previous.user.id !== session.user.id) await endSession('switch')
-  else runtime?.queryClient.clear()
+  if (previous && previous.user.id !== session.user.id) {
+    for (const listener of endListeners) listener('switch')
+  }
   expiring = false
   lastEndReason = null
   setSession(session)
+  await resetCache()
+  // Depois do reinício: a sessão recém-recebida já vale como validada, sem
+  // outra ida à API na próxima navegação.
   runtime?.queryClient.setQueryData(sessionKeys.current(session.token), session)
 }
 
+/**
+ * Sai da conta. Enquanto o logout roda, um 401 (token já vencido no servidor,
+ * requisição antiga voltando) não vira "sessão expirou".
+ */
 export async function logout() {
+  loggingOut = true
   try {
     await authApi.logout()
   } catch {
     // Mesmo sem resposta da API, a sessão local termina.
+  } finally {
+    await endSession('logout')
+    loggingOut = false
   }
-  await endSession('logout')
+}
+
+/** Sessão salva e ainda válida pela data, sem requisição (usada no preload ao passar o mouse). */
+export function getLocalSession(): Session | null {
+  const session = getSession()
+  return session && !isSessionExpired(session) ? session : null
 }
 
 /**
@@ -110,13 +147,14 @@ export async function ensureSession({ revalidate = false } = {}): Promise<Sessio
     return getSession()
   } catch (error) {
     if (
-      isApiError(error) &&
-      (error.code === 'SESSION_EXPIRED' || error.code === 'UNAUTHENTICATED')
+      error instanceof CancelledError ||
+      (isApiError(error) && (error.code === 'SESSION_EXPIRED' || error.code === 'UNAUTHENTICATED'))
     ) {
+      // Cancelada pelo fim da sessão (logout, expiração) ou recusada pela API.
       return null
     }
-    // Falha de rede: mantém a sessão salva, as telas tratam o erro ao buscar dados.
-    return session
+    // Falha de rede: vale a sessão que existe agora, não a lida antes da espera.
+    return getSession()
   }
 }
 

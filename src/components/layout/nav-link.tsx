@@ -58,7 +58,9 @@ export function NavLink({
       to={item.to}
       hash={item.hash}
       onClick={onClick}
-      activeOptions={{ exact: item.exact ?? false, includeHash: Boolean(item.hash) }}
+      // Itens exatos comparam também o hash: "Início" (/) não fica ativo junto
+      // com "Mercado" (/#catalogo).
+      activeOptions={{ exact: item.exact ?? false, includeHash: item.exact ?? false }}
       className={className}
       activeProps={{ className: activeClassName }}
       inactiveProps={{ className: inactiveClassName }}

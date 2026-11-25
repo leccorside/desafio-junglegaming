@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import {
+  expectNoPublicExpiryToast,
   isMobileViewport,
   loginViaUi,
   logoutViaUi,
@@ -124,6 +125,8 @@ test.describe('expiração da sessão', () => {
       page.getByText('Sua sessão expirou. Entre de novo para continuar de onde parou.'),
     ).toBeVisible()
     expect(await storedSession(page)).toBeNull()
+    // Um aviso só: o do login. O toast é só para quem fica em rota pública.
+    await expectNoPublicExpiryToast(page)
 
     await submitLogin(page, 'ana@example.com')
     await expect(page).toHaveURL('/wallets')
@@ -136,6 +139,43 @@ test.describe('expiração da sessão', () => {
     // Navegação pelo próprio app (sem recarregar): o link do footer.
     await page.getByRole('contentinfo').getByRole('link', { name: 'Lista de interesse' }).click()
     await expect(page).toHaveURL(/\/login\?.*redirect=%2Ffavorites.*reason=expired/)
+    await expect(page.getByRole('status').filter({ hasText: 'Sua sessão expirou' })).toBeVisible()
+    await expectNoPublicExpiryToast(page)
+  })
+
+  test('passar o mouse num link privado não consulta nem expira a sessão', async ({ page }) => {
+    test.skip(isMobileViewport(page), 'hover é do desktop')
+    await loginViaUi(page, 'ana@example.com')
+    await setScenario(page, ['session-expired'])
+
+    const sessionCalls: string[] = []
+    page.on('request', (req) => {
+      if (req.url().includes('/api/auth/session')) sessionCalls.push(req.url())
+    })
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Meu perfil' }).hover()
+    await page.waitForTimeout(600)
+    expect(sessionCalls).toEqual([])
+    expect(await storedSession(page)).not.toBeNull()
+
+    // O cenário continua guardado para o clique de verdade.
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Meu perfil' }).click()
+    await expect(page).toHaveURL(/reason=expired/)
+  })
+
+  test('o aviso de expiração não volta depois de fechado', async ({ page }) => {
+    test.skip(isMobileViewport(page), 'o modal é do desktop')
+    await loginViaUi(page, 'ana@example.com')
+    await setScenario(page, ['session-expired'])
+    await page.goto('/wallets')
+    await expect(page.getByRole('status').filter({ hasText: 'Sua sessão expirou' })).toBeVisible()
+
+    // Fecha o modal e segue como visitante; mais tarde tenta uma rota privada.
+    await page.keyboard.press('Escape')
+    await expect(page).toHaveURL('/')
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Meu perfil' }).click()
+    await expect(page).toHaveURL(/\/login\?redirect=%2Fprofile$/)
+    await expect(page.getByRole('dialog', { name: 'Entrar' })).toBeVisible()
+    await expect(page.getByRole('status').filter({ hasText: 'Sua sessão expirou' })).toHaveCount(0)
   })
 })
 

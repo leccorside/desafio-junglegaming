@@ -40,8 +40,9 @@ const MockPanel = env.enableMocks ? lazy(() => import('@/mocks/panel/mock-panel'
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   // Valida a sessão salva uma vez por carregamento (depois fica em cache).
-  beforeLoad: async () => {
-    await ensureSession()
+  // No preload (passar o mouse num link) não consulta a API.
+  beforeLoad: async ({ preload }) => {
+    if (!preload) await ensureSession()
   },
   component: RootLayout,
   notFoundComponent: NotFoundPage,

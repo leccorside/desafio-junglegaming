@@ -40,3 +40,14 @@ export async function logoutViaUi(page: Page) {
   }
   await expect(page.getByText('Você saiu da sua conta.')).toBeVisible()
 }
+
+/**
+ * Garante que o toast de expiração "de rota pública" não apareceu. O toast
+ * surge alguns milissegundos depois do aviso do login, então espera esse
+ * intervalo e confere uma vez só: um `toHaveCount(0)` repetiria a checagem
+ * por 5 s e passaria quando o toast sumisse sozinho (o Sonner fecha em 4 s).
+ */
+export async function expectNoPublicExpiryToast(page: Page) {
+  await page.waitForTimeout(1000)
+  expect(await page.getByText('Entre de novo para ver seus dados.').count()).toBe(0)
+}
