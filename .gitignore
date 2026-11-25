@@ -1,0 +1,60 @@
+# Documentação privada
+docs/private/
+
+# Variáveis de ambiente (o .env tem o FIGMA_TOKEN)
+.env
+.env.*
+*.local
+!.env.example
+
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Build (Vite)
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Testes unitários
+coverage/
+
+# Playwright: resultados e relatórios gerados a cada execução.
+# As baselines de regressão visual (tests/e2e/__screenshots__/) são versionadas.
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Lighthouse: só a pasta temporária do Lighthouse CI.
+# Os relatórios finais em lighthouse/reports/ são versionados (exigência do desafio).
+.lighthouseci/
+
+# Deploy
+.vercel/
+.netlify/
+
+# Cache
+.cache/
+.vite/
+.eslintcache
+.stylelintcache
+
+# Logs
+*.log
+logs/
+
+# Editores
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+
+# Claude Code (configuração local da máquina)
+.claude/settings.local.json
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
