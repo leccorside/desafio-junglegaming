@@ -18,7 +18,7 @@ Meta: WCAG 2.2 nível AA nas telas da entrega e Lighthouse Accessibility ≥ 95.
 
 - Galeria: miniaturas como botões com `aria-label` ("Imagem 2 de 3") e `aria-current` na imagem ativa. Só a ativa entra no Tab (tabindex móvel); setas, Home e End trocam a imagem e levam o foco junto. No mobile, os pontos são botões com o mesmo rótulo. A imagem principal usa o `alt` da API.
 - Edição: `radiogroup` com rótulo "Edição:"; cada opção diz nome, preço e, quando for o caso, "esgotada" ou "indisponível" (`aria-disabled`). As setas andam só entre as disponíveis.
-- Seletor de quantidade: botões "Diminuir quantidade" e "Aumentar quantidade", campo numérico com `min` e `max` e aviso em `aria-live` quando chega ao limite ("Máximo disponível: 2 unidades.").
+- Seletor de quantidade: botões "Diminuir quantidade" e "Aumentar quantidade", campo numérico com `min` e `max` e aviso em `aria-live` quando chega ao limite ("Máximo disponível: 2 unidades."; na barra de compra do mobile, a versão curta "Máximo: 2 disponíveis.", para caber numa linha).
 - Favoritar: botão toggle (`aria-pressed`) com o nome do NFT no rótulo ("Adicionar Sage Nomad #009 à lista de interesse"); para visitante, "Entre para favoritar …", sem `aria-pressed`. No card, o botão fica fora do link (botão dentro de link não é válido).
 - Abas do detalhe ("Detalhes do NFT", "Avaliações de colecionadores"): Radix Tabs, com setas entre as abas.
 - Destaque de "Mercado" no header do detalhe é só visual: sem `aria-current`, porque a página atual é o NFT.

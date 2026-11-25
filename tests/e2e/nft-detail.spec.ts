@@ -81,7 +81,9 @@ test.describe('detalhe do NFT', () => {
     await expect(input).toHaveValue('2')
     await expect(plus).toBeDisabled()
     await expect(
-      page.getByText('Máximo disponível: 2 unidades.').filter({ visible: true }),
+      page
+        .getByText(/^(Máximo disponível: 2 unidades\.|Máximo: 2 disponíveis\.)$/)
+        .filter({ visible: true }),
     ).toBeVisible()
 
     // Digitar além do limite volta para o máximo; trocar de edição volta para 1.
@@ -145,6 +147,36 @@ test.describe('detalhe do NFT', () => {
     const cart = (await apiFetch(page, 'GET', '/cart', { cartId })).json as Json
     expect(cart.items).toHaveLength(1)
     expect(cart.items[0]).toMatchObject({ editionId: 'nft-042-1-10', quantity: 2 })
+  })
+
+  test('no mobile, no limite da quantidade, preço e toast não colidem com a barra de compra', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'Barra de compra só abaixo de 768 px')
+    // Edição aberta: 999 unidades, o maior número do aviso.
+    await page.goto('/nft/nft-552')
+    await waitForApp(page)
+    const input = page.getByRole('spinbutton', { name: 'Qtd.' })
+    await input.fill('999')
+    await input.press('Enter')
+    await expect(page.getByText('Máximo: 999 disponíveis.')).toBeVisible()
+
+    const bar = page
+      .getByRole('button', { name: 'Comprar NFT' })
+      .locator('xpath=ancestor::div[contains(@class,"fixed")][1]')
+    const barBox = (await bar.boundingBox())!
+    // Preço numa linha só e a barra com a altura prevista (164 px).
+    const price = bar.getByText(/ETH$/)
+    expect((await price.boundingBox())!.height).toBeLessThan(40)
+    expect(barBox.height).toBeLessThanOrEqual(164)
+
+    await page.getByRole('button', { name: 'Adicionar ao carrinho' }).click()
+    const toast = page.locator('[data-sonner-toast]').first()
+    await expect(toast).toBeVisible()
+    await page.waitForTimeout(500) // animação de entrada do Sonner
+    const toastBox = (await toast.boundingBox())!
+    expect(toastBox.y + toastBox.height).toBeLessThanOrEqual(barBox.y - 8)
   })
 
   test('no mobile, a barra de compra fica no lugar da barra de navegação', async ({

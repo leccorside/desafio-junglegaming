@@ -88,11 +88,23 @@ export function QuantityStepper({
           <PlusIcon className={size === 'lg' ? 'size-4' : 'size-3'} />
         </button>
       </div>
-      <p id={hintId} aria-live="polite" className="min-h-4 text-caption text-muted-foreground">
+      {/* Na barra de compra (sm) o aviso fica numa linha: a barra não cresce. */}
+      <p
+        id={hintId}
+        aria-live="polite"
+        className={cn(
+          'min-h-4 text-muted-foreground',
+          size === 'lg' ? 'text-caption' : 'text-caption-sm whitespace-nowrap',
+        )}
+      >
         {disabled
-          ? 'Nenhuma unidade disponível.'
+          ? size === 'lg'
+            ? 'Nenhuma unidade disponível.'
+            : 'Sem unidades.'
           : atMax
-            ? `Máximo disponível: ${max} ${max === 1 ? 'unidade' : 'unidades'}.`
+            ? size === 'lg'
+              ? `Máximo disponível: ${max} ${max === 1 ? 'unidade' : 'unidades'}.`
+              : `Máximo: ${max} ${max === 1 ? 'disponível' : 'disponíveis'}.`
             : null}
       </p>
     </div>

@@ -51,6 +51,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Barra de compra do detalhe no mobile: no limite da quantidade, o aviso "Máximo disponível: 50 unidades." quebrava em duas linhas e empurrava o preço para duas linhas também; a barra crescia de 162 para 178 px e o toast de confirmação encostava nela (2 px). Agora o preço não quebra e o aviso da barra é curto ("Máximo: 50 disponíveis."), numa linha; a barra fica em 162 px e o toast, 18 px acima dela.
 - Catálogo com o servidor sem responder: eram 47 s de skeleton sem nenhum aviso (3 tentativas de 15 s) até o erro. Depois da primeira tentativa que estoura o tempo, o status passa a dizer "O servidor está demorando para responder. Ainda estamos tentando…", e timeout se repete só uma vez: o erro aparece em cerca de 31 s. Rede e 503 continuam com 2 repetições.
 - Painel de cenários no mobile: o botão flutuante ficava sobre o conteúdo e cobria o "Tentar de novo" do catálogo. Agora é uma aba estreita colada à esquerda, na margem vazia da barra inferior (antes do ícone Início), com o contador dentro dela; não cobre nada clicável em nenhuma rolagem. No tablet e no desktop continua no canto inferior esquerdo.
 - Painel de cenários: o nome do botão dizia "1 ativos". Agora concorda com o número ("1 ativo", "2 ativos").

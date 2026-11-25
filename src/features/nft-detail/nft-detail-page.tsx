@@ -238,7 +238,7 @@ export function NftDetailPage({
             size="sm"
             label="Qtd."
           />
-          <p className="pt-1 text-title-sm font-bold text-accent-foreground">
+          <p className="shrink-0 pt-1 text-title-sm font-bold whitespace-nowrap text-accent-foreground">
             <span className="sr-only">Preço: </span>
             {formatEth(price)}
           </p>
