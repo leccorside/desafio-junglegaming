@@ -4,6 +4,9 @@ import { CartIcon, LogoutIcon } from '@/components/icons/figma-icons'
 import { Button } from '@/components/ui/button'
 import { UserMenu } from '@/features/auth/components/user-menu'
 import { useSession } from '@/features/auth/session-store'
+import { cartLabel } from '@/features/cart/cart-label'
+import { CartBadge } from '@/features/cart/components/cart-badge'
+import { useCartCount } from '@/features/cart/queries'
 import { SearchDialog } from '@/features/catalog/components/search-dialog'
 
 import { Logo } from './logo'
@@ -20,6 +23,7 @@ import { NavLink } from './nav-link'
 export function SiteHeader() {
   const session = useSession()
   const location = useLocation()
+  const cartCount = useCartCount()
 
   return (
     <header className="hidden pt-6 md:block">
@@ -48,11 +52,11 @@ export function SiteHeader() {
             <SearchDialog />
             <Link
               to="/cart"
-              aria-label="Carrinho"
+              aria-label={cartLabel(cartCount)}
               className="relative text-foreground transition-colors hover:text-accent-foreground"
             >
               <CartIcon size={24} />
-              {/* O contador aparece no Passo 7, com os dados do carrinho. */}
+              <CartBadge count={cartCount} className="-top-1.5 -right-2" />
             </Link>
             {session ? (
               <div className="hidden lg:block">

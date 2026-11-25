@@ -302,6 +302,18 @@ O selo de raridade ("RARO", "LENDÁRIO") aparece em `Primary` no canto do card; 
 | Abas | "Detalhes do NFT" 17/700 `Text/Accent` com traço de 3 px; "Avaliações de colecionadores (N)" 17/400; linha `Primary` 30% | Abas de 15 px, roláveis |
 | Mais desta coleção | Título 17/700 `Text/Accent` com linha, 5 cards em linha | Cards de 175 px em rolagem horizontal |
 
+### Carrinho (Passo 7)
+
+| Bloco | Desktop | Mobile |
+| --- | --- | --- |
+| Título | Trilha "Início / Mercado / Carrinho" (15/700) | Voltar (círculo de 35 px) e "Carrinho de NFTs" (20/700) centralizado |
+| Cabeçalho da tabela | "NFTs", "Preço", "Edições", "Total" (16 px) com linha `Primary` a 30% | Não há |
+| Item | Linha de 70 px em `Surface Card`: imagem de 70 px (raio 6), nome 16/700 e "ID do token" 14 px em `Secondary`, preço 16/700 em `Text/Secondary`, quantidade (botões `Primary` de 20 × 30), total 16/700 `Text/Accent` e lixeira de 24 px | Cartão de 100 px de altura com gradiente `Surface Card` → `Surface Raised` e raio 14: imagem de 100 px, nome 15/700, "Edição: 1/50" 14 px, total da linha 18/700 `Text/Accent`, quantidade e lixeira à direita |
+| Resumo | Coluna de 332 px: "Resumo da carteira" (18/700) com linha; "Código promocional" (14/700), campo de 40 px com borda `Primary` e "Aplicar" de 102 px; Subtotal, Desconto, Taxa de rede ("Taxa estimada" 12 px `Text/Accent`) e Total (18/700 `Text/Accent`); "Conectar e finalizar" (40 px, raio 3) e "Continuar explorando" | Painel `Surface Card` preso na base, raio 28 em cima: campo em pílula de 50 px com "Aplicar" em gradiente, valores e "Conectar e finalizar" em pílula de 60 px com gradiente |
+| Colecionadores também viram | Título 17/700 `Text/Accent` com linha e 5 cards | Cards em rolagem horizontal |
+
+Avisos da linha: preço alterado em `Amber`; esgotado e acima do estoque em `--destructive-foreground`. Contador do carrinho: círculo `Primary` de 16 px com borda `Ink` e número de 10 px.
+
 O botão central da barra inferior usa o ícone de leitura (scan) do Figma, que não tem função definida no escopo. Ele abre o menu lateral, para que a navegação principal fique acessível no mobile.
 
 ## Contraste

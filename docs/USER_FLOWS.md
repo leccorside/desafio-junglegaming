@@ -73,6 +73,17 @@ Detalhes implementados no Passo 6:
 4. Visitante que faz login mantém os itens, juntados ao carrinho da conta.
 5. Segue para o pagamento (visitante passa pelo login antes).
 
+Detalhes implementados no Passo 7:
+
+- `/cart` (público): lista com imagem, nome (link para o detalhe na mesma edição), ID do token e edição, preço, quantidade, total da linha (da cotação) e lixeira. Vazio: "Seu carrinho está vazio." com "Explorar o catálogo". Erro: mensagem com "Tentar de novo".
+- Quantidade de 1 até o estoque da edição; digitar além volta ao máximo. Cada mudança vai à API e o resumo é recalculado pela cotação nova.
+- Remover mostra "Emerald Ape #042 (edição 1/50) saiu do carrinho." com "Desfazer".
+- Cupom: erro no campo ("Código promocional inválido.", "Este código promocional expirou.", valor mínimo). Aplicado, aparece o código com "Remover cupom", e o desconto mostra o código e a descrição da API.
+- Resumo da cotação (Ethereum): subtotal, desconto, taxa de rede ("Taxa estimada") e total, com skeleton no carregamento e indicador na atualização. Item esgotado ou acima do estoque fica marcado e bloqueia "Conectar e finalizar".
+- "Conectar e finalizar" leva a `/checkout` (visitante passa pelo login e volta); "Continuar explorando" volta ao catálogo. Abaixo, "Colecionadores também viram" com os NFTs mais populares fora do carrinho.
+- Mobile: título com voltar, cartões em gradiente e o resumo preso na base no lugar da barra de navegação; os avisos aparecem no topo.
+- Login: o carrinho do visitante entra no da conta, com aviso do que não coube no estoque. O contador do header e da barra inferior mostra o total de unidades.
+
 ## 4. Pagamento
 
 1. Preenche os dados do colecionador, com validação.

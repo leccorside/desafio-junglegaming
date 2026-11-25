@@ -16,26 +16,36 @@ export function QuantityStepper({
   onChange,
   size = 'lg',
   label = 'Quantidade',
+  hideLabel = size === 'lg',
+  subject,
+  busy = false,
 }: {
   value: number
   max: number
   onChange: (value: number) => void
   size?: 'lg' | 'sm'
   label?: string
+  hideLabel?: boolean
+  /** Nome do item, nos rótulos dos botões quando há vários seletores na tela (carrinho). */
+  subject?: string
+  /** Enquanto a API confirma a mudança anterior: botões desabilitados, sem perder o foco. */
+  busy?: boolean
 }) {
   const inputId = useId()
   const hintId = useId()
   const [draft, setDraft] = useState<string | null>(null)
   const disabled = max <= 0
   const atMax = !disabled && value >= max
+  const of = subject ? ` de ${subject}` : ''
 
   const commit = (raw: string) => {
     setDraft(null)
-    onChange(clampQuantity(Number(raw), max))
+    const next = clampQuantity(Number(raw), max)
+    if (next !== value) onChange(next)
   }
 
   const button = cn(
-    'flex shrink-0 cursor-pointer items-center justify-center rounded-full border border-background bg-primary text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40',
+    'flex shrink-0 cursor-pointer items-center justify-center rounded-full border border-background bg-primary text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40 aria-disabled:cursor-wait aria-disabled:opacity-60',
     size === 'lg' ? 'h-[50px] w-[33px]' : 'h-[30px] w-5',
   )
 
@@ -44,16 +54,20 @@ export function QuantityStepper({
       <div className="flex items-center gap-2 md:gap-3">
         <label
           htmlFor={inputId}
-          className={cn('text-body font-medium text-muted-foreground', size === 'lg' && 'sr-only')}
+          className={cn('text-body font-medium text-muted-foreground', hideLabel && 'sr-only')}
         >
           {label}
         </label>
         <button
           type="button"
           className={button}
-          onClick={() => onChange(clampQuantity(value - 1, max))}
+          // Ocupado: aria-disabled em vez de disabled, para o foco não sair do botão.
+          onClick={() => {
+            if (!busy) onChange(clampQuantity(value - 1, max))
+          }}
           disabled={disabled || value <= 1}
-          aria-label="Diminuir quantidade"
+          aria-disabled={busy || undefined}
+          aria-label={`Diminuir quantidade${of}`}
           aria-controls={inputId}
         >
           <MinusIcon className={size === 'lg' ? 'size-4' : 'size-3'} />
@@ -66,6 +80,8 @@ export function QuantityStepper({
           max={max}
           value={draft ?? String(value)}
           disabled={disabled}
+          readOnly={busy}
+          aria-busy={busy || undefined}
           aria-describedby={hintId}
           onChange={(event) => setDraft(event.target.value)}
           onBlur={(event) => commit(event.target.value)}
@@ -80,9 +96,12 @@ export function QuantityStepper({
         <button
           type="button"
           className={button}
-          onClick={() => onChange(clampQuantity(value + 1, max))}
+          onClick={() => {
+            if (!busy) onChange(clampQuantity(value + 1, max))
+          }}
           disabled={disabled || atMax}
-          aria-label="Aumentar quantidade"
+          aria-disabled={busy || undefined}
+          aria-label={`Aumentar quantidade${of}`}
           aria-controls={inputId}
         >
           <PlusIcon className={size === 'lg' ? 'size-4' : 'size-3'} />

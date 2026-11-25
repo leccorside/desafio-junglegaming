@@ -47,6 +47,8 @@ export function SiteFooter() {
         bottomBar === 'none' && 'hidden md:block',
         bottomBar === 'tabs' && 'pb-[150px]',
         bottomBar === 'buy' && 'pb-[188px]',
+        // O resumo do carrinho é preso (sticky) só dentro da tela: nada fixo sobre o footer.
+        bottomBar === 'cart' && 'pb-6',
       )}
     >
       <div className="bg-card p-8">

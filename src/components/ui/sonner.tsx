@@ -24,16 +24,20 @@ export const BUY_BAR_TOAST_BOTTOM = `calc(${BUY_BAR_HEIGHT + 16}px + env(safe-ar
  */
 function Toaster(props: ToasterProps) {
   const bottomBar = useBottomBar()
-  const hasBottomBar = !useMediaQuery(DESKTOP_QUERY) && bottomBar !== 'none'
+  const mobile = !useMediaQuery(DESKTOP_QUERY)
+  // Carrinho no mobile: o resumo preso na base é alto (cerca de 300 px), então
+  // os avisos vão para o topo, sem cobrir o "Conectar e finalizar".
+  const onTop = mobile && bottomBar === 'cart'
+  const hasBottomBar = mobile && (bottomBar === 'tabs' || bottomBar === 'buy')
   const bottom = bottomBar === 'buy' ? BUY_BAR_TOAST_BOTTOM : MOBILE_TOAST_BOTTOM
-  const offset = hasBottomBar ? { bottom, right: 16, left: 16 } : 24
+  const offset = onTop ? 16 : hasBottomBar ? { bottom, right: 16, left: 16 } : 24
 
   return (
     <Sonner
       theme="dark"
-      position="bottom-right"
+      position={onTop ? 'top-center' : 'bottom-right'}
       offset={offset}
-      mobileOffset={hasBottomBar ? offset : 16}
+      mobileOffset={hasBottomBar && !onTop ? offset : 16}
       className="toaster group"
       containerAriaLabel="Notificações"
       toastOptions={{

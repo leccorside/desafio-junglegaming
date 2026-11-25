@@ -92,9 +92,14 @@ Favoritos usam atualização otimista:
 
 Implementado no Passo 6 em `src/features/favorites/queries.ts` (`useToggleFavorite`). A query `favoriteKeys.all(userId)` guarda `{ nftIds, items }`; o toggle muda os dois. Com cliques seguidos, só a última mutação em andamento (`isMutating` com a `mutationKey` do usuário igual a 1) invalida, para um estado intermediário não voltar à tela. Visitante não chama a API: guarda o pedido (`savePendingFavorite`) e vai ao login com `redirect`. O `PendingFavoriteRunner` (montado na raiz) consome o pedido quando há sessão fora das telas de entrada: `ensureQueryData` dos favoritos e do NFT (repetindo se o `resetCache` do login cancelar a busca), a mesma mutation otimista e a rolagem até `[data-nft-id]`. A rolagem espera o `onRendered` do router (mais um quadro), é cancelada por `onBeforeNavigate` e não acontece se a URL já não é a de destino. O pedido só é apagado no sucesso, no "já está" ou na falha da gravação; na falha dos dados fica guardado (nova tentativa pelo toast ou na próxima navegação), com uma execução por vez.
 
-O carrinho ganhou `cartKeys.current(owner)` (`user:<id>` ou `guest:<X-Cart-Id>`) e `useAddToCart`, que grava o carrinho devolvido pela API direto no cache e invalida `quote`. O restante do carrinho entra no Passo 7.
+Carrinho (Passo 7, `src/features/cart/queries.ts`):
 
-O carrinho pode usar o mesmo padrão para quantidade, se o resultado for bom nos testes.
+- `cartKeys.current(owner)` com `owner` = `user:<id>` ou `guest:<X-Cart-Id>`; `staleTime` 0 na tela do carrinho (sempre confere estoque e preço) e 30 s no contador do header e da barra.
+- `quoteKeys.current(owner, network, cartVersion)`: a versão do carrinho está na chave, então qualquer mudança (quantidade, item, cupom) gera uma cotação nova da API; `placeholderData: keepPreviousData` mantém o resumo anterior com indicador ("Atualizando o resumo…") durante a troca.
+- Mutations (adicionar, quantidade, remover, aplicar e remover cupom) gravam o carrinho devolvido pela API direto no cache e invalidam `quote`. Sem atualização otimista: quantidade e estoque são decididos pela API, e o seletor fica ocupado (`aria-disabled`, sem perder o foco) até a resposta. Remover oferece "Desfazer" no toast (adiciona de novo a mesma edição e quantidade).
+- Merge no login: `setupSession({ onStart })` chama `mergeGuestCart` depois de gravar a sessão e antes do `resetCache`, para as buscas refeitas já virem com o carrinho juntado.
+
+O carrinho não usa atualização otimista (decisão do Passo 7): o limite de quantidade e o preço vêm da API, e uma mudança otimista mostraria por instantes um total que a cotação depois desmente.
 
 ## Eventos em tempo real
 

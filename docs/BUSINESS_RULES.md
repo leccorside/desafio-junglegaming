@@ -23,7 +23,15 @@ Regras aplicadas pela API simulada e respeitadas pela interface. A fonte da verd
 - Um item é a combinação de NFT e edição. Adicionar a mesma combinação soma à quantidade existente.
 - A quantidade de um item não passa da disponibilidade da edição. A API responde `409 AVAILABILITY_CONFLICT` com a quantidade máxima permitida.
 - O visitante tem carrinho identificado pelo cabeçalho `X-Cart-Id`, gerado no navegador.
-- No login, o carrinho do visitante é juntado ao do usuário. Itens iguais somam quantidade, limitada à disponibilidade; o que não couber é informado ao usuário.
+- No login (ou cadastro), o carrinho do visitante é juntado ao do usuário (`POST /cart/merge`), antes de a aplicação recarregar os dados da conta. Regra final:
+  - itens iguais (mesmo NFT e edição) somam a quantidade, limitada à disponibilidade da edição;
+  - o que não couber é informado num aviso ("Ivory Baron #088: entraram 1 de 2"), e a parte que coube entra;
+  - item cujo NFT saiu do catálogo não entra e também é avisado;
+  - o cupom do visitante só passa para a conta se ela não tiver cupom;
+  - o carrinho do visitante é apagado na API e o navegador troca o `X-Cart-Id`, para o próximo visitante começar vazio;
+  - se a API falhar, o carrinho do visitante continua guardado e é juntado no próximo login.
+- O resumo do carrinho usa a cotação com a taxa da Ethereum ("Taxa estimada"); a rede é escolhida no pagamento.
+- Item esgotado ou com quantidade acima do estoque fica fora da cotação e bloqueia "Conectar e finalizar" até ser removido ou ajustado. Preço alterado é avisado na linha e entra na cotação com o preço novo.
 - Quando `nft.updated` muda o preço ou a disponibilidade de um item no carrinho, a interface avisa e pede nova cotação. Se a edição esgotar, o item fica marcado e não entra no pedido até ser removido ou ajustado.
 
 ## Cupons

@@ -5,6 +5,10 @@ import tabBarBackground from '@/assets/tab-bar-background.svg'
 import type { IconProps } from '@/components/icons/create-icon'
 import { HeartIcon, HomeIcon, ScanIcon, ShopIcon, UserIcon } from '@/components/icons/figma-icons'
 
+import { cartLabel } from '@/features/cart/cart-label'
+import { CartBadge } from '@/features/cart/components/cart-badge'
+import { useCartCount } from '@/features/cart/queries'
+
 import { useBottomBar } from './bottom-bar'
 import { MobileMenu } from './mobile-menu'
 
@@ -32,24 +36,30 @@ const rightTabs: TabItem[] = [
  * embutida numa margem de 30 px nas laterais e 40 px em cima.
  */
 export function MobileTabBar() {
-  // No detalhe do NFT a barra de compra ocupa o lugar dela (Figma mobile).
-  if (useBottomBar() !== 'tabs') return null
+  const bottomBar = useBottomBar()
+  const cartCount = useCartCount()
+  // No detalhe do NFT e no carrinho, a barra de compra ou o resumo ocupam o lugar dela (Figma mobile).
+  if (bottomBar !== 'tabs') return null
 
-  const renderTab = ({ label, to, icon: Icon }: TabItem) => (
-    <li key={label}>
-      <Link
-        to={to}
-        aria-label={label}
-        activeOptions={{ exact: to === '/' }}
-        className="flex size-11 items-center justify-center rounded-full transition-colors"
-        // Cor só por estado: o Link concatena classes sem tailwind-merge (ver NavLink).
-        activeProps={{ className: 'text-accent-foreground' }}
-        inactiveProps={{ className: 'text-muted-foreground hover:text-foreground' }}
-      >
-        <Icon size={20} />
-      </Link>
-    </li>
-  )
+  const renderTab = ({ label, to, icon: Icon }: TabItem) => {
+    const isCart = to === '/cart'
+    return (
+      <li key={label}>
+        <Link
+          to={to}
+          aria-label={isCart ? cartLabel(cartCount) : label}
+          activeOptions={{ exact: to === '/' }}
+          className="relative flex size-11 items-center justify-center rounded-full transition-colors"
+          // Cor só por estado: o Link concatena classes sem tailwind-merge (ver NavLink).
+          activeProps={{ className: 'text-accent-foreground' }}
+          inactiveProps={{ className: 'text-muted-foreground hover:text-foreground' }}
+        >
+          <Icon size={20} />
+          {isCart ? <CartBadge count={cartCount} className="top-1 right-0.5" /> : null}
+        </Link>
+      </li>
+    )
+  }
 
   return (
     <nav

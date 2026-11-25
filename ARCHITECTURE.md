@@ -124,7 +124,7 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Itens fora do escopo (Criadores, Aprenda, Atividade, Central de ajuda...) | Aparecem como texto com 60% de opacidade e aviso "(indisponível nesta demonstração)" para leitores de tela. Não são links, para não parecer que funcionam. |
 | Newsletter do footer | O envio mostra um toast informativo dizendo que a newsletter não está disponível. Não simula cadastro. |
 | Redes sociais | Abrem a página inicial de cada rede em nova aba (`rel="noopener noreferrer"`), com o aviso no nome acessível. |
-| Contador do carrinho | O Figma mostra "6". O badge só vai aparecer no Passo 7, com a quantidade real do carrinho. |
+| Contador do carrinho (antes do Passo 7) | O Figma mostra "6". O badge mostra a quantidade real do carrinho e some quando ele está vazio. |
 | Login social e "Esqueceu a senha?" | Fora do escopo. Os botões aparecem como no Figma, mas mostram um aviso de indisponível, sem simular sucesso. |
 | Sessão expirada | Em rota privada, vai ao login com o aviso "Sua sessão expirou. Entre de novo para continuar de onde parou." e volta depois. Em rota pública, fica na página e recebe um aviso. |
 | Fechar o modal de login | X, Esc ou clique fora voltam ao início (a rota de origem pode ser privada, e não dá para voltar a ela sem sessão). |
@@ -146,6 +146,12 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | "Mais desta coleção" | Até 5 NFTs da mesma coleção pelo novo filtro `collection` da API; some se a coleção não tiver outros ou a busca falhar (conteúdo complementar). |
 | Favoritar como visitante | O pedido é guardado e concluído depois do login (`PendingFavoriteRunner`), com toast, rolagem até o NFT (só se ele estiver fora da tela, e depois do `onRendered` do router) e foco no coração. Mudar de tela cancela a rolagem. O pedido só é apagado depois do sucesso: se os dados falham, fica guardado, o toast oferece "Tentar de novo" e nada rola; se a gravação falha, o coração volta com o aviso de sempre e fica em foco. Desistir do login descarta o pedido. A busca dos dados repete quando é só cancelada pelo reinício do cache do login (`resetCache`). |
 | Lista de interesse (`/favorites`) | O Figma não desenha a tela: título, contagem e a grade do catálogo, com vazio e erro. |
+| Taxa de rede no carrinho | A rede é escolhida no pagamento. O resumo do carrinho usa a cotação da Ethereum, com "Taxa estimada" (como o Figma, 0.016 ETH). |
+| Resumo do carrinho no mobile | Preso na base (`sticky`) enquanto a lista rola, no lugar da barra de navegação (Figma "Payment Summary"). Os toasts dessa tela vão para o topo, para não cobrir "Conectar e finalizar". |
+| Item esgotado ou acima do estoque | Fica marcado na linha ("Esgotado: remova…", "Só N disponíveis: ajuste…") e bloqueia "Conectar e finalizar" com aviso. Preço alterado só é avisado ("O preço mudou de X para Y"). |
+| Remover item | Sem confirmação: o toast oferece "Desfazer", que adiciona a mesma edição e quantidade de novo. |
+| Merge no login | Aviso do que não coube no estoque (10 s na tela). Falha do merge não bloqueia o login: o carrinho do visitante fica guardado para a próxima entrada. |
+| Contador do carrinho | Total de unidades, no header e na barra inferior; só aparece com itens, e o número vai no nome do link ("Carrinho, 3 unidades"). |
 | Servidor demorando (timeout) | Depois da primeira tentativa que estoura os 15 s, o status (`aria-live`) troca "Carregando NFTs…" por "O servidor está demorando para responder. Ainda estamos tentando…", em âmbar. Com a página anterior na tela, o mesmo texto substitui o "Atualizando…". Timeout se repete só uma vez, então o erro aparece em cerca de 31 s. |
 | Faixa de preço sem faixa | Catálogo vazio, um único preço ou API fora do ar: "Faixa de preço indisponível no momento.", sem slider e sem "Aplicar" (um slider de 0,00 a 0,00 não deixa escolher nada). |
 | Página 404 e erro de rota | Mesmo layout das outras telas, com o código em `Primary`, texto e botão "Voltar ao início". O erro de rota oferece "Tentar de novo" sem recarregar a página. |
@@ -162,6 +168,8 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Marca KURIO no título da página | O nome da página no Figma é "GreenMint", mas o wordmark em todas as telas é KURIO. |
 | Rótulos dos campos de login e cadastro só para leitor de tela | O Figma só tem placeholder. Os campos ganharam `<label>` visualmente oculto e mensagens de erro ligadas por `aria-describedby`. |
 | Sem footer nas telas de entrada no mobile | O Figma mobile de login e cadastro é tela cheia. |
+| Carrinho: rótulos "Desconto do lançamento" e "(-) 00.00" | Sem cupom, o rótulo do Figma fica; o valor segue o formato do resto ("(-) 0.00 ETH"). Com cupom, vira "Desconto (CÓDIGO)" com a descrição da API embaixo. |
+| Carrinho: coluna "Edições" | O Figma usa "Edições" no cabeçalho da coluna de quantidade. O cabeçalho ficou, e cada linha mostra também a edição ao lado do ID do token; o seletor se chama "Quantidade de Emerald Ape #042" (nome do NFT) para leitores de tela. |
 | Imagens das promoções e do blog | O Figma usa fotos que não estão entre os assets exportáveis. Os cartões usam as 4 imagens de NFT do projeto. |
 | Coração nos cards só no mobile | É onde o Figma desenha ("Column L/R"); no desktop o favorito fica no detalhe. |
 | Rótulos "Contrato" e "Direitos autorais" do detalhe | No Figma, cada rótulo está com o texto do outro. Aqui cada um fica com o seu valor. |

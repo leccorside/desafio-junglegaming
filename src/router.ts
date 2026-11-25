@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 
 import { clearSessionEndReason, onSessionEnd, setupSession } from '@/features/auth/session'
 import { getSession } from '@/features/auth/session-store'
+import { mergeGuestCart } from '@/features/cart/merge'
 import { clearPendingFavorite } from '@/features/favorites/pending-favorite'
 import { queryClient } from '@/lib/query-client'
 
@@ -40,6 +41,8 @@ setupSession({
     if (!targetIsPrivate()) toast.warning('Sua sessão expirou. Entre de novo para ver seus dados.')
     void router.invalidate()
   },
+  // Login ou cadastro: o carrinho do visitante entra no carrinho da conta.
+  onStart: (session) => mergeGuestCart(queryClient, session),
 })
 
 /**

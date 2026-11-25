@@ -6,6 +6,11 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Carrinho do Figma (desktop e mobile): itens com quantidade limitada pelo estoque, remoção com "Desfazer", cupom com erro no campo (inválido, expirado, valor mínimo) e remoção, resumo da cotação da API (subtotal, desconto, taxa de rede estimada e total) com skeleton e indicador de atualização, aviso de preço alterado, item esgotado ou acima do estoque bloqueando a finalização, "Conectar e finalizar", "Continuar explorando", estados vazio e de erro e "Colecionadores também viram".
+- Carrinho do visitante persistido (refresh) e juntado ao da conta no login, com aviso do que não coube no estoque; o `X-Cart-Id` é trocado depois do merge.
+- Contador do carrinho no header e na barra inferior, com o total de unidades no nome do link.
+- No mobile, o resumo do carrinho fica preso na base no lugar da barra de navegação, e os avisos dessa tela aparecem no topo.
+- 20 cenários E2E do carrinho (item 5 do enunciado) e o helper `trackApi` para esperar a API ficar ociosa nos testes.
 - Detalhe do NFT do Figma (desktop e mobile): galeria com miniaturas navegáveis pelo teclado, nota, edições em grupo de rádio (esgotada e indisponível riscadas), quantidade limitada pela disponibilidade, "COMPRAR", compartilhamento, abas "Detalhes do NFT" e "Avaliações de colecionadores" e "Mais desta coleção". Acesso direto e refresh pelo loader da rota, 404 próprio para NFT inexistente e edição escolhida na URL (`?edition=`).
 - Barra de compra fixa no mobile, no lugar da barra de navegação, com "Comprar NFT" e o botão do carrinho; toasts e footer sobem acima dela.
 - Adicionar ao carrinho (visitante ou conta) pelo detalhe, com confirmação e atalho "Ver carrinho".
@@ -51,6 +56,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Testes: `loginViaUi` esperava `networkidle`, que num app de página única retorna na hora depois do login. Uma busca autenticada ainda em andamento era pega pelo cenário `session-expired` ativado em seguida, e o teste de expiração durante a navegação falhava de vez em quando sob carga. Agora o helper espera as requisições `/api` terminarem de fato.
 - Favorito pendente do visitante (achados do code review):
   - a busca do NFT para rolar até ele continuava por até 6 s depois de a pessoa mudar de tela e podia rolar e tirar o foco na tela nova; agora qualquer navegação cancela, e nada acontece se a pessoa já saiu da tela de destino;
   - a rolagem até o NFT espera o router desenhar a tela e aplicar a própria rolagem (`onRendered`), para não ser desfeita;
