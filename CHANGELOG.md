@@ -51,6 +51,12 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Favorito pendente do visitante (achados do code review):
+  - a busca do NFT para rolar até ele continuava por até 6 s depois de a pessoa mudar de tela e podia rolar e tirar o foco na tela nova; agora qualquer navegação cancela, e nada acontece se a pessoa já saiu da tela de destino;
+  - a rolagem até o NFT espera o router desenhar a tela e aplicar a própria rolagem (`onRendered`), para não ser desfeita;
+  - o pedido só sai do armazenamento depois do sucesso; se os dados não carregam, ele fica guardado, o toast oferece "Tentar de novo" e a tela não rola nem foca;
+  - um `createdAt` no futuro fazia o pedido nunca vencer; agora conta como inválido;
+  - no detalhe, a volta do login rolava a página (102 px no desktop, 16 px no mobile) mesmo com o coração já na tela; agora só rola quando o NFT está fora da tela.
 - Favoritar como visitante: depois do login a pessoa voltava à tela, mas precisava achar o NFT e tocar de novo, e um card abaixo da dobra ficava fora da tela (a volta caía no topo). Agora o pedido fica guardado (sessionStorage da aba, 10 minutos): depois do login o favorito é concluído com o toast "Golden Signal #160 adicionado à lista de interesse." (ou "já está na sua lista de interesse."), a tela rola até o card ou o detalhe do NFT e o foco vai para o coração. Quem desiste do login e sai das telas de entrada perde o pedido, e ele não passa para um login feito depois.
 - Barra de compra do detalhe no mobile: no limite da quantidade, o aviso "Máximo disponível: 50 unidades." quebrava em duas linhas e empurrava o preço para duas linhas também; a barra crescia de 162 para 178 px e o toast de confirmação encostava nela (2 px). Agora o preço não quebra e o aviso da barra é curto ("Máximo: 50 disponíveis."), numa linha; a barra fica em 162 px e o toast, 18 px acima dela.
 - Catálogo com o servidor sem responder: eram 47 s de skeleton sem nenhum aviso (3 tentativas de 15 s) até o erro. Depois da primeira tentativa que estoura o tempo, o status passa a dizer "O servidor está demorando para responder. Ainda estamos tentando…", e timeout se repete só uma vez: o erro aparece em cerca de 31 s. Rede e 503 continuam com 2 repetições.

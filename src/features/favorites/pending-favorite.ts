@@ -11,7 +11,7 @@ export const PENDING_FAVORITE_TTL_MS = 10 * 60_000
 const pendingFavoriteSchema = z.object({
   nftId: z.string().min(1).max(80),
   name: z.string().min(1).max(200),
-  createdAt: z.number(),
+  createdAt: z.number().int().nonnegative(),
 })
 export type PendingFavorite = z.infer<typeof pendingFavoriteSchema>
 
@@ -41,9 +41,10 @@ export function peekPendingFavorite(now = Date.now()): PendingFavorite | null {
     const raw = store?.getItem(PENDING_FAVORITE_KEY)
     if (!raw) return null
     const parsed = pendingFavoriteSchema.safeParse(JSON.parse(raw))
-    if (parsed.success && now - parsed.data.createdAt <= PENDING_FAVORITE_TTL_MS) {
-      return parsed.data
-    }
+    // Idade entre 0 e o prazo: um createdAt no futuro (relógio voltou, valor
+    // forjado) não pode valer para sempre.
+    const age = parsed.success ? now - parsed.data.createdAt : -1
+    if (parsed.success && age >= 0 && age <= PENDING_FAVORITE_TTL_MS) return parsed.data
   } catch {
     // JSON inválido: cai no descarte abaixo.
   }

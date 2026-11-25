@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 import { submitLogin, loginViaUi } from '../fixtures/auth'
-import { resetMocks, setScenario, waitForApp } from '../fixtures/mocks'
+import { apiFetch, resetMocks, setScenario, waitForApp } from '../fixtures/mocks'
 
 /** Coração do NFT na tela (botão "Favoritar" no desktop, círculo sobre a imagem no mobile). */
 const heart = (page: Page, name: string) =>
@@ -16,6 +16,24 @@ const favoriteSaved = (page: Page) =>
   page.waitForResponse(
     (response) =>
       /\/api\/me\/favorites\//.test(response.url()) && response.request().method() === 'PUT',
+  )
+
+/** IDs favoritos do usuário logado, lidos direto da API simulada. */
+const favoriteIds = async (page: Page) => {
+  const token = await page.evaluate(
+    () => (JSON.parse(localStorage.getItem('kurio:session') ?? 'null') as { token: string }).token,
+  )
+  return ((await apiFetch(page, 'GET', '/me/favorites', { token })).json as { nftIds: string[] })
+    .nftIds
+}
+
+/** Dois quadros de animação: tempo para uma rolagem ou um foco pendente acontecer. */
+const nextFrames = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
   )
 
 test.describe('favoritos', () => {
@@ -104,11 +122,109 @@ test.describe('favoritos', () => {
     await expect(page).toHaveURL(/\/$/)
     await expect.poll(pending).toBeNull()
 
+    // Entra depois e abre o detalhe; espera a rede parar, para o runner (que é
+    // assíncrono) ter tido tempo de agir se o pedido ainda existisse.
     await loginViaUi(page, 'ana@example.com')
     await page.goto('/nft/nft-009')
     await waitForApp(page)
+    await page.waitForLoadState('networkidle')
     await expect(heart(page, 'Sage Nomad #009')).toHaveAttribute('aria-pressed', 'false')
     expect(await page.getByText('adicionado à lista de interesse').count()).toBe(0)
+    // A prova definitiva é a API: nft-009 não entrou nos favoritos da Ana.
+    expect(await favoriteIds(page)).not.toContain('nft-009')
+  })
+
+  test('pedido de favoritar não rola nem rouba o foco se a pessoa já mudou de tela', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'O coração no card é do layout mobile')
+    await page.goto('/')
+    await waitForApp(page)
+    const card = heart(page, 'Golden Signal #160')
+    await card.scrollIntoViewIfNeeded()
+    await card.click()
+    await expect(page).toHaveURL(/\/login/)
+
+    // Catálogo e NFT lentos: a conclusão demora, e a pessoa sai antes.
+    await setScenario(page, ['slow'], { routes: ['/nfts'] })
+    await submitLogin(page, 'ana@example.com')
+    await expect(page).toHaveURL(/\/$/)
+    await page
+      .getByRole('navigation', { name: 'Navegação inferior' })
+      .getByRole('link', { name: 'Lista de interesse' })
+      .click()
+    await expect(page.getByRole('heading', { name: 'Lista de interesse' })).toBeVisible()
+    await page.evaluate(() => window.scrollTo(0, 0))
+
+    // O favorito é concluído (o pedido continua valendo) e o card entra na lista...
+    await expect(page.getByText('Golden Signal #160 adicionado à lista de interesse.')).toBeVisible(
+      {
+        timeout: 10_000,
+      },
+    )
+    const listed = page.getByRole('link', { name: /Golden Signal #160/ })
+    await expect(listed).toHaveCount(1)
+    await nextFrames(page)
+    // ...mas a tela não rola até ele nem tira o foco de onde a pessoa está.
+    expect(await page.evaluate(() => window.scrollY)).toBe(0)
+    await expect(heart(page, 'Golden Signal #160')).not.toBeFocused()
+  })
+
+  test('na volta ao detalhe, o foco vai ao coração do detalhe, sem rolar à toa', async ({
+    page,
+  }) => {
+    await page.goto('/nft/nft-009')
+    await waitForApp(page)
+    await heart(page, 'Sage Nomad #009').click()
+    await expect(page).toHaveURL(/\/login/)
+
+    // NFT lento: o detalhe só aparece depois que os dados chegam. No desktop a
+    // tela inicial fica atrás do modal de login, com o card do mesmo NFT.
+    await setScenario(page, ['slow'], { routes: ['/nfts'] })
+    await submitLogin(page, 'ana@example.com')
+    await expect(page.getByText('Sage Nomad #009 adicionado à lista de interesse.')).toBeVisible({
+      timeout: 10_000,
+    })
+    await expect(page.getByRole('heading', { level: 1, name: 'Sage Nomad #009' })).toBeVisible()
+    await nextFrames(page)
+    await expect(heart(page, 'Sage Nomad #009')).toBeFocused()
+    // O coração já está na tela ao abrir o detalhe: nada de rolar.
+    expect(await page.evaluate(() => window.scrollY)).toBe(0)
+  })
+
+  test('se os dados não carregam, o pedido fica guardado e "Tentar de novo" conclui', async ({
+    page,
+  }) => {
+    await page.goto('/nft/nft-009')
+    await waitForApp(page)
+    await heart(page, 'Sage Nomad #009').click()
+    await expect(page).toHaveURL(/\/login/)
+
+    await setScenario(page, ['server-error'], { routes: ['/me/favorites'] })
+    await submitLogin(page, 'ana@example.com')
+    const error = page.getByText(
+      'Não foi possível adicionar Sage Nomad #009 à lista de interesse. Tente de novo.',
+    )
+    await expect(error).toBeVisible({ timeout: 15_000 })
+    await nextFrames(page)
+    // Nada de rolar ou focar como se tivesse dado certo; o pedido continua guardado.
+    await expect(heart(page, 'Sage Nomad #009')).not.toBeFocused()
+    expect(await page.evaluate(() => window.scrollY)).toBe(0)
+    expect(await page.evaluate(() => sessionStorage.getItem('kurio:pending-favorite'))).toContain(
+      'nft-009',
+    )
+
+    // A API volta: a ação do toast conclui o pedido.
+    await setScenario(page, [])
+    const saved = favoriteSaved(page)
+    await page.getByRole('button', { name: 'Tentar de novo' }).click()
+    await expect(page.getByText('Sage Nomad #009 adicionado à lista de interesse.')).toBeVisible()
+    expect((await saved).status()).toBe(200)
+    await expect(heart(page, 'Sage Nomad #009')).toHaveAttribute('aria-pressed', 'true')
+    await expect
+      .poll(() => page.evaluate(() => sessionStorage.getItem('kurio:pending-favorite')))
+      .toBeNull()
   })
 
   test('favoritar persiste por usuário e aparece na lista de interesse', async ({ page }) => {

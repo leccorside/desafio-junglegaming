@@ -32,6 +32,18 @@ describe('intenção de favoritar do visitante', () => {
     expect(sessionStorage.getItem(PENDING_FAVORITE_KEY)).toBeNull()
   })
 
+  it('descarta pedido com data no futuro (não vale para sempre)', () => {
+    sessionStorage.setItem(
+      PENDING_FAVORITE_KEY,
+      JSON.stringify({ nftId: 'nft-160', name: 'x', createdAt: 9e15 }),
+    )
+    expect(peekPendingFavorite(1000)).toBeNull()
+    expect(sessionStorage.getItem(PENDING_FAVORITE_KEY)).toBeNull()
+
+    savePendingFavorite({ id: 'nft-160', name: 'x' }, 5000)
+    expect(peekPendingFavorite(4999)).toBeNull()
+  })
+
   it('ignora valor corrompido ou fora do formato', () => {
     sessionStorage.setItem(PENDING_FAVORITE_KEY, '{quebrado')
     expect(peekPendingFavorite()).toBeNull()
