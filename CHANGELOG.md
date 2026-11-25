@@ -34,6 +34,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Sessão: o toast de boas-vindas da conta anterior ("Que bom ver você, Ana Ribeiro.") continuava na página depois do logout e da entrada de outra conta. Agora todos os toasts fecham no fim da sessão.
 - Sessão: um 401 atrasado de requisição feita com token antigo derrubava a sessão nova. Agora só o token atual conta.
 - Sessão: o fim da sessão e o login usavam `clear()`, que deixava as telas montadas com os dados antigos. Agora o cache é reiniciado (cancela, remove o que não está na tela, refaz as buscas do que está), e respostas de visitante atrasadas não aparecem na conta.
 - Sessão: a revalidação cancelada pelo fim da sessão devolvia a sessão já apagada e liberava a rota privada.

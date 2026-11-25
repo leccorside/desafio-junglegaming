@@ -180,6 +180,25 @@ test.describe('expiração da sessão', () => {
 })
 
 test.describe('logout e troca de usuário', () => {
+  test('os toasts da conta anterior fecham no fim da sessão', async ({ page }) => {
+    await page.goto('/login')
+    await submitLogin(page, 'ana@example.com')
+    const anaToast = page.getByText('Que bom ver você, Ana Ribeiro.')
+    await expect(anaToast).toBeVisible()
+    const shownAt = Date.now()
+
+    await logoutViaUi(page)
+    // Some logo depois do logout, e não pelo fechamento automático do Sonner (4 s).
+    await expect(anaToast).toHaveCount(0, { timeout: 1000 })
+    expect(Date.now() - shownAt).toBeLessThan(3500)
+
+    await page.goto('/login')
+    await submitLogin(page, 'bruno@example.com')
+    await expect(page.getByText('Que bom ver você, Bruno Lima.')).toBeVisible()
+    // Leitura única: nada da Ana em lugar nenhum da página do Bruno.
+    expect(await page.evaluate(() => document.body.innerText.includes('Ana Ribeiro'))).toBe(false)
+  })
+
   test('sair limpa a sessão e entrar com outra conta não mostra a anterior', async ({ page }) => {
     await loginViaUi(page, 'ana@example.com')
     expect((await storedSession(page))?.user.displayName).toBe('Ana Ribeiro')

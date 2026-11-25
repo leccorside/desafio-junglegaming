@@ -59,6 +59,7 @@ A proteção acontece no `beforeLoad` do layout `_authenticated`, que redirecion
   3. cancela as requisições em andamento;
   4. reinicia o cache: cancela as buscas em andamento, apaga as queries que não estão na tela e reinicia (`resetQueries`) as que estão, que buscam de novo já sem a sessão. Só `clear()` não basta: as telas montadas continuariam mostrando os dados antigos.
 - O login (`startSession`) faz o mesmo reinício: respostas de visitante ainda em andamento são canceladas e não gravam no cache da conta. Entrar com outra conta sem sair também avisa `onSessionEnd('switch')`.
+- Todos os toasts fecham no fim da sessão (`onSessionEnd(() => toast.dismiss())` em `router.ts`), para uma mensagem como "Que bom ver você, Ana Ribeiro." não ficar na tela de quem entra depois. Os avisos do próprio fim ("Você saiu da sua conta.", "Sua sessão expirou...") são criados depois e continuam visíveis.
 - Eventos com `userId` diferente do usuário atual são descartados (Passo 8).
 - A API responde `403 FORBIDDEN` para pedido ou carteira de outro usuário.
 - O carrinho do visitante é juntado ao do usuário no login (Passo 7) e depois deixa de ser usado.

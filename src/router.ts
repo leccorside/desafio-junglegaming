@@ -1,7 +1,7 @@
 import { createRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-import { clearSessionEndReason, setupSession } from '@/features/auth/session'
+import { clearSessionEndReason, onSessionEnd, setupSession } from '@/features/auth/session'
 import { queryClient } from '@/lib/query-client'
 
 import { routeTree } from './routeTree.gen'
@@ -47,6 +47,14 @@ setupSession({
  * Decide no fim da navegação, e não no desmonte da tela de login, porque a
  * proteção da rota e o `invalidate()` podem desmontar e remontar o login no meio.
  */
+/**
+ * Toasts falam da sessão que os criou ("Que bom ver você, Ana Ribeiro."). Ao
+ * fim da sessão (logout, expiração, troca de conta) todos fecham, para nenhum
+ * dado do usuário anterior ficar na tela do próximo. Os avisos do próprio fim
+ * ("Você saiu da sua conta.", "Sua sessão expirou...") são criados depois.
+ */
+onSessionEnd(() => toast.dismiss())
+
 router.subscribe('onResolved', ({ toLocation }) => {
   if (toLocation.pathname !== '/login' && toLocation.pathname !== '/register') {
     clearSessionEndReason()
