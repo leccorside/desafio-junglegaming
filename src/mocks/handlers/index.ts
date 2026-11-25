@@ -324,7 +324,13 @@ const mocksHandlers = [
           if (!edition) fail('NOT_FOUND', { message: 'Edição não encontrada.' })
           if (body.price) edition.price = body.price
           if (body.available !== undefined) edition.available = body.available
-          edition.status = body.status ?? (edition.available > 0 ? 'available' : 'sold_out')
+          if (body.status) {
+            edition.status = body.status
+          } else if (body.available !== undefined && edition.status !== 'unavailable') {
+            // Só o estoque informado decide entre disponível e esgotado. Um ajuste só
+            // de preço mantém o status, e uma edição indisponível continua indisponível.
+            edition.status = edition.available > 0 ? 'available' : 'sold_out'
+          }
           nft.priceFrom = computePriceFrom(nft.editions)
           nft.version += 1
           nft.updatedAt = new Date().toISOString()

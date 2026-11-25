@@ -25,3 +25,15 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 - `vercel.json` com fallback de SPA e cabeçalhos de cache.
 - Design system com os valores do Figma.
 - Estrutura de documentação: `README.md`, `ARCHITECTURE.md`, `CHANGELOG.md` e os documentos de `docs/` (contexto, requisitos, regras de negócio, API, mocks, tempo real, estado, segurança, design system, acessibilidade, fluxos, testes, performance e deploy).
+
+### Corrigido
+
+- Mocks: `mutate` passou a persistir e avisar os interessados mesmo quando a regra termina em erro. Antes, a cotação nova e o preço alterado do `QUOTE_OUTDATED` se perdiam no refresh.
+- Mocks: um cenário corrompido no `localStorage` impedia a aplicação de subir.
+- Mocks: o `?scenario=` da URL era reaplicado a cada reload, desfazendo a escolha do painel e redisparando cenários de uso único. Agora ele é aplicado uma vez e removido da URL.
+- Mocks: o "Aplicar" do painel apagava as opções do cenário (rotas, latência, semente, prazo).
+- Mocks: a latência padrão deslocava a sequência do `jitter`, que deixava de ser reproduzível.
+- Mocks: o ajuste de NFT dos testes trocava o status de edições indisponíveis num ajuste só de preço.
+- Mocks: a recusa do pagamento reabria edições esgotadas por outro motivo depois da reserva.
+- Mocks: o merge do carrinho descartava sem aviso itens fora do catálogo e mudava a versão mesmo sem mudança.
+- `.gitattributes` com `eol=lf`: com `core.autocrlf=true` (padrão do Git no Windows), o checkout entregava arquivos com CRLF e o `format:check` falhava.

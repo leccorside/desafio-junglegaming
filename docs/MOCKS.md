@@ -31,7 +31,8 @@ Os handlers só traduzem HTTP: leem o corpo com o schema Zod do contrato (`readB
 ## Banco dos mocks
 
 - Estado único (`DbState`) com usuários, sessões, NFTs, favoritos, carrinhos, cupons, cotações, pedidos, chaves de idempotência e carteiras. REST e Socket.IO (Passo 8) leem e escrevem no mesmo estado, e `onDbChange` avisa o socket a cada mudança.
-- Persistido no `localStorage` em `kurio:mocks:db`, com `schemaVersion`. Versão diferente ou JSON corrompido fazem o banco voltar às fixtures.
+- Persistido no `localStorage` em `kurio:mocks:db`, com `schemaVersion` (hoje 2). Versão diferente ou JSON corrompido fazem o banco voltar às fixtures.
+- `mutate` persiste e avisa os interessados mesmo quando a regra termina em erro. Algumas regras alteram o banco de propósito antes de recusar (o cenário de preço alterado sobe o preço e guarda a cotação nova, e só então devolve `QUOTE_OUTDATED`). Regra que não deve deixar rastro valida antes de alterar.
 - Sem `localStorage` (Node, navegação privada bloqueada), fica só em memória.
 - IDs de pedido, cotação e carteira são sequenciais (`ord-0003`), então os testes são previsíveis.
 
@@ -54,7 +55,9 @@ Os handlers só traduzem HTTP: leem o corpo com o schema Zod do contrato (`readB
 - **Sessão:** token opaco válido por 30 minutos, uma sessão ativa por usuário. Token inválido gera `UNAUTHENTICATED` e token vencido gera `SESSION_EXPIRED`, inclusive nas rotas públicas que aceitam token, como o carrinho.
 - **Carrinho:** o visitante é identificado pelo `X-Cart-Id`, e o carrinho é calculado contra o catálogo atual (preço alterado, estoque insuficiente, esgotado). Alterar a quantidade conta como ciência do preço novo.
 - **Cotação:** guarda uma assinatura do que foi cotado (itens, preços, quantidades, cupom, taxa). No `POST /orders`, assinatura diferente, versão diferente ou cotação vencida (10 minutos) geram `QUOTE_OUTDATED`, com a cotação nova e a lista de mudanças.
-- **Pedido:** reserva o estoque na criação. O pagamento é decidido 3 segundos depois (`settleAt`). Essa decisão roda antes de cada requisição, então o resultado aparece mesmo depois de refresh. Confirmado: gera hash e link de explorador simulados e tira do carrinho só o que foi comprado. Recusado: devolve o estoque e mantém o carrinho.
+- **Pedido:** reserva o estoque na criação. O pagamento é decidido 3 segundos depois (`settleAt`). Essa decisão roda antes de cada requisição, então o resultado aparece mesmo depois de refresh. Confirmado: gera hash e link de explorador simulados e tira do carrinho só o que foi comprado. Recusado: devolve o estoque e mantém o carrinho. A edição volta à venda só se foi a própria reserva que a esgotou (`soldOutByReservation`). Esgotada por outro motivo depois, continua esgotada.
+- **Merge do carrinho:** item do visitante cujo NFT saiu do catálogo vai para `adjustments` com `added: 0`. A versão do carrinho do usuário só muda se algo entrou.
+- **Ajuste de NFT (`/__mocks/nfts/:id/update`):** sem `status` no corpo, o status só é recalculado quando `available` é informado, e uma edição `unavailable` continua indisponível.
 - **Idempotência:** a mesma `Idempotency-Key` com o mesmo corpo devolve o mesmo pedido (200). Com corpo diferente ou de outro usuário, devolve `IDEMPOTENCY_CONFLICT`.
 - **Avatar:** guardado como data URL, porque não há servidor de arquivos.
 
@@ -62,11 +65,11 @@ Os handlers só traduzem HTTP: leem o corpo com o schema Zod do contrato (`readB
 
 Ativados de três formas, combináveis. Ficam salvos (`kurio:mocks:scenario`) até o reset.
 
-1. URL: `?scenario=slow,payment-rejected`, com `&scenarioRoutes=/nfts,/cart` opcional para limitar os cenários de rede a algumas rotas.
+1. URL: `?scenario=slow,payment-rejected`, com `&scenarioRoutes=/nfts,/cart` opcional para limitar os cenários de rede a algumas rotas. Os dois parâmetros são aplicados uma vez e saem da barra de endereço (`history.replaceState`), e os outros parâmetros ficam. Assim o reload usa o estado salvo, sem desfazer o que foi escolhido no painel nem redisparar cenários de uso único.
 2. Painel de desenvolvimento: botão com ícone de frasco no canto inferior esquerdo (acima da barra no mobile). Escondido em navegador automatizado.
 3. API: `PUT /api/__mocks/scenario` com `{ "names": [...], "options": {...} }`.
 
-Opções: `routes` (limita os cenários de rede), `latencyMs` (do `slow`), `seed` (do `jitter`) e `settleMs` (prazo do pagamento).
+Opções: `routes` (limita os cenários de rede), `latencyMs` (do `slow`), `seed` (do `jitter`) e `settleMs` (prazo do pagamento). O "Aplicar" do painel troca só os cenários e mantém as opções em vigor. Um valor corrompido no `localStorage` é ignorado: a aplicação sobe sem cenário.
 
 ### Rede
 
@@ -74,7 +77,7 @@ Opções: `routes` (limita os cenários de rede), `latencyMs` (do `slow`), `seed
 | --- | --- |
 | (nenhum) | Latência curta variável (80 a 220 ms) no navegador |
 | `slow` | 2,5 s em cada requisição |
-| `jitter` | 100 a 1800 ms com semente fixa: requisições paralelas voltam fora de ordem, sempre na mesma ordem para a mesma semente |
+| `jitter` | 100 a 1800 ms com semente fixa: requisições paralelas voltam fora de ordem, sempre na mesma ordem para a mesma semente. A latência padrão das outras rotas usa outro gerador, então não desloca a sequência |
 | `timeout` | A requisição nunca responde (testa o timeout do Axios) |
 | `offline` | Erro de rede (`fetch` rejeita) |
 | `server-error` | `503 SERVICE_UNAVAILABLE` com `retryable: true` |
@@ -142,9 +145,10 @@ As telas chegam a partir do Passo 4. Até lá, os cenários podem ser conferidos
 
 ## Testes
 
-- `src/mocks/api.test.ts`: 38 testes de integração que fazem `fetch` real contra os handlers via `msw/node` e validam cada resposta com o schema do contrato.
+- `src/mocks/api.test.ts`: 43 testes de integração que fazem `fetch` real contra os handlers via `msw/node` e validam cada resposta com o schema do contrato.
 - `src/mocks/fixtures/fixtures.test.ts`: determinismo, conformidade com os contratos, NFTs do Figma, casos fixos e hash das senhas.
-- `src/mocks/db/store.test.ts`: persistência entre carregamentos, fallback para as fixtures e reset.
+- `src/mocks/db/store.test.ts`: persistência entre carregamentos, persistência quando a regra termina em erro, fallback para as fixtures e reset.
+- `src/mocks/scenarios/scenarios.test.ts`: leitura da URL, opções mantidas pelo painel, sequência reproduzível do `jitter`, plano de cada cenário de rede e valor corrompido no storage.
 - `tests/e2e/mocks.spec.ts`: service worker no navegador, persistência no refresh, reset, cenário pela URL, latência fora de ordem e painel escondido.
 
 ## Regras

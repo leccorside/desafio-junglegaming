@@ -87,6 +87,8 @@ const EMPTY: ScenarioState = { names: [], options: {}, consumed: [] }
 
 let state: ScenarioState = load()
 let jitterRandom = createRandom(state.options.seed ?? 7)
+const DEFAULT_LATENCY_SEED = 11
+let defaultRandom = createRandom(DEFAULT_LATENCY_SEED)
 const flakyCalls = new Map<string, number>()
 
 function storage(): Storage | null {
@@ -100,8 +102,13 @@ function storage(): Storage | null {
 function load(): ScenarioState {
   const raw = storage()?.getItem(STORAGE_KEY)
   if (!raw) return structuredClone(EMPTY)
-  const parsed = scenarioStateSchema.safeParse(JSON.parse(raw))
-  return parsed.success ? parsed.data : structuredClone(EMPTY)
+  try {
+    const parsed = scenarioStateSchema.safeParse(JSON.parse(raw))
+    return parsed.success ? parsed.data : structuredClone(EMPTY)
+  } catch {
+    // JSON corrompido (gravação interrompida, edição manual): começa sem cenário.
+    return structuredClone(EMPTY)
+  }
 }
 
 function save() {
@@ -119,9 +126,15 @@ export function getScenario(): ScenarioState {
 export function setScenario(names: ScenarioName[], options: ScenarioOptions = {}): ScenarioState {
   state = { names: Array.from(new Set(names)), options, consumed: [] }
   jitterRandom = createRandom(options.seed ?? 7)
+  defaultRandom = createRandom(DEFAULT_LATENCY_SEED)
   flakyCalls.clear()
   save()
   return state
+}
+
+/** Troca só os cenários ativos, mantendo as opções (rotas, latência, semente, prazo). */
+export function updateScenarioNames(names: ScenarioName[]): ScenarioState {
+  return setScenario(names, state.options)
 }
 
 export function resetScenario(): ScenarioState {
@@ -143,17 +156,24 @@ export function consumeOnce(name: ScenarioName): boolean {
   return true
 }
 
-/** Lê `?scenario=slow,favorite-fails&scenarioRoutes=/nfts` da URL da página. */
-export function applyScenarioFromUrl(search: string) {
+export const URL_SCENARIO_PARAMS = ['scenario', 'scenarioRoutes'] as const
+
+/**
+ * Lê `?scenario=slow,favorite-fails&scenarioRoutes=/nfts` da URL da página.
+ * Devolve true quando a URL trazia cenário: quem chama deve remover os
+ * parâmetros, para o próximo reload não sobrescrever o estado salvo.
+ */
+export function applyScenarioFromUrl(search: string): boolean {
   const params = new URLSearchParams(search)
   const raw = params.get('scenario')
-  if (raw === null) return
+  if (raw === null) return false
   const names = raw
     .split(',')
     .map((n) => n.trim())
     .filter((n): n is ScenarioName => scenarioNameSchema.safeParse(n).success)
   const routes = params.get('scenarioRoutes')?.split(',').filter(Boolean)
   setScenario(names, routes?.length ? { routes } : {})
+  return true
 }
 
 function appliesTo(path: string): boolean {
@@ -176,34 +196,54 @@ function unavailable() {
 
 const isBrowser = typeof window !== 'undefined'
 
+/** O que fazer com uma requisição: esperar `delayMs` e então seguir ou trocar a resposta. */
+export interface NetworkPlan {
+  delayMs: number | 'infinite' | null
+  outcome: 'continue' | 'offline' | 'unavailable'
+}
+
 /**
- * Aplica os cenários de rede a uma requisição. Devolve uma resposta quando o
- * cenário substitui a da API (erro, offline) ou `null` para seguir normalmente.
+ * Decide o efeito dos cenários de rede sobre uma requisição, sem executar nada.
+ * A latência padrão usa um gerador próprio: requisições fora do `jitter` não
+ * deslocam a sequência dele, que fica reproduzível para a mesma semente.
  */
-export async function applyNetworkScenario(method: string, path: string): Promise<Response | null> {
-  if (!appliesTo(path)) {
-    if (isBrowser) await delay(jitterRandom.int(LATENCY.default.min, LATENCY.default.max))
-    return null
-  }
+export function planNetwork(
+  method: string,
+  path: string,
+  { browser = isBrowser }: { browser?: boolean } = {},
+): NetworkPlan {
+  const defaultDelay = () =>
+    browser ? defaultRandom.int(LATENCY.default.min, LATENCY.default.max) : null
 
-  if (isActive('offline')) return HttpResponse.error()
-  if (isActive('timeout')) {
-    await delay('infinite')
-    return null
-  }
+  if (!appliesTo(path)) return { delayMs: defaultDelay(), outcome: 'continue' }
+  if (isActive('offline')) return { delayMs: null, outcome: 'offline' }
+  if (isActive('timeout')) return { delayMs: 'infinite', outcome: 'continue' }
 
-  if (isActive('slow')) await delay(state.options.latencyMs ?? LATENCY.slow)
-  else if (isActive('jitter')) await delay(jitterRandom.int(LATENCY.jitter.min, LATENCY.jitter.max))
-  else if (isBrowser) await delay(jitterRandom.int(LATENCY.default.min, LATENCY.default.max))
+  const delayMs = isActive('slow')
+    ? (state.options.latencyMs ?? LATENCY.slow)
+    : isActive('jitter')
+      ? jitterRandom.int(LATENCY.jitter.min, LATENCY.jitter.max)
+      : defaultDelay()
 
-  if (isActive('server-error')) return unavailable()
+  if (isActive('server-error')) return { delayMs, outcome: 'unavailable' }
 
   if (isActive('flaky')) {
     const key = `${method} ${path}`
     const calls = (flakyCalls.get(key) ?? 0) + 1
     flakyCalls.set(key, calls)
-    if (calls === 1) return unavailable()
+    if (calls === 1) return { delayMs, outcome: 'unavailable' }
   }
 
-  return null
+  return { delayMs, outcome: 'continue' }
+}
+
+/**
+ * Aplica os cenários de rede a uma requisição. Devolve uma resposta quando o
+ * cenário substitui a da API (erro, offline) ou `null` para seguir normalmente.
+ */
+export async function applyNetworkScenario(method: string, path: string): Promise<Response | null> {
+  const plan = planNetwork(method, path)
+  if (plan.outcome === 'offline') return HttpResponse.error()
+  if (plan.delayMs !== null) await delay(plan.delayMs)
+  return plan.outcome === 'unavailable' ? unavailable() : null
 }

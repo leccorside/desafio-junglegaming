@@ -43,6 +43,25 @@ describe('persistência do banco', () => {
     expect((await import('./store')).getDb().nfts).toHaveLength(60)
   })
 
+  it('persiste e avisa mesmo quando a alteração termina em erro', async () => {
+    const store = await import('./store')
+    const listener = vi.fn()
+    store.onDbChange(listener)
+
+    // Como o cenário de preço alterado: muda o banco e depois recusa a requisição.
+    expect(() =>
+      store.mutate((db) => {
+        db.nfts[0]!.priceFrom = '9.99'
+        throw new Error('QUOTE_OUTDATED')
+      }),
+    ).toThrow('QUOTE_OUTDATED')
+    expect(listener).toHaveBeenCalledTimes(1)
+
+    vi.resetModules()
+    const reloaded = await import('./store')
+    expect(reloaded.getDb().nfts[0]?.priceFrom).toBe('9.99')
+  })
+
   it('reset restaura as fixtures e avisa os interessados', async () => {
     const store = await import('./store')
     const listener = vi.fn()

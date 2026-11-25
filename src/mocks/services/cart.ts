@@ -247,10 +247,21 @@ export function mergeGuestCart(userId: string, guestId: string): MergeCartRespon
     const cart = ensureCart(state, userOwner)
     const guest = state.carts[`guest:${guestId}`]
     const adjustments: MergeCartResponse['adjustments'] = []
+    let changed = false
 
     for (const guestItem of guest?.items ?? []) {
       const found = findEdition(state, guestItem.nftId, guestItem.editionId)
-      if (!found) continue
+      if (!found) {
+        // O NFT saiu do catálogo: o item não entra, mas o colecionador fica sabendo.
+        adjustments.push({
+          nftId: guestItem.nftId,
+          editionId: guestItem.editionId,
+          name: 'Item que não está mais no catálogo',
+          requested: guestItem.quantity,
+          added: 0,
+        })
+        continue
+      }
       const existing = cart.items.find(
         (i) => i.nftId === guestItem.nftId && i.editionId === guestItem.editionId,
       )
@@ -270,11 +281,16 @@ export function mergeGuestCart(userId: string, guestId: string): MergeCartRespon
       if (added === 0) continue
       if (existing) existing.quantity = current + added
       else cart.items.push({ ...guestItem, quantity: added })
+      changed = true
     }
 
-    if (!cart.couponCode && guest?.couponCode) cart.couponCode = guest.couponCode
+    if (!cart.couponCode && guest?.couponCode) {
+      cart.couponCode = guest.couponCode
+      changed = true
+    }
     delete state.carts[`guest:${guestId}`]
-    touch(cart)
+    // A versão só muda quando o carrinho do usuário mudou de fato.
+    if (changed) touch(cart)
     return { cart: toCart(state, cart), adjustments }
   })
 }

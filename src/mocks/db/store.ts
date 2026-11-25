@@ -49,13 +49,23 @@ export function getDb(): DbState {
   return db
 }
 
-/** Aplica uma alteração, persiste e avisa os interessados (socket simulado, Passo 8). */
+/**
+ * Aplica uma alteração, persiste e avisa os interessados (socket simulado, Passo 8).
+ *
+ * Persiste e avisa mesmo quando a alteração termina em erro: algumas regras
+ * mudam o banco de propósito antes de recusar a requisição (o cenário de preço
+ * alterado sobe o preço e guarda a cotação nova, e só então devolve
+ * QUOTE_OUTDATED). Sem isso, a memória e o localStorage divergiriam.
+ * Regra que não deve deixar rastro precisa validar antes de alterar.
+ */
 export function mutate<T>(change: (state: DbState) => T): T {
   const state = getDb()
-  const result = change(state)
-  persist(state)
-  for (const listener of listeners) listener(state)
-  return result
+  try {
+    return change(state)
+  } finally {
+    persist(state)
+    for (const listener of listeners) listener(state)
+  }
 }
 
 /** Restaura as fixtures. */

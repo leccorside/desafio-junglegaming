@@ -85,6 +85,8 @@ export interface DbOrder extends Order {
   settleAt: string
   /** Resultado previsto na criação (pelo cenário ativo). */
   outcome: 'confirmed' | 'rejected'
+  /** Edições que a reserva deste pedido esgotou (voltam à venda se ele for recusado). */
+  soldOutByReservation: string[]
 }
 
 export interface DbIdempotencyEntry {

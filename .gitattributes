@@ -1,0 +1,13 @@
+# Fim de linha LF em todo checkout, independente do core.autocrlf da máquina.
+# O Prettier (format:check) exige LF; com autocrlf=true no Windows, o Git
+# entregava os arquivos com CRLF.
+* text=auto eol=lf
+
+# Binários: sem conversão.
+*.png binary
+*.jpg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

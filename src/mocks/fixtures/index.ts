@@ -8,7 +8,8 @@ import { createNftFixtures } from './nfts'
 export { SPECIAL_NFTS } from './nfts'
 
 /** Versão do formato do banco. Incrementar quando `DbState` ou as fixtures mudarem. */
-export const SCHEMA_VERSION = 1
+// 2: DbOrder ganhou `soldOutByReservation`.
+export const SCHEMA_VERSION = 2
 
 /**
  * Credenciais fictícias. A senha dos dois é `Senha@123`; só o hash
@@ -99,6 +100,7 @@ function createPastOrder(
     status: 'confirmed',
     outcome: 'confirmed',
     settleAt: createdAt,
+    soldOutByReservation: [],
     rejectionReason: null,
     transaction: { hash, explorerUrl: `${EXPLORERS[wallet.network]}${hash}` },
     snapshot: {

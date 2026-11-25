@@ -17,7 +17,7 @@ import {
 } from '@/api/contracts'
 import { ethCompare } from '@/lib/eth'
 
-import { getDb } from './db/store'
+import { getDb, mutate } from './db/store'
 import { SPECIAL_NFTS } from './fixtures'
 import { setScenario } from './scenarios'
 import { call, GUEST_CART, loginAs, setupMockServer } from './test-utils'
@@ -476,6 +476,136 @@ describe('pedidos', () => {
       idempotencyKey: uuid(),
     })
     expect(errorOf(wrongNetwork.json).fields).toHaveProperty('network')
+  })
+})
+
+describe('correções do code review', () => {
+  const edition = (nftId: string, name: string) =>
+    getDb()
+      .nfts.find((n) => n.id === nftId)!
+      .editions.find((e) => e.name === name)!
+
+  async function rejectedOrderFor(nftId: string, editionId: string, quantity: number) {
+    const { token } = await loginAs('ana')
+    await call('POST', '/cart/items', { token, body: { nftId, editionId, quantity } })
+    const quote = quoteSchema.parse(
+      (await call('POST', '/quotes', { token, body: { network: 'ethereum' } })).json,
+    )
+    setScenario(['payment-rejected'], { settleMs: 60_000 })
+    const order = orderSchema.parse(
+      (
+        await call('POST', '/orders', {
+          token,
+          idempotencyKey: uuid(),
+          body: {
+            quoteId: quote.id,
+            quoteVersion: quote.version,
+            walletId: 'wallet-ana-primary',
+            network: 'ethereum',
+            buyer: { displayName: 'Ana', email: 'ana@example.com' },
+          },
+        })
+      ).json,
+    )
+    /** Antecipa o prazo do pagamento e força a liquidação na próxima leitura. */
+    const settle = async () => {
+      mutate((db) => {
+        db.orders.find((o) => o.id === order.id)!.settleAt = new Date(0).toISOString()
+      })
+      return orderSchema.parse((await call('GET', `/orders/${order.id}`, { token })).json)
+    }
+    return { settle }
+  }
+
+  it('ajuste só de preço mantém o status da edição', async () => {
+    await call('POST', `/__mocks/nfts/${SPECIAL_NFTS.partiallyUnavailable}/update`, {
+      body: { editionId: `${SPECIAL_NFTS.partiallyUnavailable}-1-10`, price: '9.99' },
+    })
+    expect(edition(SPECIAL_NFTS.partiallyUnavailable, '1/10')).toMatchObject({
+      price: '9.99',
+      status: 'unavailable',
+    })
+  })
+
+  it('recusa devolve o estoque sem reabrir edição esgotada por outro motivo', async () => {
+    const { settle } = await rejectedOrderFor('nft-042', 'nft-042-open', 2)
+    await call('POST', '/__mocks/nfts/nft-042/update', {
+      body: { editionId: 'nft-042-open', available: 0, status: 'sold_out' },
+    })
+    expect((await settle()).status).toBe('rejected')
+    expect(edition('nft-042', 'Aberta')).toMatchObject({ available: 2, status: 'sold_out' })
+  })
+
+  it('recusa reabre a edição que a própria reserva esgotou', async () => {
+    const { settle } = await rejectedOrderFor(
+      SPECIAL_NFTS.lowStock,
+      `${SPECIAL_NFTS.lowStock}-1-10`,
+      2,
+    )
+    expect(edition(SPECIAL_NFTS.lowStock, '1/10')).toMatchObject({
+      available: 0,
+      status: 'sold_out',
+    })
+    await settle()
+    expect(edition(SPECIAL_NFTS.lowStock, '1/10')).toMatchObject({
+      available: 2,
+      status: 'available',
+    })
+  })
+
+  it('merge avisa sobre item que saiu do catálogo e não mexe na versão sem mudança', async () => {
+    const { token } = await loginAs('ana')
+    const before = cartSchema.parse((await call('GET', '/cart', { token })).json)
+    mutate((db) => {
+      db.carts[`guest:${GUEST_CART}`] = {
+        id: 'guest-cart',
+        owner: 'guest',
+        items: [
+          {
+            id: 'x',
+            nftId: 'nft-000',
+            editionId: 'nft-000-open',
+            quantity: 1,
+            acknowledgedPrice: '1',
+          },
+        ],
+        couponCode: null,
+        version: 1,
+        updatedAt: new Date().toISOString(),
+      }
+    })
+
+    const merged = mergeCartResponseSchema.parse(
+      (await call('POST', '/cart/merge', { token, body: { guestCartId: GUEST_CART } })).json,
+    )
+    expect(merged.adjustments).toEqual([
+      expect.objectContaining({ nftId: 'nft-000', requested: 1, added: 0 }),
+    ])
+    expect(merged.cart.version).toBe(before.version)
+  })
+
+  it('cotação nova do QUOTE_OUTDATED continua válida para a nova tentativa', async () => {
+    const { token } = await loginAs('ana')
+    await call('POST', '/cart/items', {
+      token,
+      body: { nftId: 'nft-042', editionId: 'nft-042-open', quantity: 1 },
+    })
+    const quote = quoteSchema.parse(
+      (await call('POST', '/quotes', { token, body: { network: 'ethereum' } })).json,
+    )
+    setScenario(['price-changed-on-checkout'])
+    const body = {
+      quoteId: quote.id,
+      quoteVersion: quote.version,
+      walletId: 'wallet-ana-primary',
+      network: 'ethereum',
+      buyer: { displayName: 'Ana', email: 'ana@example.com' },
+    }
+    const outdated = await call('POST', '/orders', { token, idempotencyKey: uuid(), body })
+    const fresh = quoteOutdatedDetailsSchema.parse(errorOf(outdated.json).details).quote
+    // A cotação nova e o preço novo ficaram no banco, mesmo com a resposta de erro.
+    expect(getDb().quotes.some((q) => q.id === fresh.id)).toBe(true)
+    expect(edition('nft-042', 'Aberta').price).toBe('1.31')
   })
 })
 

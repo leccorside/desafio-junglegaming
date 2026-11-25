@@ -51,6 +51,32 @@ test.describe('API simulada no navegador', () => {
     expect((await apiFetch(page, 'GET', '/nfts')).status).toBe(503)
   })
 
+  test('o ?scenario= sai da URL e o reload não redispara cenário de uso único', async ({
+    page,
+  }) => {
+    await page.goto('/?scenario=session-expired&page=2')
+    await waitForApp(page)
+    // O parâmetro sai, os outros ficam.
+    expect(new URL(page.url()).search).toBe('?page=2')
+
+    const login = await apiFetch(page, 'POST', '/auth/login', {
+      body: { email: 'ana@example.com', password: 'Senha@123' },
+    })
+    const token = (login.json as Json).token as string
+    expect((await apiFetch(page, 'GET', '/me/profile', { token })).status).toBe(401)
+
+    // Antes da correção, o reload relia ?scenario= e expirava a sessão de novo.
+    await page.reload()
+    await waitForApp(page)
+    const relogin = await apiFetch(page, 'POST', '/auth/login', {
+      body: { email: 'ana@example.com', password: 'Senha@123' },
+    })
+    const profile = await apiFetch(page, 'GET', '/me/profile', {
+      token: (relogin.json as Json).token as string,
+    })
+    expect(profile.status).toBe(200)
+  })
+
   test('aplica latência variável com respostas fora de ordem', async ({ page }) => {
     await setScenario(page, ['jitter'], { seed: 3 })
     const order = await page.evaluate(async () => {

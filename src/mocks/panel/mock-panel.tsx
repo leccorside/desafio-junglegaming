@@ -21,7 +21,7 @@ import {
   NETWORK_SCENARIOS,
   resetScenario,
   SCENARIO_DESCRIPTIONS,
-  setScenario,
+  updateScenarioNames,
   type ScenarioName,
 } from '../scenarios'
 
@@ -43,7 +43,8 @@ export default function MockPanel() {
     )
 
   const apply = () => {
-    setScenario(selected)
+    // Mantém as opções em vigor (rotas, latência, semente), como as vindas da URL.
+    updateScenarioNames(selected)
     window.location.reload()
   }
 

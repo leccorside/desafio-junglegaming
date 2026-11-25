@@ -17,7 +17,14 @@ import { ensureCart, findEdition, removePurchased } from './cart'
 import { computeQuote, describeChanges, fingerprint, storeQuote, toQuote } from './quotes'
 
 export function toOrder(order: DbOrder): Order {
-  const { userId: _u, cartOwnerKey: _c, settleAt: _s, outcome: _o, ...rest } = order
+  const {
+    userId: _u,
+    cartOwnerKey: _c,
+    settleAt: _s,
+    outcome: _o,
+    soldOutByReservation: _r,
+    ...rest
+  } = order
   return rest
 }
 
@@ -125,12 +132,14 @@ export function createOrder(
     }
 
     // Reserva o estoque. Se o pagamento for recusado, ele volta.
+    const soldOutByReservation: string[] = []
     for (const line of current.lines) {
       const found = findEdition(state, line.nftId, line.editionId)!
       found.edition.available -= line.quantity
       if (found.edition.available <= 0) {
         found.edition.available = 0
         found.edition.status = 'sold_out'
+        soldOutByReservation.push(found.edition.id)
       }
       bumpNft(state, line.nftId)
     }
@@ -144,6 +153,7 @@ export function createOrder(
       status: 'pending',
       outcome: isActive('payment-rejected') ? 'rejected' : 'confirmed',
       settleAt: new Date(createdAt.getTime() + settleMs).toISOString(),
+      soldOutByReservation,
       rejectionReason: null,
       transaction: null,
       snapshot: {
@@ -199,7 +209,11 @@ function settle(state: DbState, order: DbOrder) {
       const found = findEdition(state, item.nftId, item.editionId)
       if (!found) continue
       found.edition.available += item.quantity
-      if (found.edition.status === 'sold_out') found.edition.status = 'available'
+      // Só reabre a venda se foi esta reserva que esgotou a edição. Esgotada por
+      // outro motivo depois (cenário, ajuste de teste), continua esgotada.
+      const reopened =
+        order.soldOutByReservation.includes(found.edition.id) && found.edition.status === 'sold_out'
+      if (reopened) found.edition.status = 'available'
       bumpNft(state, item.nftId)
     }
   }
