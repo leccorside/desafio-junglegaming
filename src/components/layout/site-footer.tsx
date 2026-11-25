@@ -1,4 +1,3 @@
-import { useMatchRoute } from '@tanstack/react-router'
 import { useId, type ComponentType, type FormEvent } from 'react'
 import { toast } from 'sonner'
 
@@ -13,6 +12,7 @@ import {
 
 import { cn } from '@/lib/utils'
 
+import { useBottomBar } from './bottom-bar'
 import { footerColumns, footerFeatures, socialLinks } from './nav-config'
 import { NavLink } from './nav-link'
 
@@ -30,9 +30,9 @@ const socialIcons: Record<(typeof socialLinks)[number]['label'], ComponentType<I
  */
 export function SiteFooter() {
   const emailId = useId()
-  const matchRoute = useMatchRoute()
   // No mobile, entrar e criar conta ocupam a tela inteira, sem footer (Figma).
-  const onAuthScreen = Boolean(matchRoute({ to: '/login' }) || matchRoute({ to: '/register' }))
+  // Nas outras telas o footer termina acima da barra fixa da base.
+  const bottomBar = useBottomBar()
 
   // Newsletter está fora do escopo: o envio avisa que não há cadastro, sem simular sucesso.
   const handleNewsletter = (event: FormEvent<HTMLFormElement>) => {
@@ -43,8 +43,10 @@ export function SiteFooter() {
   return (
     <footer
       className={cn(
-        'mx-auto mt-24 w-full max-w-content px-6 pb-[150px] md:pb-6 xl:px-0',
-        onAuthScreen && 'hidden md:block',
+        'mx-auto mt-24 w-full max-w-content px-6 md:pb-6 xl:px-0',
+        bottomBar === 'none' && 'hidden md:block',
+        bottomBar === 'tabs' && 'pb-[150px]',
+        bottomBar === 'buy' && 'pb-[188px]',
       )}
     >
       <div className="bg-card p-8">

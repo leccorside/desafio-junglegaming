@@ -45,6 +45,9 @@ Padrões globais em `src/lib/query-client.ts` (Passo 4): `staleTime` 30 s, `gcTi
 
 | Query | Chave | Política |
 | --- | --- | --- |
+| Detalhe do NFT | `['nfts', 'detail', id]` | `staleTime` 30 s; o loader da rota usa `ensureQueryData` |
+| Mais desta coleção | `['nfts', 'list', { collection, sort: 'popular', pageSize: 6 }]` | Mesma query da listagem, com `select` que tira o próprio NFT e corta em 5 |
+| Lista de interesse | `['favorites', userId]` | `staleTime` 5 min; desligada para visitante |
 | Sessão | `['session', token]` | `staleTime: Infinity` no carregamento; `0` ao entrar em rota privada (revalida a cada entrada); sem retry |
 
 ## Retries
@@ -86,6 +89,10 @@ Favoritos usam atualização otimista:
 1. `onMutate`: cancela queries de favoritos, guarda o estado anterior e aplica a mudança.
 2. `onError`: restaura o estado anterior e mostra o erro.
 3. `onSettled`: invalida `favorites` para alinhar com a API.
+
+Implementado no Passo 6 em `src/features/favorites/queries.ts` (`useToggleFavorite`). A query `favoriteKeys.all(userId)` guarda `{ nftIds, items }`; o toggle muda os dois. Com cliques seguidos, só a última mutação em andamento (`isMutating` com a `mutationKey` do usuário igual a 1) invalida, para um estado intermediário não voltar à tela. Visitante não chama a API: vai ao login com `redirect`.
+
+O carrinho ganhou `cartKeys.current(owner)` (`user:<id>` ou `guest:<X-Cart-Id>`) e `useAddToCart`, que grava o carrinho devolvido pela API direto no cache e invalida `quote`. O restante do carrinho entra no Passo 7.
 
 O carrinho pode usar o mesmo padrão para quantidade, se o resultado for bom nos testes.
 

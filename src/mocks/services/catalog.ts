@@ -55,6 +55,7 @@ function buildFilters(all: Nft[], params: NftListParams) {
           : null,
     category: params.category?.length ? (n) => params.category!.includes(n.category) : null,
     network: params.network?.length ? (n) => params.network!.includes(n.network) : null,
+    collection: params.collection ? (n) => n.collection.id === params.collection : null,
     minPrice: params.minPrice ? (n) => ethCompare(n.priceFrom, params.minPrice!) >= 0 : null,
     maxPrice: params.maxPrice ? (n) => ethCompare(n.priceFrom, params.maxPrice!) <= 0 : null,
     availability: params.availability

@@ -1,10 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { PagePlaceholder } from '@/components/feedback/page-placeholder'
+import { FavoritesPage } from '@/features/favorites/favorites-page'
 
-// Rota privada: Passo 6.
+// Lista de interesse (favoritos): rota privada, protegida pelo layout _authenticated.
 export const Route = createFileRoute('/_authenticated/favorites')({
-  component: function FavoritesPage() {
-    return <PagePlaceholder title="Lista de interesse" />
-  },
+  component: FavoritesPage,
 })

@@ -137,6 +137,14 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Busca no desktop | O Figma desktop não tem campo de busca, só a lupa do header. Ela abre um diálogo com o campo, que leva ao catálogo com `?q=`. |
 | Diário da Cunhagem (blog) | Fora do escopo. Os cartões aparecem com o texto do Figma, e o "Ler mais" fica como indisponível. |
 | Carrossel do hero | Troca só pelos pontos (sem rotação automática, que atrapalharia a leitura e o leitor de tela). As imagens vêm de `GET /nfts/featured`. Sem destaques (lista vazia ou falha), entra a imagem fixa `nft-01` do Figma, sem link, para o hero não ficar com metade vazia. |
+| NFT inexistente | O loader da rota transforma o 404 da API em `notFound()`: página "NFT não encontrado" (código 404) com "Explorar o catálogo" e "Voltar ao início". Outras falhas usam a página de erro com "Tentar de novo". |
+| Edição padrão e edição indisponível | Abre na edição mais barata disponível (o preço do card). Esgotada e indisponível aparecem riscadas e não podem ser escolhidas. Link com uma delas (`?edition=`) cai na padrão com aviso; sem nenhuma à venda, aviso e compra desabilitada. |
+| Quantidade | Limite = disponibilidade da edição, a mesma regra da API (sem teto próprio da interface). Trocar de edição volta para 1. |
+| "COMPRAR" e o botão do carrinho | O Figma não desenha o resultado. "COMPRAR" adiciona e leva ao carrinho; o botão do carrinho do mobile só adiciona e mostra "Ver carrinho" no toast. |
+| Barra de compra no mobile | No detalhe, a barra do Figma ("Buy Bar") substitui a barra de navegação; toasts e o fim do footer sobem acima dela (`useBottomBar`). O botão de voltar usa o histórico do app ou vai ao início. |
+| Avaliações | A API só traz média e total. A aba "Avaliações de colecionadores" mostra a nota e avisa que os comentários não estão disponíveis na demonstração. |
+| "Mais desta coleção" | Até 5 NFTs da mesma coleção pelo novo filtro `collection` da API; some se a coleção não tiver outros ou a busca falhar (conteúdo complementar). |
+| Lista de interesse (`/favorites`) | O Figma não desenha a tela: título, contagem e a grade do catálogo, com vazio e erro. |
 | Servidor demorando (timeout) | Depois da primeira tentativa que estoura os 15 s, o status (`aria-live`) troca "Carregando NFTs…" por "O servidor está demorando para responder. Ainda estamos tentando…", em âmbar. Com a página anterior na tela, o mesmo texto substitui o "Atualizando…". Timeout se repete só uma vez, então o erro aparece em cerca de 31 s. |
 | Faixa de preço sem faixa | Catálogo vazio, um único preço ou API fora do ar: "Faixa de preço indisponível no momento.", sem slider e sem "Aplicar" (um slider de 0,00 a 0,00 não deixa escolher nada). |
 | Página 404 e erro de rota | Mesmo layout das outras telas, com o código em `Primary`, texto e botão "Voltar ao início". O erro de rota oferece "Tentar de novo" sem recarregar a página. |
@@ -154,7 +162,10 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Rótulos dos campos de login e cadastro só para leitor de tela | O Figma só tem placeholder. Os campos ganharam `<label>` visualmente oculto e mensagens de erro ligadas por `aria-describedby`. |
 | Sem footer nas telas de entrada no mobile | O Figma mobile de login e cadastro é tela cheia. |
 | Imagens das promoções e do blog | O Figma usa fotos que não estão entre os assets exportáveis. Os cartões usam as 4 imagens de NFT do projeto. |
-| Coração e contagem de favoritos fora dos cards | Entram no Passo 6, com os favoritos. |
+| Coração nos cards só no mobile | É onde o Figma desenha ("Column L/R"); no desktop o favorito fica no detalhe. |
+| Rótulos "Contrato" e "Direitos autorais" do detalhe | No Figma, cada rótulo está com o texto do outro. Aqui cada um fica com o seu valor. |
+| Ícone de círculo sobre a imagem do detalhe (desktop) | Sem função identificável no Figma; não foi implementado. O favorito usa o botão "Favoritar". |
+| Coração preenchido | O Figma só tem o contorno. O estado "favoritado" usa o contorno externo do mesmo ícone, preenchido em `Text/Coral`. |
 | Ícone de menu (`MenuIcon` do lucide) no header do tablet | O Figma não tem ícone de menu, porque não desenha o tablet. |
 
 Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens vêm do arquivo do Figma (ver [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)).

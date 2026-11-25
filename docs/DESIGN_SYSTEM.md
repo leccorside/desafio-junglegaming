@@ -288,6 +288,20 @@ Toasts (Sonner, `src/components/ui/sonner.tsx`): no canto inferior direito, a 24
 
 O selo de raridade ("RARO", "LENDÁRIO") aparece em `Primary` no canto do card; NFTs comuns não têm selo. NFT esgotado mostra o preço em `Secondary` com "ESGOTADO".
 
+### Detalhe do NFT (Passo 6)
+
+| Bloco | Desktop | Mobile |
+| --- | --- | --- |
+| Trilha | "Início / Mercado / nome do NFT" (15/700); "Mercado" destacado no header | Não há (botão de voltar sobre a imagem) |
+| Galeria | Miniaturas de 100 px (raio 8, borda `Primary` na ativa) em coluna e imagem de 444 px em `Surface Card` com padding 16 e imagem de raio 24 | Imagem na largura da tela, raio 24, pontos de 7 px (o ativo com 28 px); voltar e coração em círculos de 35 px (`Surface Raised`, borda `Border`) |
+| Título e preço | Nome 28/700, preço 22/700 `Text/Accent`, 5 estrelas de 15 px (`Primary` cheias, `Text/Secondary` vazias) e "N avaliações de colecionadores" | Nome 20/700 e pílula da nota (borda `Primary`, "4,8 (19)") |
+| Edição | Pílulas de 28 px, borda `Border`; escolhida com borda `Primary` e texto `Text/Accent`; esgotada ou indisponível riscada com 50% de opacidade | Igual |
+| Quantidade | Botões `Primary` de 33 × 50 (raio cheio) com o número 20 px no meio | Na barra de compra: "Qtd." e botões de 20 × 30 |
+| Ações | "COMPRAR" 130 × 40 `Primary` e "Favoritar" 130 × 40 com borda `Primary` | Barra de compra em `Surface Card` (raio 28 em cima): "Comprar NFT" em pílula de 60 px com gradiente `Primary` e botão do carrinho de 60 px |
+| Informações | "ID do token", "Coleção", "Atributos" em 15/400 `Secondary`; "Compartilhar este NFT:" com LinkedIn, copiar link e X | Igual |
+| Abas | "Detalhes do NFT" 17/700 `Text/Accent` com traço de 3 px; "Avaliações de colecionadores (N)" 17/400; linha `Primary` 30% | Abas de 15 px, roláveis |
+| Mais desta coleção | Título 17/700 `Text/Accent` com linha, 5 cards em linha | Cards de 175 px em rolagem horizontal |
+
 O botão central da barra inferior usa o ícone de leitura (scan) do Figma, que não tem função definida no escopo. Ele abre o menu lateral, para que a navegação principal fique acessível no mobile.
 
 ## Contraste

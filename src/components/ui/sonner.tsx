@@ -1,5 +1,6 @@
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
 
+import { BUY_BAR_HEIGHT, useBottomBar } from '@/components/layout/bottom-bar'
 import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query'
 
 /**
@@ -10,6 +11,9 @@ import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query'
  */
 export const MOBILE_TOAST_BOTTOM = 'calc(142px + env(safe-area-inset-bottom))'
 
+/** No detalhe do NFT, a barra de compra (164 px) toma o lugar da de navegação. */
+export const BUY_BAR_TOAST_BOTTOM = `calc(${BUY_BAR_HEIGHT + 16}px + env(safe-area-inset-bottom))`
+
 /**
  * Toasts do projeto. Tema fixo escuro (não há tema claro no Figma).
  * O Sonner anuncia as mensagens numa região `aria-live` para leitores de tela.
@@ -19,8 +23,10 @@ export const MOBILE_TOAST_BOTTOM = 'calc(142px + env(safe-area-inset-bottom))'
  * 767 px o toast também sobe para cima da barra.
  */
 function Toaster(props: ToasterProps) {
-  const hasBottomBar = !useMediaQuery(DESKTOP_QUERY)
-  const offset = hasBottomBar ? { bottom: MOBILE_TOAST_BOTTOM, right: 16, left: 16 } : 24
+  const bottomBar = useBottomBar()
+  const hasBottomBar = !useMediaQuery(DESKTOP_QUERY) && bottomBar !== 'none'
+  const bottom = bottomBar === 'buy' ? BUY_BAR_TOAST_BOTTOM : MOBILE_TOAST_BOTTOM
+  const offset = hasBottomBar ? { bottom, right: 16, left: 16 } : 24
 
   return (
     <Sonner

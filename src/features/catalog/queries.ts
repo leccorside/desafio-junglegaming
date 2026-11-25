@@ -1,6 +1,6 @@
 import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query'
 
-import type { NftListParams } from '@/api/contracts'
+import type { Nft, NftListParams } from '@/api/contracts'
 
 import { catalogApi } from './api'
 
@@ -30,6 +30,30 @@ export const featuredNftsQuery = () =>
     queryKey: nftKeys.featured(),
     queryFn: ({ signal }) => catalogApi.featured(signal),
     staleTime: 60_000,
+  })
+
+export const nftDetailQuery = (id: string) =>
+  queryOptions({
+    queryKey: nftKeys.detail(id),
+    queryFn: ({ signal }) => catalogApi.detail(id, signal),
+    staleTime: 30_000,
+  })
+
+/** "Mais desta coleção": até 5 NFTs da mesma coleção, sem o próprio. */
+export const RELATED_LIMIT = 5
+
+export const relatedNftsQuery = (nft: Pick<Nft, 'id' | 'collection'>) =>
+  queryOptions({
+    ...nftListQuery({
+      feed: 'all',
+      collection: nft.collection.id,
+      sort: 'popular',
+      page: 1,
+      pageSize: RELATED_LIMIT + 1,
+    }),
+    // Sem a página anterior: trocar de NFT mostra o skeleton, não a coleção antiga.
+    placeholderData: undefined,
+    select: (page) => page.items.filter((item) => item.id !== nft.id).slice(0, RELATED_LIMIT),
   })
 
 export function useNftList(params: NftListParams) {

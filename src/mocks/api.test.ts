@@ -112,6 +112,15 @@ describe('catálogo', () => {
     expect(page.items.map((n) => n.id)).toContain('nft-042')
   })
 
+  it('filtra por coleção', async () => {
+    const page = nftListResponseSchema.parse(
+      (await call('GET', '/nfts?collection=col-kurio-apes&pageSize=48')).json,
+    )
+    expect(page.total).toBeGreaterThan(1)
+    expect(page.items.every((n) => n.collection.id === 'col-kurio-apes')).toBe(true)
+    expect(page.items.map((n) => n.id)).toContain('nft-042')
+  })
+
   it('filtra por faixa de preço e ordena por preço', async () => {
     const page = nftListResponseSchema.parse(
       (await call('GET', '/nfts?minPrice=1&maxPrice=2&sort=price_asc&pageSize=48')).json,

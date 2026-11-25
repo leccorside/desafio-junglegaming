@@ -151,6 +151,7 @@ O mesmo schema (`nftListParamsSchema`) valida os search params da URL do catálo
 | `feed` | `all` \| `new` \| `trending` (abas do catálogo) | `all` | `new` |
 | `category` | lista separada por vírgula | | `digital-art,music` |
 | `network` | lista separada por vírgula | | `ethereum,solana` |
+| `collection` | ID da coleção ("Mais desta coleção" no detalhe; não vai para a URL do catálogo) | | `col-kurio-apes` |
 | `minPrice` / `maxPrice` | ETH (`minPrice ≤ maxPrice`) | | `0.02` |
 | `availability` | `available` \| `sold_out` | | `available` |
 | `sort` | `recent` \| `price_asc` \| `price_desc` \| `popular` | `recent` | `price_asc` |

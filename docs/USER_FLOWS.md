@@ -55,6 +55,16 @@ Detalhes implementados no Passo 5:
 3. Favoritar como visitante leva ao login e volta ao detalhe. Logado, o coração muda na hora; se a API falhar, volta ao estado anterior com aviso.
 4. Adiciona ao carrinho e recebe confirmação.
 
+Detalhes implementados no Passo 6:
+
+- `/nft/$nftId?edition=<id>`: o loader busca o NFT antes da tela (acesso direto e refresh). 404 da API mostra "NFT não encontrado" com "Explorar o catálogo"; outras falhas mostram a página de erro com "Tentar de novo".
+- Edição padrão: a mais barata disponível (o preço do card). A escolha vai para a URL com `replace`, sem encher o histórico. Edição esgotada ou indisponível aparece riscada e não pode ser escolhida; na URL, cai na padrão com o aviso "A edição 1/1 está esgotada. Mostrando a edição …". NFT sem nenhuma edição à venda mostra o aviso e desabilita a compra.
+- Quantidade de 1 até a disponibilidade da edição, com aviso "Máximo disponível: N unidades."; trocar de edição volta para 1.
+- Desktop: "COMPRAR" adiciona ao carrinho e leva a `/cart`. Mobile: a barra de compra fixa ("Comprar NFT" e o botão do carrinho) substitui a barra de navegação; o botão do carrinho só adiciona e oferece "Ver carrinho" no toast. Voltar (mobile) usa o histórico do app ou vai ao início.
+- Favoritar como visitante leva a `/login?redirect=/nft/...` e volta ao detalhe. Logado, o coração muda na hora; se a API falhar, volta ao estado anterior com toast de erro. O coração aparece no detalhe e nos cards do catálogo no mobile (Figma).
+- `/favorites` ("Lista de interesse"): grade com os NFTs favoritados, estado vazio com "Explorar o catálogo" e erro com nova tentativa.
+- "Mais desta coleção": até 5 NFTs da mesma coleção (`/nfts?collection=`); some se a coleção não tiver outros.
+
 ## 3. Carrinho
 
 1. Vê os itens, altera quantidades e remove itens. O resumo vem da cotação da API.

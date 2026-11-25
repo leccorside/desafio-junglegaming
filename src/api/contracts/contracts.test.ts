@@ -117,6 +117,13 @@ describe('listagem de NFTs', () => {
     expect(parseNftListQuery(query).data).toEqual(params)
   })
 
+  it('serializa e lê o filtro de coleção', () => {
+    const params = nftListParamsSchema.parse({ collection: 'col-kurio-apes', pageSize: 6 })
+    const query = toNftListQuery(params)
+    expect(query.toString()).toBe('collection=col-kurio-apes&pageSize=6')
+    expect(parseNftListQuery(query).data).toEqual(params)
+  })
+
   it('omite os valores padrão da query string', () => {
     expect(toNftListQuery(nftListParamsSchema.parse({})).toString()).toBe('')
   })

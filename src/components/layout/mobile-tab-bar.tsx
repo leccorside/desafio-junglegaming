@@ -1,10 +1,11 @@
-import { Link, useMatchRoute, type LinkProps } from '@tanstack/react-router'
+import { Link, type LinkProps } from '@tanstack/react-router'
 import type { ComponentType } from 'react'
 
 import tabBarBackground from '@/assets/tab-bar-background.svg'
 import type { IconProps } from '@/components/icons/create-icon'
 import { HeartIcon, HomeIcon, ScanIcon, ShopIcon, UserIcon } from '@/components/icons/figma-icons'
 
+import { useBottomBar } from './bottom-bar'
 import { MobileMenu } from './mobile-menu'
 
 interface TabItem {
@@ -31,8 +32,8 @@ const rightTabs: TabItem[] = [
  * embutida numa margem de 30 px nas laterais e 40 px em cima.
  */
 export function MobileTabBar() {
-  const matchRoute = useMatchRoute()
-  if (matchRoute({ to: '/login' }) || matchRoute({ to: '/register' })) return null
+  // No detalhe do NFT a barra de compra ocupa o lugar dela (Figma mobile).
+  if (useBottomBar() !== 'tabs') return null
 
   const renderTab = ({ label, to, icon: Icon }: TabItem) => (
     <li key={label}>

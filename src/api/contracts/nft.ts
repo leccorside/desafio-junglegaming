@@ -132,6 +132,8 @@ export const nftListParamsSchema = z
     feed: nftFeedSchema.default('all'),
     category: z.array(nftCategorySchema).optional(),
     network: z.array(networkSchema).optional(),
+    /** ID da coleção ("Mais desta coleção" no detalhe). Não aparece na URL do catálogo. */
+    collection: idSchema.optional(),
     minPrice: ethAmountSchema.optional(),
     maxPrice: ethAmountSchema.optional(),
     availability: availabilityFilterSchema.optional(),
@@ -170,6 +172,7 @@ export function toNftListQuery(params: NftListParams): URLSearchParams {
   if (params.feed !== 'all') query.set('feed', params.feed)
   if (params.category?.length) query.set('category', params.category.join(','))
   if (params.network?.length) query.set('network', params.network.join(','))
+  if (params.collection) query.set('collection', params.collection)
   if (params.minPrice) query.set('minPrice', params.minPrice)
   if (params.maxPrice) query.set('maxPrice', params.maxPrice)
   if (params.availability) query.set('availability', params.availability)
@@ -191,6 +194,7 @@ export function parseNftListQuery(query: URLSearchParams) {
     feed: query.get('feed') ?? undefined,
     category: list('category'),
     network: list('network'),
+    collection: query.get('collection') ?? undefined,
     minPrice: query.get('minPrice') ?? undefined,
     maxPrice: query.get('maxPrice') ?? undefined,
     availability: query.get('availability') ?? undefined,

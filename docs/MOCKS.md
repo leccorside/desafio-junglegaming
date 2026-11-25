@@ -134,7 +134,7 @@ As telas chegam a partir do Passo 4. Até lá, os cenários podem ser conferidos
 | Sessão expirada | Entrar e ativar `session-expired` | Volta ao login e retoma o fluxo depois |
 | Conflito de cadastro | `/register?scenario=register-conflict` | Erro no campo e-mail |
 | Erro de validação | `?scenario=validation-error` no cadastro, perfil ou carteiras | Erro no campo apontado pela API |
-| Falha ao favoritar | `?scenario=favorite-fails` e clicar no coração | O coração volta ao estado anterior, com aviso |
+| Falha ao favoritar | `?scenario=favorite-fails` e clicar no coração (com `slow` e `scenarioRoutes=/me/favorites` dá para ver o coração mudar antes de voltar) | O coração volta ao estado anterior, com aviso |
 | Cupom inválido ou expirado | Aplicar `NADA` ou `EXPIRADO` no carrinho | Erro no campo do cupom |
 | Preço alterado no checkout | `?scenario=price-changed-on-checkout` e confirmar a compra | A diferença aparece e é preciso confirmar de novo |
 | Edição esgotada no checkout | `?scenario=sold-out-on-checkout` e confirmar | Item bloqueado e nova confirmação |

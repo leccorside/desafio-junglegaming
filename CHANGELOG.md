@@ -6,6 +6,12 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Detalhe do NFT do Figma (desktop e mobile): galeria com miniaturas navegáveis pelo teclado, nota, edições em grupo de rádio (esgotada e indisponível riscadas), quantidade limitada pela disponibilidade, "COMPRAR", compartilhamento, abas "Detalhes do NFT" e "Avaliações de colecionadores" e "Mais desta coleção". Acesso direto e refresh pelo loader da rota, 404 próprio para NFT inexistente e edição escolhida na URL (`?edition=`).
+- Barra de compra fixa no mobile, no lugar da barra de navegação, com "Comprar NFT" e o botão do carrinho; toasts e footer sobem acima dela.
+- Adicionar ao carrinho (visitante ou conta) pelo detalhe, com confirmação e atalho "Ver carrinho".
+- Favoritos: coração no detalhe e nos cards do mobile, visitante vai ao login e volta, atualização otimista com rollback e aviso quando a API falha, e a tela "Lista de interesse" (`/favorites`).
+- Filtro `collection` em `GET /nfts`.
+- Testes: 5 unitários das regras de edição e quantidade, 2 de API (filtro de coleção) e 12 cenários E2E de detalhe e favoritos (itens 2 e 4 do enunciado).
 - Tela inicial do Figma: hero com os destaques da API e pontos do carrossel (banner compacto no mobile), "NFT em destaque" na sidebar, promoções que abrem o catálogo filtrado e o "Diário da Cunhagem" com o "Ler mais" indisponível.
 - Catálogo com estado na URL validado por schema: busca, abas (Todos, Novos lançamentos, Em alta), coleções e redes combináveis, faixa de preço, ordenação e paginação de 9 em 9. Refresh, voltar e avançar restauram a lista, e valores inválidos na URL voltam ao padrão.
 - Busca com debounce no mobile e diálogo de busca pela lupa do header no desktop. Filtros em menu lateral no mobile, com ordenação e foco preso.

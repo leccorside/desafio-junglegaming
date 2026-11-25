@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useMatchRoute } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
@@ -35,6 +35,9 @@ export function NavLink({
   onClick,
   children,
 }: NavLinkProps) {
+  const matchRoute = useMatchRoute()
+  const highlighted = item.highlightOn?.some((to) => Boolean(matchRoute({ to }))) ?? false
+
   if (!item.to) {
     return (
       <span
@@ -64,7 +67,8 @@ export function NavLink({
       activeOptions={{ exact: item.exact ?? false, includeHash: item.exact ?? false }}
       className={className}
       activeProps={{ className: activeClassName }}
-      inactiveProps={{ className: inactiveClassName }}
+      // Destaque visual sem ser a página atual: as classes de ativo no lugar das de inativo.
+      inactiveProps={{ className: highlighted ? activeClassName : inactiveClassName }}
     >
       {children ?? item.label}
     </Link>

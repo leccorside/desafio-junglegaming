@@ -9,11 +9,16 @@ export async function submitLogin(page: Page, email: string, password = PASSWORD
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
 }
 
-/** Entra pela interface a partir de /login. */
+/**
+ * Entra pela interface a partir de /login. Espera as buscas da tela de destino
+ * terminarem (ex.: a lista de interesse dos cards), para um cenário ativado
+ * logo depois (como `session-expired`) não pegar uma busca ainda em andamento.
+ */
 export async function loginViaUi(page: Page, email: string) {
   await page.goto('/login')
   await submitLogin(page, email)
   await expect(page).not.toHaveURL(/\/login/)
+  await page.waitForLoadState('networkidle')
 }
 
 /** Sessão salva no navegador (o que a aplicação usa para o token). */

@@ -15,11 +15,16 @@ export interface NavItem {
   search?: { category?: NftCategory[] }
   /** Ativo só na rota exata (o Início não fica ativo em /nft/...). */
   exact?: boolean
+  /**
+   * Rotas em que o item aparece destacado sem ser a página atual (o Figma
+   * marca "Mercado" no detalhe do NFT). Só visual: sem `aria-current`.
+   */
+  highlightOn?: LinkProps['to'][]
 }
 
 export const mainNav: NavItem[] = [
   { label: 'Início', to: '/', exact: true },
-  { label: 'Mercado', to: '/', hash: 'catalogo', exact: true },
+  { label: 'Mercado', to: '/', hash: 'catalogo', exact: true, highlightOn: ['/nft/$nftId'] },
   { label: 'Criadores' },
   { label: 'Aprenda' },
 ]
