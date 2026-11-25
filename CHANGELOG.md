@@ -34,6 +34,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Toasts: no mobile, cobriam a barra inferior e o botão "Sair" do menu lateral. Abaixo de 768 px (onde a barra existe) ficam a 142 px da base, mais a área segura do aparelho. A faixa de 600 a 767 px também foi corrigida: nela o Sonner já usava a posição de desktop.
 - Sessão: o toast de boas-vindas da conta anterior ("Que bom ver você, Ana Ribeiro.") continuava na página depois do logout e da entrada de outra conta. Agora todos os toasts fecham no fim da sessão.
 - Sessão: um 401 atrasado de requisição feita com token antigo derrubava a sessão nova. Agora só o token atual conta.
 - Sessão: o fim da sessão e o login usavam `clear()`, que deixava as telas montadas com os dados antigos. Agora o cache é reiniciado (cancela, remove o que não está na tela, refaz as buscas do que está), e respostas de visitante atrasadas não aparecem na conta.

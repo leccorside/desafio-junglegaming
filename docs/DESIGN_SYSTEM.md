@@ -271,6 +271,8 @@ O arquivo só tem 4 imagens, reaproveitadas em 81 lugares. As fixtures do catál
 | Tablet (768 a 1023 px) | Logo, busca, carrinho e botão de menu | Menu lateral (Sheet) com os itens e o "Entrar" | 2 colunas |
 | Mobile (< 768 px) | Não há, como no Figma | Barra inferior fixa: Início, Favoritos, botão central (abre o menu), Carrinho e Perfil | 1 coluna, com espaço livre para a barra |
 
+Toasts (Sonner, `src/components/ui/sonner.tsx`): no canto inferior direito, a 24 px da base, a partir de 768 px. Abaixo disso ficam a `calc(142px + env(safe-area-inset-bottom))` da base, com 16 px nas laterais: acima da barra inferior (126 px) e do botão "Sair" do menu lateral (cerca de 81 px). A regra segue a media query do projeto (768 px), e não a do Sonner (600 px).
+
 O botão central da barra inferior usa o ícone de leitura (scan) do Figma, que não tem função definida no escopo. Ele abre o menu lateral, para que a navegação principal fique acessível no mobile.
 
 ## Contraste
