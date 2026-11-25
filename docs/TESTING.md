@@ -13,6 +13,12 @@
 | `src/lib/eth.test.ts` | Soma, subtração, multiplicação e porcentagem sem ponto flutuante; 18 casas (1 wei); resumo do carrinho do Figma (26.83 + 0.016 = 26.846 ETH); erros com valor inválido, quantidade fracionária e resultado negativo; `formatEth` com 2 a 4 casas e "< 0.0001 ETH" |
 | `src/api/contracts/contracts.test.ts` | Formato de valor em ETH, status HTTP de todo código de erro, corpo de erro, regras de cadastro e senha, padrões e ida e volta da query string do catálogo, endereço por rede, pedido, estados terminais e envelope dos eventos |
 
+| `src/mocks/api.test.ts` | 38 testes de integração da API simulada: `fetch` real contra os handlers via `msw/node`, com cada resposta validada pelo schema do contrato. Cobrem sessão, cadastro, catálogo (filtros, facetas, busca, abas, paginação), favoritos, carrinho, cupons, cotação, merge, pedidos (idempotência, confirmação, recusa, `QUOTE_OUTDATED`, timeout), perfil, avatar, senha, carteiras, cenários de rede e reset |
+| `src/mocks/fixtures/fixtures.test.ts` | Fixtures determinísticas, válidas pelos contratos, com os NFTs do Figma e os casos fixos |
+| `src/mocks/db/store.test.ts` | Persistência no `localStorage` entre carregamentos, fallback para as fixtures e reset |
+
+O `setupMockServer()` de `src/mocks/test-utils.ts` sobe o MSW em Node e reinicia banco e cenário antes de cada teste.
+
 O `vitest.config.ts` é separado do `vite.config.ts`, para os testes não carregarem o plugin de rotas nem o Tailwind.
 
 ## Projetos do Playwright
@@ -28,6 +34,7 @@ O `webServer` do Playwright gera o build com `--mode mocks` e serve com `vite pr
 
 ## Isolamento
 
+- `tests/fixtures/mocks.ts` tem os helpers prontos: `apiFetch` (chamada à API de dentro da página, passando pelo service worker, o que o `page.request` não faz), `resetMocks`, `setScenario` e `waitForApp`. A spec `tests/e2e/mocks.spec.ts` usa esses helpers para conferir a API simulada no navegador.
 - Cada teste começa com o reset do banco dos mocks, `localStorage` e `sessionStorage` limpos e o cenário escolhido.
 - Fixtures do Playwright em `tests/fixtures` expõem helpers: `scenario(name)`, `resetMocks()`, `login(user)`, `emitNftUpdated(...)`, `emitOrderUpdated(...)`, `dropSocket()`.
 - Relógio controlado com `page.clock` nos cenários de expiração, timeout e pedido pendente.

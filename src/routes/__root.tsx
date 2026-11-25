@@ -9,6 +9,7 @@ import { SiteFooter } from '@/components/layout/site-footer'
 import { SiteHeader } from '@/components/layout/site-header'
 import { SkipLink } from '@/components/layout/skip-link'
 import { Toaster } from '@/components/ui/sonner'
+import { env } from '@/lib/env'
 
 export interface RouterContext {
   queryClient: QueryClient
@@ -25,12 +26,16 @@ const Devtools = import.meta.env.DEV
         default: () => (
           <>
             <TanStackRouterDevtools position="bottom-right" />
-            <ReactQueryDevtools buttonPosition="bottom-left" />
+            {/* No canto de cima: o de baixo à esquerda é do painel de cenários. */}
+            <ReactQueryDevtools buttonPosition="top-left" />
           </>
         ),
       }
     })
   : () => null
+
+// Painel de cenários dos mocks: carregado sob demanda, só com os mocks ligados.
+const MockPanel = env.enableMocks ? lazy(() => import('@/mocks/panel/mock-panel')) : () => null
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
@@ -50,6 +55,7 @@ function RootLayout() {
       <MobileTabBar />
       <Toaster />
       <Suspense>
+        <MockPanel />
         <Devtools />
       </Suspense>
     </div>

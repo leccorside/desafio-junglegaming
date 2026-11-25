@@ -64,6 +64,8 @@ Toda resposta 4xx/5xx tem o corpo:
 | 409 | `AVAILABILITY_CONFLICT` | Quantidade acima do estoque | `{ maxQuantity }` |
 | 409 | `QUOTE_OUTDATED` | Cotação desatualizada ao criar o pedido | `{ quote, changes[] }` |
 | 409 | `IDEMPOTENCY_CONFLICT` | Mesma chave com conteúdo diferente | |
+| 409 | `WALLET_REJECTED` | O colecionador recusou a conexão da carteira | |
+| 409 | `WALLET_DISCONNECTED` | A carteira desconectou durante o pagamento | |
 | 422 | `VALIDATION_ERROR` | Campos inválidos | |
 | 422 | `INVALID_PASSWORD` | Senha atual incorreta na troca | |
 | 422 | `COUPON_INVALID` | Cupom inexistente | |
@@ -325,6 +327,14 @@ Avatar: PNG, JPEG ou WebP, até 2 MB (`avatarFileSchema`). O formulário de senh
 | GET | `/me/wallets` | | `200 { items: Wallet[] }` |
 | POST | `/me/wallets` | `CreateWalletRequest` | `201 Wallet` |
 | PATCH | `/me/wallets/:id` | `UpdateWalletRequest` | `200 Wallet` |
+| POST | `/me/wallets/:id/connect` | | `200 WalletConnection` ou `409 WALLET_REJECTED` |
+
+```ts
+// Conexão simulada da carteira na etapa de pagamento.
+type WalletConnection = { walletId: string; network: Network; address: string; connectedAt: string }
+```
+
+Cadastrar uma carteira com um papel (`primary` ou `secondary`) que já existe devolve `422 VALIDATION_ERROR` no campo `role`: a carteira existente deve ser editada. A criação do pedido exige que `walletId` seja do usuário e que `network` seja a rede da carteira.
 
 ```ts
 type Wallet = {
@@ -349,6 +359,7 @@ Utilitários disponíveis só com os mocks ligados, usados pelo painel de desenv
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| POST | `/__mocks/reset` | Restaura as fixtures |
-| PUT | `/__mocks/scenario` | Ativa um cenário `{ name, options }` |
-| POST | `/__mocks/nfts/:id/update` | Altera preço ou disponibilidade e emite `nft.updated` |
+| POST | `/__mocks/reset` | Restaura as fixtures e o cenário padrão |
+| GET | `/__mocks/scenario` | Cenário ativo |
+| PUT | `/__mocks/scenario` | Ativa cenários `{ names, options }` |
+| POST | `/__mocks/nfts/:id/update` | Altera preço, estoque ou status de uma edição (e emite `nft.updated` a partir do Passo 8) |

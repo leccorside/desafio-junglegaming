@@ -65,3 +65,15 @@ export type UpdateWalletRequest = z.infer<typeof updateWalletRequestSchema>
 
 export const walletsResponseSchema = z.object({ items: z.array(walletSchema) })
 export type WalletsResponse = z.infer<typeof walletsResponseSchema>
+
+/**
+ * POST /me/wallets/:id/connect: conexão simulada da carteira no pagamento.
+ * Pode falhar com `WALLET_REJECTED` (o colecionador recusou na extensão).
+ */
+export const walletConnectionSchema = z.object({
+  walletId: idSchema,
+  network: networkSchema,
+  address: z.string(),
+  connectedAt: isoDateTimeSchema,
+})
+export type WalletConnection = z.infer<typeof walletConnectionSchema>

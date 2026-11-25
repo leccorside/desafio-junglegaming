@@ -6,6 +6,11 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- API simulada completa com MSW: sessão e conta, catálogo com filtros e facetas, favoritos, carrinho do visitante e do usuário com merge, cupons, cotação com detecção de mudanças, pedidos com idempotência, reserva de estoque e pagamento simulado, perfil, avatar, senha e carteiras com conexão simulada.
+- Banco dos mocks persistido no `localStorage` e fixtures determinísticas: 60 NFTs (os 10 do Figma incluídos), 2 usuários, carteiras, cupons e pedidos anteriores.
+- 19 cenários de rede e de negócio, ativados pela URL, pelo painel de desenvolvimento ou por `/__mocks/scenario`, e reset completo.
+- Erros `WALLET_REJECTED` e `WALLET_DISCONNECTED` e a rota `POST /me/wallets/:id/connect`.
+- 48 testes de integração e de fixtures dos mocks (Vitest + `msw/node`) e testes E2E da API simulada no navegador.
 - Contratos tipados em `src/api/contracts` (Zod): sessão e conta, NFT com edições, categorias, rede e raridade, listagem com facetas, favoritos, carrinho, cotação, pedido com snapshot e idempotência, perfil, carteiras e eventos `nft.updated` e `order.updated`. Formato padrão de erro com status por código.
 - Helpers de valores em ETH em `src/lib/eth.ts` (big.js, 18 casas) e `formatEth` no padrão do Figma.
 - Vitest com 46 testes unitários dos helpers e dos contratos (`npm run test:unit`).

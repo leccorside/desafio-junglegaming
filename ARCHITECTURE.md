@@ -54,10 +54,13 @@ src/
   lib/                   decimal, formatação, utilitários
   mocks/
     db/                  banco em memória, persistência, reset
-    fixtures/            NFTs, usuários, cupons, carteiras
-    handlers/            handlers REST por recurso
-    socket/              servidor Socket.IO simulado
+    fixtures/            NFTs, usuários, cupons, carteiras, pedidos anteriores
+    services/            regras de negócio da API simulada
+    handlers/            rotas MSW (validação com os contratos → serviço)
+    socket/              servidor Socket.IO simulado (Passo 8)
     scenarios/           cenários de rede e de negócio
+    panel/               painel de desenvolvimento (cenários e reset)
+    http.ts              envelope das rotas: cenários, erros, liquidação de pagamentos
     browser.ts           setup do worker
 public/
   images/nfts/           imagens do Figma em WebP (480 e 960 px)
@@ -81,6 +84,10 @@ Cada pasta em `features/` concentra os hooks de query e mutation, as query keys,
 | Zod nos contratos | Um schema gera o tipo e valida a resposta no limite da rede. |
 | Valores em ETH como string + big.js (`src/lib/eth.ts`) | Evita erro de ponto flutuante e segue o enunciado. O big.js (cerca de 6 kB) cobre soma, multiplicação, comparação e arredondamento. O decimal.js seria 5 vezes maior, com funções que o projeto não usa. |
 | Contratos em `src/api/contracts` como schemas Zod | Um schema gera o tipo e valida a resposta. O mesmo schema serve aos handlers do MSW, aos formulários (React Hook Form) e aos search params da URL do catálogo. |
+| Mocks em camadas: handlers → serviços → banco (`src/mocks`) | Os handlers só traduzem HTTP e validam com os contratos. As regras ficam em serviços testados pela API HTTP real (`msw/node`). Separar isso evita regra de negócio duplicada entre REST e Socket.IO. |
+| Pagamento decidido por prazo (`settleAt`) e liquidado antes de cada requisição | O resultado do pedido sobrevive a refresh e funciona com relógio controlado nos testes, sem depender de `setTimeout` vivo. |
+| Cotação com assinatura do conteúdo | A API percebe qualquer mudança de preço, estoque, cupom ou taxa entre a revisão e a confirmação e devolve `QUOTE_OUTDATED` com o que mudou. |
+| Painel de cenários no build de demonstração | O avaliador consegue reproduzir as falhas na URL publicada, sem rodar nada local. Ele fica escondido em navegador automatizado, para não entrar nas regressões visuais. |
 | Vitest para regras puras | Aritmética, contratos e reconciliação de eventos se testam melhor isolados. Os fluxos da interface ficam no Playwright. |
 | Banco dos mocks no `localStorage` | Sustenta refresh sem backend, e o reset volta às fixtures. |
 | Carrinho do visitante com `X-Cart-Id` | Permite persistir e depois juntar ao carrinho do usuário no login. |

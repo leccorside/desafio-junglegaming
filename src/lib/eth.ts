@@ -59,6 +59,11 @@ export function ethPercent(amount: EthInput, percent: number): EthAmount {
   return toEthString(toBig(amount).times(percent).div(100))
 }
 
+/** Arredonda (meio para cima) para `decimals` casas. */
+export function ethRound(value: EthInput, decimals: number): EthAmount {
+  return toEthString(toBig(value).round(decimals, Big.roundHalfUp))
+}
+
 export function ethCompare(a: EthInput, b: EthInput): -1 | 0 | 1 {
   return toBig(a).cmp(toBig(b)) as -1 | 0 | 1
 }

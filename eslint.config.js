@@ -30,6 +30,11 @@ export default defineConfig([
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
+      // `const { interno: _x, ...publico } = obj` remove campos antes de responder.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
     },
   },
   {

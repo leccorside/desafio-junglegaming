@@ -86,7 +86,14 @@ As senhas ficam guardadas como hash no banco dos mocks.
 
 ## Cenários simulados
 
-O cenário ativo é escolhido pela query string `?scenario=<nome>` ou pelo painel de desenvolvimento. O reset volta ao estado inicial das fixtures. A lista completa e como reproduzir cada falha está em [docs/MOCKS.md](docs/MOCKS.md).
+Toda a API roda no navegador (MSW), com dados persistidos no `localStorage` para sobreviver ao refresh.
+
+- **Escolher cenários:** pela URL (`/?scenario=slow,payment-rejected`, com `&scenarioRoutes=/nfts` opcional) ou pelo painel de desenvolvimento, que é o botão com ícone de frasco no canto inferior esquerdo. Os cenários ficam ativos até o reset.
+- **Restaurar os dados iniciais:** botão "Restaurar dados iniciais" do painel ou `fetch('/api/__mocks/reset', { method: 'POST' })` no console.
+- **Cenários disponíveis:** `slow`, `jitter`, `timeout`, `offline`, `server-error`, `flaky`, `empty-catalog`, `session-expired`, `forbidden`, `register-conflict`, `validation-error`, `favorite-fails`, `price-changed-on-checkout`, `sold-out-on-checkout`, `order-timeout`, `payment-confirmed`, `payment-rejected`, `wallet-rejected` e `wallet-disconnected`.
+- **Cupons:** `BEMVINDO10` (10%), `FIXO005` (0.05 ETH a partir de 0.5 ETH) e `EXPIRADO`.
+
+O efeito de cada cenário e o passo a passo para reproduzir cada falha estão em [docs/MOCKS.md](docs/MOCKS.md).
 
 ## Documentação
 
