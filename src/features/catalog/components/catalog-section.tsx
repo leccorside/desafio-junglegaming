@@ -94,11 +94,22 @@ function MobileSearchBar({
   )
 }
 
-function ResultsStatus({ total, fetching }: { total: number | undefined; fetching: boolean }) {
+function ResultsStatus({
+  total,
+  fetching,
+  failed,
+}: {
+  total: number | undefined
+  fetching: boolean
+  /** Falhou sem nada na tela: não pode continuar anunciando "Carregando". */
+  failed: boolean
+}) {
   return (
     <p className="text-body-sm text-muted-foreground" role="status" aria-live="polite">
       {total === undefined
-        ? 'Carregando NFTs…'
+        ? failed
+          ? 'Não foi possível carregar os NFTs.'
+          : 'Carregando NFTs…'
         : `${total} ${total === 1 ? 'NFT encontrado' : 'NFTs encontrados'}`}
       {fetching && total !== undefined ? (
         <span className="ml-2 text-accent-foreground">Atualizando…</span>
@@ -127,6 +138,8 @@ export function CatalogSection({ search }: { search: CatalogSearch }) {
   const showSkeleton = query.isPending
   const updating = query.isFetching && query.isPlaceholderData
   const filtered = hasActiveFilters(search)
+  // Falhou e não há página anterior para mostrar (a nova tentativa volta a "pending").
+  const failed = query.isError && !data
 
   const filtersButton = (
     <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -155,7 +168,7 @@ export function CatalogSection({ search }: { search: CatalogSearch }) {
         </SheetHeader>
         <div className="flex flex-col gap-10 px-4 pb-8">
           <CatalogSort value={search.sort} onChange={(sort) => update({ sort })} />
-          <CatalogFilters search={search} facets={facets} onChange={update} />
+          <CatalogFilters search={search} facets={facets} onChange={update} unavailable={failed} />
           {filtered ? (
             <Button variant="secondary" onClick={() => reset()}>
               Limpar filtros
@@ -178,7 +191,7 @@ export function CatalogSection({ search }: { search: CatalogSearch }) {
 
       <aside aria-label="Filtros" className="hidden w-[310px] shrink-0 flex-col gap-6 lg:flex">
         <div className="bg-card p-5">
-          <CatalogFilters search={search} facets={facets} onChange={update} />
+          <CatalogFilters search={search} facets={facets} onChange={update} unavailable={failed} />
         </div>
         <FeaturedBanner />
       </aside>
@@ -196,13 +209,13 @@ export function CatalogSection({ search }: { search: CatalogSearch }) {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <ResultsStatus total={data?.total} fetching={updating} />
+          <ResultsStatus total={data?.total} fetching={updating} failed={failed} />
           {search.q ? (
             <ActiveSearch query={search.q} onClear={() => update({ q: undefined })} />
           ) : null}
         </div>
 
-        {query.isError && !data ? (
+        {failed ? (
           <div
             role="alert"
             className="flex flex-col items-start gap-4 rounded-md border border-destructive/60 bg-card p-6"

@@ -233,6 +233,39 @@ test.describe('catálogo', () => {
     await expect(alert).toBeHidden()
   })
 
+  test('no erro, o status e os filtros não dizem que ainda está carregando', async ({
+    page,
+    isMobile,
+  }) => {
+    await setScenario(page, ['server-error'], { routes: ['/nfts'] })
+    await page.reload()
+    await waitForApp(page)
+    const alert = page
+      .getByRole('alert')
+      .filter({ hasText: 'Não foi possível carregar o catálogo.' })
+    await expect(alert).toBeVisible({ timeout: 15_000 })
+
+    const status = page.locator('#catalogo [role="status"]').first()
+    await expect(status).toHaveText('Não foi possível carregar os NFTs.')
+    expect(await page.getByText('Carregando NFTs…').count()).toBe(0)
+
+    let panel = await filters(page, isMobile)
+    expect(await panel.locator('[data-slot="skeleton"]').count()).toBe(0)
+    await expect(panel.getByText('Faixa de preço indisponível no momento.')).toBeVisible()
+    await expect(panel.getByRole('button', { name: 'Aplicar' })).toHaveCount(0)
+    // As opções continuam utilizáveis, só sem contagem.
+    await expect(panel.getByRole('button', { name: 'Música', exact: true })).toBeVisible()
+    await closeFilters(page, isMobile)
+
+    await setScenario(page, [])
+    await alert.getByRole('button', { name: 'Tentar de novo' }).click()
+    await expectTotal(page, await apiTotal(page))
+    panel = await filters(page, isMobile)
+    await expect(panel.getByRole('button', { name: /^Música\s*\(\d+\)$/ })).toBeVisible()
+    await expect(panel.getByText(/^Preço: [\d,]+ - [\d,]+ ETH$/)).toBeVisible()
+    await closeFilters(page, isMobile)
+  })
+
   test('respostas fora de ordem não trocam o resultado do último filtro', async ({
     page,
     isMobile,

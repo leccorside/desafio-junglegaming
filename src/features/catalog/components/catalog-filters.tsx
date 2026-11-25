@@ -20,6 +20,8 @@ interface CatalogFiltersProps {
   facets: NftFacets | undefined
   onChange: (patch: Partial<CatalogSearch>) => void
   className?: string
+  /** O catálogo não carregou: facetas indisponíveis em vez de carregando. */
+  unavailable?: boolean
 }
 
 /** "0,02" como no Figma ("Preço: 0,02 - 12,30 ETH"). */
@@ -28,11 +30,14 @@ const formatPrice = (value: number) => value.toFixed(2).replace('.', ',')
 function FilterOption({
   label,
   count,
+  unavailable,
   selected,
   onToggle,
 }: {
   label: string
   count: number | undefined
+  /** A API falhou: sem contagem (e sem skeleton, que daria a entender que ainda carrega). */
+  unavailable: boolean
   selected: boolean
   onToggle: () => void
 }) {
@@ -58,7 +63,9 @@ function FilterOption({
           {label}
         </span>
         {count === undefined ? (
-          <Skeleton className="h-4 w-8" />
+          unavailable ? null : (
+            <Skeleton className="h-4 w-8" />
+          )
         ) : (
           <span className={cn(selected && 'font-bold')}>({count})</span>
         )}
@@ -72,7 +79,14 @@ function FilterOption({
  * Rede. Usado na sidebar (desktop) e no menu de filtros (mobile). Coleções e
  * redes se combinam; a faixa de preço só vale ao clicar em "Aplicar".
  */
-export function CatalogFilters({ search, facets, onChange, className }: CatalogFiltersProps) {
+export function CatalogFilters({
+  search,
+  facets,
+  onChange,
+  className,
+  unavailable = false,
+}: CatalogFiltersProps) {
+  const noFacets = facets === undefined && unavailable
   const priceId = useId()
   const min = facets ? Number(facets.priceRange.min) : 0
   const max = facets ? Number(facets.priceRange.max) : 0
@@ -113,6 +127,7 @@ export function CatalogFilters({ search, facets, onChange, className }: CatalogF
               key={category}
               label={NFT_CATEGORY_LABELS[category]}
               count={facets?.categories[category]}
+              unavailable={noFacets}
               selected={search.category?.includes(category) ?? false}
               onToggle={() => onChange({ category: toggleValue(search.category, category) })}
             />
@@ -136,16 +151,20 @@ export function CatalogFilters({ search, facets, onChange, className }: CatalogF
               thumbLabels={['Preço mínimo', 'Preço máximo']}
               aria-describedby={priceId}
             />
-          ) : (
+          ) : noFacets ? null : (
             <Skeleton className="h-[21px] w-full" />
           )}
           <p id={priceId} className="text-body text-foreground" aria-live="polite">
-            Preço: {facets ? `${formatPrice(range[0])} - ${formatPrice(range[1])}` : '…'} ETH
+            {noFacets
+              ? 'Faixa de preço indisponível no momento.'
+              : `Preço: ${facets ? `${formatPrice(range[0])} - ${formatPrice(range[1])}` : '…'} ETH`}
           </p>
           <div className="flex items-center gap-3">
-            <Button size="sm" onClick={applyPrice} disabled={!priceChanged} className="w-[92px]">
-              Aplicar
-            </Button>
+            {noFacets ? null : (
+              <Button size="sm" onClick={applyPrice} disabled={!priceChanged} className="w-[92px]">
+                Aplicar
+              </Button>
+            )}
             {search.minPrice || search.maxPrice ? (
               <Button
                 size="sm"
@@ -167,6 +186,7 @@ export function CatalogFilters({ search, facets, onChange, className }: CatalogF
               key={network}
               label={NETWORK_LABELS[network]}
               count={facets?.networks[network]}
+              unavailable={noFacets}
               selected={search.network?.includes(network) ?? false}
               onToggle={() => onChange({ network: toggleValue(search.network, network) })}
             />

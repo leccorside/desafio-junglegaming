@@ -133,7 +133,7 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Catálogo carregando | Skeleton com shimmer nas proporções do card (9 itens), sem deslocar o layout. A contagem "Carregando NFTs…" fica numa região `aria-live`. |
 | Troca de filtro com resultado na tela | A página anterior continua visível com 60% de opacidade, `aria-busy` e "Atualizando…" até a resposta nova (`placeholderData`). |
 | Catálogo vazio | "Nenhum NFT encontrado." com "Limpar filtros" quando há filtro. Página além da última mostra "Voltar à primeira página". |
-| Falha do catálogo | Sem dados: cartão de erro com a mensagem da API e "Tentar de novo". Com dados antigos na tela: aviso curto acima da grade, sem apagar o que já aparece. |
+| Falha do catálogo | Sem dados: cartão de erro com a mensagem da API e "Tentar de novo"; o status diz "Não foi possível carregar os NFTs.", os filtros ficam sem contagem (sem skeleton) e a faixa de preço aparece como indisponível. A nova tentativa volta ao skeleton. Com dados antigos na tela: aviso curto acima da grade, sem apagar o que já aparece. |
 | Busca no desktop | O Figma desktop não tem campo de busca, só a lupa do header. Ela abre um diálogo com o campo, que leva ao catálogo com `?q=`. |
 | Diário da Cunhagem (blog) | Fora do escopo. Os cartões aparecem com o texto do Figma, e o "Ler mais" fica como indisponível. |
 | Carrossel do hero | Troca só pelos pontos (sem rotação automática, que atrapalharia a leitura e o leitor de tela). As imagens vêm de `GET /nfts/featured`. |
