@@ -8,8 +8,8 @@ Marketplace de NFTs em React e TypeScript, feito para o desafio frontend descrit
 
 | Item | Endereço |
 | --- | --- |
-| Aplicação publicada | a definir (Passo 0) |
-| Repositório | a definir |
+| Aplicação publicada | [desafio-junglegaming-two.vercel.app](https://desafio-junglegaming-two.vercel.app) |
+| Repositório | [github.com/leccorside/desafio-junglegaming](https://github.com/leccorside/desafio-junglegaming) |
 | Layout no Figma | [Frontend Challenge](https://www.figma.com/design/Ff0SksUi7UFtPWUO8kyNtw/Frontend-Challenge?node-id=0-1) |
 
 ## Stack
