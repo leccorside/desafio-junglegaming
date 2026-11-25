@@ -46,7 +46,7 @@ Toda a autenticação é simulada pelo MSW. O objetivo é reproduzir o comportam
 | `/`, `/nft/$nftId`, `/cart` | Público |
 | `/login`, `/register` | Só visitante. Com sessão, vai para o `redirect` ou para o início |
 | `/checkout`, `/orders/$orderId`, `/profile`, `/wallets`, `/favorites` | Autenticado |
-| Favoritar | Autenticado (visitante vai ao login e volta), no Passo 6 |
+| Favoritar | Autenticado. O visitante vai ao login e volta; o pedido fica no `sessionStorage` da aba (`kurio:pending-favorite`: só ID e nome do NFT, 10 minutos) e é concluído com a sessão nova. É apagado se a pessoa sair das telas de entrada sem entrar e em todo fim de sessão, para não valer para outra conta |
 
 A proteção acontece no `beforeLoad` do layout `_authenticated`, que redireciona para `/login?redirect=<rota>`. O `redirect` passa por `safeRedirect`, que recusa URL absoluta, `//`, `/\`, caminho sem barra e as próprias telas de entrada, para evitar open redirect e laço de redirecionamento.
 

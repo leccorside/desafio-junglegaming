@@ -108,7 +108,8 @@ export function NftDetailPage({
 
   return (
     <div className="mx-auto flex max-w-content flex-col gap-12 px-4 pt-4 md:gap-24 md:px-6 md:pt-8 xl:px-0">
-      <div className="flex flex-col gap-3">
+      {/* data-nft-id: a volta do login (intenção de favoritar) começa aqui, no topo. */}
+      <div className="flex flex-col gap-3" data-nft-id={nft.id} data-reveal="start">
         <nav aria-label="Trilha de navegação" className="hidden md:block">
           <ol className="flex gap-1 text-body font-bold text-foreground">
             <li>

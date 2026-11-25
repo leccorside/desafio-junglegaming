@@ -23,7 +23,8 @@ export function NftCard({ nft, priority = false }: { nft: Nft; priority?: boolea
   const showRarity = nft.rarity !== 'common'
 
   return (
-    <div className="relative">
+    // data-nft-id: a volta do login rola até este card (intenção de favoritar).
+    <div className="relative" data-nft-id={nft.id}>
       <Link
         to="/nft/$nftId"
         params={{ nftId: nft.id }}

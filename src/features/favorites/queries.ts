@@ -13,6 +13,7 @@ import type { FavoritesResponse, Nft } from '@/api/contracts'
 import { useSession } from '@/features/auth/session-store'
 
 import { favoritesApi } from './api'
+import { savePendingFavorite } from './pending-favorite'
 
 /** Chaves privadas: incluem o usuário, então duas contas nunca dividem cache. */
 export const favoriteKeys = {
@@ -55,6 +56,11 @@ function applyToggle(
   return favorite ? { nftIds: [...nftIds, nft.id], items: [...items, nft] } : { nftIds, items }
 }
 
+export function useFavoriteMutation() {
+  const session = useSession()
+  return useToggleMutation(session?.user.id ?? 'guest', useQueryClient())
+}
+
 function useToggleMutation(userId: string, queryClient: QueryClient) {
   const key = favoriteKeys.all(userId)
   return useMutation({
@@ -88,7 +94,8 @@ function useToggleMutation(userId: string, queryClient: QueryClient) {
 }
 
 /**
- * Favoritar e desfavoritar. Visitante vai ao login e volta para a mesma tela.
+ * Favoritar e desfavoritar. Visitante vai ao login e volta para a mesma tela,
+ * com o favorito concluído (`PendingFavoriteRunner`).
  * Logado: atualização otimista com rollback e aviso em caso de falha.
  */
 export function useToggleFavorite() {
@@ -102,6 +109,8 @@ export function useToggleFavorite() {
   const toggle = useCallback(
     (nft: Nft, favorite: boolean) => {
       if (!session) {
+        // Depois do login o favorito é concluído e a tela volta a este NFT.
+        if (favorite) savePendingFavorite(nft)
         void navigate({ to: '/login', search: { redirect: location.href } })
         return
       }

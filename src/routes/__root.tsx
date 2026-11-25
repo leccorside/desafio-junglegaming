@@ -10,6 +10,7 @@ import { SiteHeader } from '@/components/layout/site-header'
 import { SkipLink } from '@/components/layout/skip-link'
 import { Toaster } from '@/components/ui/sonner'
 import { ensureSession } from '@/features/auth/session'
+import { PendingFavoriteRunner } from '@/features/favorites/components/pending-favorite-runner'
 import { env } from '@/lib/env'
 
 export interface RouterContext {
@@ -60,6 +61,7 @@ function RootLayout() {
       <SiteFooter />
       <MobileTabBar />
       <Toaster />
+      <PendingFavoriteRunner />
       <Suspense>
         <MockPanel />
         <Devtools />

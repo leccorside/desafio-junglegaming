@@ -25,15 +25,90 @@ test.describe('favoritos', () => {
     await resetMocks(page)
   })
 
-  test('visitante vai ao login e volta para o detalhe', async ({ page }) => {
+  test('visitante no detalhe: entra, volta e o favorito é concluído', async ({ page }) => {
     await page.goto('/nft/nft-009')
     await waitForApp(page)
     await heart(page, 'Sage Nomad #009').click()
     await expect(page).toHaveURL(/\/login\?redirect=%2Fnft%2Fnft-009/)
 
+    const saved = favoriteSaved(page)
     await submitLogin(page, 'ana@example.com')
     await expect(page).toHaveURL(/\/nft\/nft-009$/)
+    await expect(page.getByText('Sage Nomad #009 adicionado à lista de interesse.')).toBeVisible()
+    await expect(heart(page, 'Sage Nomad #009')).toHaveAttribute('aria-pressed', 'true')
+    await expect(heart(page, 'Sage Nomad #009')).toBeFocused()
+    expect((await saved).status()).toBe(200)
+
+    await page.reload()
+    await waitForApp(page)
+    await expect(heart(page, 'Sage Nomad #009')).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('visitante no card abaixo da dobra: volta ao card com o favorito feito', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'O coração no card é do layout mobile')
+    await page.goto('/')
+    await waitForApp(page)
+    const card = heart(page, 'Golden Signal #160')
+    await card.scrollIntoViewIfNeeded()
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(500)
+    await card.click()
+    await expect(page).toHaveURL(/\/login/)
+
+    const saved = favoriteSaved(page)
+    await submitLogin(page, 'ana@example.com')
+    await expect(
+      page.getByText('Golden Signal #160 adicionado à lista de interesse.'),
+    ).toBeVisible()
+    expect((await saved).status()).toBe(200)
+    await expect(card).toHaveAttribute('aria-pressed', 'true')
+    await expect(card).toBeFocused()
+    // O card voltou para a tela (e não ficou abaixo, com a página no topo).
+    await expect(card).toBeInViewport()
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(500)
+  })
+
+  test('NFT que já está na lista só recebe o aviso', async ({ page }) => {
+    await page.goto('/nft/nft-042')
+    await waitForApp(page)
+    await heart(page, 'Emerald Ape #042').click()
+    await submitLogin(page, 'ana@example.com')
+    await expect(page).toHaveURL(/\/nft\/nft-042$/)
+    await expect(
+      page.getByText('Emerald Ape #042 já está na sua lista de interesse.'),
+    ).toBeVisible()
+    await expect(heart(page, 'Emerald Ape #042')).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('visitante que desiste do login não favorita num login feito depois', async ({
+    page,
+    isMobile,
+  }) => {
+    await page.goto('/nft/nft-009')
+    await waitForApp(page)
+    await heart(page, 'Sage Nomad #009').click()
+    await expect(page).toHaveURL(/\/login/)
+
+    const pending = () => page.evaluate(() => sessionStorage.getItem('kurio:pending-favorite'))
+    expect(await pending()).toContain('nft-009')
+
+    // Desiste: fecha o modal (desktop) ou volta ao início pelo logo (mobile).
+    if (isMobile) {
+      await page.getByRole('link', { name: /KURIO/ }).first().click()
+    } else {
+      await expect(page.getByRole('dialog', { name: 'Entrar' })).toBeVisible()
+      await page.keyboard.press('Escape')
+    }
+    await expect(page).toHaveURL(/\/$/)
+    await expect.poll(pending).toBeNull()
+
+    await loginViaUi(page, 'ana@example.com')
+    await page.goto('/nft/nft-009')
+    await waitForApp(page)
     await expect(heart(page, 'Sage Nomad #009')).toHaveAttribute('aria-pressed', 'false')
+    expect(await page.getByText('adicionado à lista de interesse').count()).toBe(0)
   })
 
   test('favoritar persiste por usuário e aparece na lista de interesse', async ({ page }) => {

@@ -2,6 +2,8 @@ import { createRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { clearSessionEndReason, onSessionEnd, setupSession } from '@/features/auth/session'
+import { getSession } from '@/features/auth/session-store'
+import { clearPendingFavorite } from '@/features/favorites/pending-favorite'
 import { queryClient } from '@/lib/query-client'
 
 import { routeTree } from './routeTree.gen'
@@ -58,8 +60,14 @@ onSessionEnd(() => toast.dismiss())
 router.subscribe('onResolved', ({ toLocation }) => {
   if (toLocation.pathname !== '/login' && toLocation.pathname !== '/register') {
     clearSessionEndReason()
+    // Visitante que desistiu de entrar (fechou o login, voltou, navegou):
+    // o pedido de favoritar não vale para um login feito mais tarde.
+    if (!getSession()) clearPendingFavorite()
   }
 })
+
+// Fim de sessão: nenhuma intenção pendente passa para a próxima conta.
+onSessionEnd(() => clearPendingFavorite())
 
 declare module '@tanstack/react-router' {
   interface Register {
