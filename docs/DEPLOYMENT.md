@@ -8,21 +8,21 @@ Vercel, com o preset de Vite. A aplicação é estática e os mocks rodam no nav
 
 ```bash
 npm ci
-npm run build      # gera dist/
-npm run preview    # serve dist/ localmente para conferir
+npm run build -- --mode mocks   # build de demonstração em dist/, com mocks
+npm run preview                 # serve dist/ em http://localhost:4173
 ```
 
-O build de demonstração mantém `VITE_ENABLE_MOCKS=true` e inclui `mockServiceWorker.js` em `dist/`.
+O modo `mocks` carrega o `.env.mocks` (versionado), que liga o MSW. O `mockServiceWorker.js` vai de `public/` para `dist/`. O `vercel.json` já define esse comando de build, então não é preciso configurar nada no painel.
 
 ## Variáveis de ambiente
 
 | Variável | Produção (demonstração) | Descrição |
 | --- | --- | --- |
-| `VITE_ENABLE_MOCKS` | `true` | Liga o MSW REST e Socket.IO |
-| `VITE_API_URL` | `/api` | Base REST |
+| `VITE_ENABLE_MOCKS` | `true` (vem do `.env.mocks`) | Liga o MSW REST e Socket.IO |
+| `VITE_API_URL` | `/api` (padrão do código) | Base REST |
 | `VITE_SOCKET_URL` | a definir no Passo 8 | Endereço interceptado pelo binding |
 
-Configuradas no painel da Vercel e espelhadas em `.env.example`.
+Os valores ficam espelhados em `.env.example`. Só é preciso cadastrar variáveis no painel da Vercel se algum valor diferir do padrão.
 
 ## Rotas da SPA
 
@@ -30,7 +30,12 @@ Configuradas no painel da Vercel e espelhadas em `.env.example`.
 
 ```json
 {
-  "rewrites": [{ "source": "/((?!assets/|mockServiceWorker\\.js).*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/((?!assets/|mockServiceWorker\\.js|favicon\\.svg).*)",
+      "destination": "/index.html"
+    }
+  ]
 }
 ```
 

@@ -1,0 +1,14 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npm run preview -- --port 4174 --strictPort",
+      "startServerReadyPattern": "Local",
+      "url": ["http://localhost:4174/"],
+      "numberOfRuns": 3
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "lighthouse/reports"
+    }
+  }
+}

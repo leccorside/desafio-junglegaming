@@ -6,6 +6,7 @@ docs/private/
 .env.*
 *.local
 !.env.example
+!.env.mocks
 
 # Dependências
 node_modules/

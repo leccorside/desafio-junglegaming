@@ -77,6 +77,12 @@ Cada pasta em `features/` concentra os hooks de query e mutation, as query keys,
 | Carrinho do visitante com `X-Cart-Id` | Permite persistir e depois juntar ao carrinho do usuário no login. |
 | `Idempotency-Key` persistida por tentativa | Recupera o mesmo pedido depois de timeout ou refresh. |
 | Eventos com `eventId` e `version` | Descarta duplicados e eventos antigos sem regredir o cache. |
+| TypeScript 6.0, e não o 7 | O `typescript-eslint` aceita até a 6.0. |
+| MSW 2.x, e não o 3 | O `@mswjs/socket.io-binding` declara dependência do `msw` 2. |
+| shadcn/ui sobre Radix | Diálogos e drawers do Radix prendem e devolvem o foco, como pede a acessibilidade. |
+| Modo `mocks` do Vite (`.env.mocks`) | Liga o MSW no `dev:mocks`, nos testes e no deploy sem variável no painel da Vercel. |
+| Playwright contra o build de produção | Os testes exercitam o mesmo bundle publicado, com o service worker real. |
+| Devtools do Router e do Query carregadas sob demanda só em desenvolvimento | Ficam fora do bundle de produção. |
 
 Os detalhes estão em [docs/STATE_MANAGEMENT.md](docs/STATE_MANAGEMENT.md), [docs/REALTIME.md](docs/REALTIME.md), [docs/SECURITY.md](docs/SECURITY.md) e [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md).
 

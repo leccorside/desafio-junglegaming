@@ -15,6 +15,8 @@
 
 Os fluxos principais rodam nos dois. Verificações de layout pontuais usam também 768 px.
 
+O `webServer` do Playwright gera o build com `--mode mocks` e serve com `vite preview` na porta 4173. Assim os testes rodam contra o mesmo bundle que vai para a Vercel, com o service worker do MSW de verdade. Fora do CI, um servidor já aberto nessa porta é reaproveitado.
+
 ## Isolamento
 
 - Cada teste começa com o reset do banco dos mocks, `localStorage` e `sessionStorage` limpos e o cenário escolhido.

@@ -18,7 +18,7 @@ Marketplace de NFTs em React e TypeScript, feito para o desafio frontend descrit
 | --- | --- |
 | Interface | React |
 | Linguagem | TypeScript |
-| Build | Vite |
+| Build | Vite 8 |
 | Roteamento | TanStack Router |
 | Estado remoto | TanStack Query |
 | Cliente HTTP | Axios |
@@ -32,8 +32,8 @@ Marketplace de NFTs em React e TypeScript, feito para o desafio frontend descrit
 
 ## Requisitos
 
-- Node.js 22 LTS
-- npm 10 (o lockfile versionado é o `package-lock.json`)
+- Node.js 22 ou superior (desenvolvido com o 24.13)
+- npm 10 ou superior (o lockfile versionado é o `package-lock.json`)
 
 ## Instalação
 
@@ -53,16 +53,20 @@ npx playwright install chromium
 | `VITE_API_URL` | `/api` | Base das chamadas REST feitas pelo Axios. |
 | `VITE_SOCKET_URL` | `ws://localhost/socket` | Endereço do Socket.IO interceptado pelo MSW. |
 
+O arquivo `.env.mocks`, versionado, liga os mocks no modo `mocks`, usado pelo `dev:mocks`, pelos testes e pelo deploy.
+
 ## Comandos
 
 | Comando | O que faz |
 | --- | --- |
-| `npm run dev` | Servidor de desenvolvimento com mocks. |
-| `npm run build` | Build de produção (com mocks, para a demonstração). |
-| `npm run preview` | Serve o build localmente. |
+| `npm run dev` | Servidor de desenvolvimento em `http://localhost:5173`. Os mocks seguem `VITE_ENABLE_MOCKS` do `.env`. |
+| `npm run dev:mocks` | Servidor de desenvolvimento com os mocks sempre ligados (modo `mocks`). |
+| `npm run build` | Typecheck e build de produção em `dist/`. Para o build de demonstração, com mocks: `npm run build -- --mode mocks`. |
+| `npm run preview` | Serve o build em `http://localhost:4173`. |
 | `npm run typecheck` | Verificação de tipos. |
 | `npm run lint` | ESLint. |
-| `npm run test:e2e` | Testes Playwright com relatório HTML. |
+| `npm run format` / `format:check` | Formata ou confere o código com Prettier. |
+| `npm run test:e2e` | Testes Playwright (gera o build com mocks e roda contra o `preview`), com relatório HTML. |
 | `npm run test:e2e:update` | Atualiza as baselines de regressão visual. |
 | `npm run lighthouse` | Auditoria Lighthouse (três medições por página e perfil). |
 
