@@ -45,6 +45,8 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Painel de cenários no mobile: o botão flutuante ficava sobre o conteúdo e cobria o "Tentar de novo" do catálogo. Agora é uma aba estreita colada à esquerda, na margem vazia da barra inferior (antes do ícone Início), com o contador dentro dela; não cobre nada clicável em nenhuma rolagem. No tablet e no desktop continua no canto inferior esquerdo.
+- Painel de cenários: o nome do botão dizia "1 ativos". Agora concorda com o número ("1 ativo", "2 ativos").
 - Catálogo vazio: a faixa de preço mostrava "Preço: 0,00 - 0,00 ETH" com os dois pontos do slider sobrepostos e o botão "Aplicar". Sem faixa para escolher (catálogo vazio, um único preço ou API fora do ar), aparece "Faixa de preço indisponível no momento.", sem slider e sem "Aplicar"; "Limpar preço" continua quando há preço na URL.
 - Hero: sem destaques na API (catálogo vazio ou falha), a metade direita ficava vazia no desktop e o banner mobile ficava sem imagem. Agora entra uma imagem fixa do projeto, sem link.
 - Catálogo: quando a API falhava, o status acima da grade continuava em "Carregando NFTs…" (anunciado pelo leitor de tela), e as contagens dos filtros e o slider de preço ficavam em skeleton para sempre. Agora o status diz "Não foi possível carregar os NFTs.", os filtros aparecem sem contagem e a faixa de preço mostra "Faixa de preço indisponível no momento." até a nova tentativa dar certo.

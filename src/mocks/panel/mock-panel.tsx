@@ -4,6 +4,7 @@ import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 import {
   Sheet,
   SheetContent,
@@ -96,12 +97,20 @@ export default function MockPanel() {
       <SheetTrigger asChild>
         <button
           type="button"
-          aria-label={`Cenários de teste${activeCount ? ` (${activeCount} ativos)` : ''}`}
-          className="fixed bottom-[calc(210px+env(safe-area-inset-bottom))] left-3 z-30 flex size-10 items-center justify-center rounded-full border border-border-soft bg-card text-muted-foreground opacity-80 shadow-md transition-opacity hover:opacity-100 md:bottom-4"
+          aria-label={`Cenários de teste${activeCount ? ` (${activeCount} ${activeCount === 1 ? 'ativo' : 'ativos'})` : ''}`}
+          className={cn(
+            // Mobile: aba estreita colada à esquerda, na margem vazia da barra
+            // inferior (antes do ícone Início). Ali não cobre conteúdo da página
+            // em nenhuma posição de rolagem; z acima da barra (z-40) e abaixo
+            // das camadas de diálogo (z-50).
+            'fixed bottom-[calc(14px+env(safe-area-inset-bottom))] left-0 z-[45] flex h-10 w-6 items-center justify-center rounded-r-lg border border-l-0 border-border-soft bg-card text-muted-foreground opacity-90 shadow-md transition-opacity hover:opacity-100',
+            // Tablet e desktop: sem barra inferior, botão redondo no canto.
+            'md:bottom-4 md:left-3 md:size-10 md:rounded-full md:border-l md:opacity-80',
+          )}
         >
-          <FlaskConicalIcon className="size-5" />
+          <FlaskConicalIcon className="size-4 md:size-5" />
           {activeCount ? (
-            <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-tiny font-bold text-primary-foreground">
+            <span className="pointer-events-none absolute -top-2 right-[5px] flex size-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground md:-top-1 md:-right-1 md:size-4 md:text-tiny">
               {activeCount}
             </span>
           ) : null}

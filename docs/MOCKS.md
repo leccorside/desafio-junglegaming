@@ -66,7 +66,7 @@ Os handlers só traduzem HTTP: leem o corpo com o schema Zod do contrato (`readB
 Ativados de três formas, combináveis. Ficam salvos (`kurio:mocks:scenario`) até o reset.
 
 1. URL: `?scenario=slow,payment-rejected`, com `&scenarioRoutes=/nfts,/cart` opcional para limitar os cenários de rede a algumas rotas. Os dois parâmetros são aplicados uma vez e saem da barra de endereço (`history.replaceState`), e os outros parâmetros ficam. Assim o reload usa o estado salvo, sem desfazer o que foi escolhido no painel nem redisparar cenários de uso único.
-2. Painel de desenvolvimento: botão com ícone de frasco no canto inferior esquerdo (acima da barra no mobile). Escondido em navegador automatizado.
+2. Painel de desenvolvimento: botão com ícone de frasco no canto inferior esquerdo. No mobile é uma aba estreita colada à borda esquerda, na margem vazia da barra inferior (antes do ícone Início), para não cobrir conteúdo. O nome acessível traz quantos cenários estão ativos ("Cenários de teste (1 ativo)"). Escondido em navegador automatizado (`navigator.webdriver`); os testes do próprio painel desligam essa marca com `addInitScript`.
 3. API: `PUT /api/__mocks/scenario` com `{ "names": [...], "options": {...} }`.
 
 Opções: `routes` (limita os cenários de rede), `latencyMs` (do `slow`), `seed` (do `jitter`) e `settleMs` (prazo do pagamento). O "Aplicar" do painel troca só os cenários e mantém as opções em vigor. Um valor corrompido no `localStorage` é ignorado: a aplicação sobe sem cenário.
@@ -149,7 +149,7 @@ As telas chegam a partir do Passo 4. Até lá, os cenários podem ser conferidos
 - `src/mocks/fixtures/fixtures.test.ts`: determinismo, conformidade com os contratos, NFTs do Figma, casos fixos e hash das senhas.
 - `src/mocks/db/store.test.ts`: persistência entre carregamentos, persistência quando a regra termina em erro, fallback para as fixtures e reset.
 - `src/mocks/scenarios/scenarios.test.ts`: leitura da URL, opções mantidas pelo painel, sequência reproduzível do `jitter`, plano de cada cenário de rede e valor corrompido no storage.
-- `tests/e2e/mocks.spec.ts`: service worker no navegador, persistência no refresh, reset, cenário pela URL, latência fora de ordem e painel escondido.
+- `tests/e2e/mocks.spec.ts`: service worker no navegador, persistência no refresh, reset, cenário pela URL, latência fora de ordem, painel escondido em navegador automatizado e, com o painel visível, plural do contador e posição no mobile (na margem da barra, sem cobrir nada clicável em nenhuma rolagem, com o "Tentar de novo" na tela).
 
 ## Regras
 

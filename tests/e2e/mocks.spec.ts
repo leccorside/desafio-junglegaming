@@ -94,3 +94,87 @@ test.describe('API simulada no navegador', () => {
     await expect(page.getByRole('button', { name: /Cenários de teste/ })).toHaveCount(0)
   })
 })
+
+test.describe('painel de cenários visível (como para o avaliador)', () => {
+  test.beforeEach(async ({ page }) => {
+    // Simula um navegador comum: o painel só some com navigator.webdriver.
+    await page.addInitScript(() =>
+      Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }),
+    )
+    await page.goto('/')
+    await waitForApp(page)
+    await resetMocks(page)
+  })
+
+  test('o nome do botão concorda com o número de cenários ativos', async ({ page }) => {
+    const button = page.getByRole('button', { name: /^Cenários de teste/ })
+    await expect(button).toHaveAccessibleName('Cenários de teste')
+
+    await setScenario(page, ['slow'])
+    await page.reload()
+    await waitForApp(page)
+    await expect(button).toHaveAccessibleName('Cenários de teste (1 ativo)')
+
+    await setScenario(page, ['slow', 'flaky'])
+    await page.reload()
+    await waitForApp(page)
+    await expect(button).toHaveAccessibleName('Cenários de teste (2 ativos)')
+  })
+
+  test('no mobile, o botão fica na margem da barra inferior sem cobrir nada clicável', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'A barra inferior só existe abaixo de 768 px')
+    await setScenario(page, ['server-error'], { routes: ['/nfts'] })
+    await page.reload()
+    await waitForApp(page)
+    const retry = page.getByRole('button', { name: 'Tentar de novo' })
+    await expect(retry).toBeVisible({ timeout: 15_000 })
+
+    const button = page.getByRole('button', { name: /^Cenários de teste/ })
+    const bar = page.getByRole('navigation', { name: 'Navegação inferior' })
+    const home = bar.getByRole('link', { name: 'Início' })
+    const box = (await button.boundingBox())!
+    const barBox = (await bar.boundingBox())!
+    const homeBox = (await home.boundingBox())!
+    // Colado à esquerda, dentro da faixa da barra e antes do Início.
+    expect(box.x).toBe(0)
+    expect(box.y).toBeGreaterThanOrEqual(barBox.y)
+    expect(box.x + box.width).toBeLessThanOrEqual(homeBox.x)
+    // O contador de cenários também fica dentro da largura do botão.
+    const badge = (await button.locator('span').last().boundingBox())!
+    expect(badge.x + badge.width).toBeLessThanOrEqual(box.x + box.width)
+
+    // Em qualquer rolagem, nenhum elemento clicável fica embaixo do botão.
+    const height = await page.evaluate(() => document.documentElement.scrollHeight)
+    for (let y = 0; y < height; y += 150) {
+      await page.evaluate((top) => window.scrollTo(0, top), y)
+      const covered = await page.evaluate(() => {
+        const panel = [...document.querySelectorAll('button')].find((b) =>
+          b.getAttribute('aria-label')?.startsWith('Cenários de teste'),
+        )!
+        const p = panel.getBoundingClientRect()
+        return [...document.querySelectorAll('main a, main button, main input')]
+          .filter((el) => {
+            const r = el.getBoundingClientRect()
+            return (
+              r.width > 0 &&
+              r.left < p.right &&
+              r.right > p.left &&
+              r.top < p.bottom &&
+              r.bottom > p.top
+            )
+          })
+          .map((el) => el.getAttribute('aria-label') ?? el.textContent?.trim())
+      })
+      expect(covered, `rolagem ${y}px`).toEqual([])
+    }
+
+    // O "Tentar de novo" recebe o toque, e o botão do painel continua funcionando.
+    await retry.scrollIntoViewIfNeeded()
+    await retry.click()
+    await button.click()
+    await expect(page.getByRole('dialog', { name: 'Cenários de teste' })).toBeVisible()
+  })
+})
