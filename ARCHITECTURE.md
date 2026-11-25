@@ -45,9 +45,12 @@ src/
     wallets/
     realtime/            cliente Socket.IO e aplicação de eventos no cache
   routes/                rotas do TanStack Router (por arquivo)
+  assets/                formas SVG exportadas do Figma
   components/
     ui/                  componentes shadcn adaptados
-    layout/              header, footer, menu mobile
+    layout/              header, footer, menu lateral, barra inferior mobile
+    icons/               ícones do Figma (figma-icons.tsx é gerado)
+    feedback/            páginas de 404 e de erro de rota
   lib/                   decimal, formatação, utilitários
   mocks/
     db/                  banco em memória, persistência, reset
@@ -56,6 +59,10 @@ src/
     socket/              servidor Socket.IO simulado
     scenarios/           cenários de rede e de negócio
     browser.ts           setup do worker
+public/
+  images/nfts/           imagens do Figma em WebP (480 e 960 px)
+scripts/
+  export-figma-assets.mjs  exporta ícones, formas e imagens pela API do Figma
 tests/
   e2e/                   specs Playwright
   fixtures/              helpers de cenário, relógio e socket
@@ -88,11 +95,31 @@ Os detalhes estão em [docs/STATE_MANAGEMENT.md](docs/STATE_MANAGEMENT.md), [doc
 
 ## Decisões de UX
 
-A preencher durante a implementação. Registrar aqui comportamentos definidos por nós em estados que o Figma não desenhou (erros, vazios, pedido pendente, aviso de preço alterado).
+Comportamentos definidos por nós em estados que o Figma não desenhou.
+
+| Situação | Decisão |
+| --- | --- |
+| Navegação no tablet (768 a 1023 px) | O Figma só tem desktop e mobile. O header fica com logo, busca e carrinho, e a navegação vai para um menu lateral (Sheet). |
+| Navegação no mobile | O Figma não tem header no mobile, só a barra inferior. O botão central da barra (ícone de leitura, sem função no escopo) abre o menu lateral, para a navegação principal continuar acessível. |
+| Itens fora do escopo (Criadores, Aprenda, Atividade, Central de ajuda...) | Aparecem como texto com 60% de opacidade e aviso "(indisponível nesta demonstração)" para leitores de tela. Não são links, para não parecer que funcionam. |
+| Newsletter do footer | O envio mostra um toast informativo dizendo que a newsletter não está disponível. Não simula cadastro. |
+| Redes sociais | Abrem a página inicial de cada rede em nova aba (`rel="noopener noreferrer"`), com o aviso no nome acessível. |
+| Contador do carrinho | O Figma mostra "6". O badge só vai aparecer no Passo 7, com a quantidade real do carrinho. |
+| Página 404 e erro de rota | Mesmo layout das outras telas, com o código em `Primary`, texto e botão "Voltar ao início". O erro de rota oferece "Tentar de novo" sem recarregar a página. |
 
 ## Desvios do Figma
 
-A preencher. Registrar asset substituído, ajuste de contraste, tamanho de alvo de toque ou qualquer outra diferença em relação ao layout, com o motivo.
+| Desvio | Motivo |
+| --- | --- |
+| Texto de erro em `#ff5c66` em vez de `#ed1b2e` | `#ed1b2e` tem 4,39:1 sobre o fundo, abaixo dos 4,5:1 da WCAG AA. A cor original continua em ícones e bordas. |
+| Borda dos campos em `#8a5c40` em vez de `#3f2319` | `#3f2319` tem 1,34:1 e a WCAG pede 3:1 para componentes de interface. Cards e divisórias mantêm a cor original. |
+| Botões em 3 tamanhos (36, 40 e 48 px) com raio de 5 px | O Figma usa 5 alturas e 3 raios para o mesmo papel. Onde a medida exata importa, a tela passa a classe (o "Entrar" do header continua com 35 px e raio de 6 px). |
+| Campos com raio de 5 px em todas as telas | O Figma alterna entre 3 e 5 px. |
+| Altura de linha mínima igual ao tamanho da fonte | Vários estilos do Figma têm altura de linha menor que a fonte (18 px com 16 px), o que corta acentos quando o texto quebra. |
+| Marca KURIO no título da página | O nome da página no Figma é "GreenMint", mas o wordmark em todas as telas é KURIO. |
+| Ícone de menu (`MenuIcon` do lucide) no header do tablet | O Figma não tem ícone de menu, porque não desenha o tablet. |
+
+Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens vêm do arquivo do Figma (ver [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)).
 
 ## Limitações
 
@@ -100,3 +127,5 @@ A preencher. Registrar asset substituído, ajuste de contraste, tamanho de alvo 
 - A sessão é simulada: o token é opaco, emitido pelo MSW e guardado no navegador. Ver [docs/SECURITY.md](docs/SECURITY.md).
 - O transporte Socket.IO é interceptado pelo MSW. As limitações do binding ficam registradas em [docs/REALTIME.md](docs/REALTIME.md).
 - Os dados vivem no navegador de quem acessa. Dois navegadores não compartilham estado.
+- O pacote `shadcn`, que fornece o `shadcn/tailwind.css`, traz um `minimatch` antigo (via `ts-morph`) com alerta moderado de DoS no `npm audit`. Ele só roda no build e não chega ao navegador. O `npm audit fix --force` trocaria a versão do shadcn por uma incompatível.
+- Até o Passo 4, os links do layout usam `<a href>` e recarregam a página. Com as rotas criadas, passam a `<Link>` tipado do TanStack Router.

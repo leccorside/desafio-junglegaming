@@ -1,22 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { Button } from '@/components/ui/button'
-
 export const Route = createFileRoute('/')({
   component: HomePage,
 })
 
-// Página provisória do Passo 0. A tela inicial real entra no Passo 5.
+// Página provisória. A tela inicial real (destaques e catálogo) entra no Passo 5.
 function HomePage() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 p-6 text-center">
-      <h1 className="text-3xl font-bold">GreenMint</h1>
-      <p className="max-w-md text-muted-foreground">
-        Marketplace de NFTs em construção. Esta página confirma que a stack está configurada.
+    <section className="mx-auto flex max-w-content flex-col items-start gap-4 px-6 py-24 xl:px-0">
+      <h1 className="text-display-sm font-bold text-foreground uppercase">KURIO</h1>
+      <p className="max-w-xl text-body-lg text-muted-foreground">
+        Marketplace de NFTs em construção. O catálogo chega nas próximas etapas.
       </p>
-      <Button asChild>
-        <a href="https://github.com/leccorside/desafio-junglegaming">Ver repositório</a>
-      </Button>
-    </main>
+    </section>
   )
 }

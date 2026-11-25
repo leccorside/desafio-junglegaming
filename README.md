@@ -10,7 +10,7 @@ Marketplace de NFTs em React e TypeScript, feito para o desafio frontend descrit
 | --- | --- |
 | Aplicação publicada | [desafio-junglegaming-two.vercel.app](https://desafio-junglegaming-two.vercel.app) |
 | Repositório | [github.com/leccorside/desafio-junglegaming](https://github.com/leccorside/desafio-junglegaming) |
-| Layout no Figma | [Frontend Challenge](https://www.figma.com/design/Ff0SksUi7UFtPWUO8kyNtw/Frontend-Challenge?node-id=0-1) |
+| Layout no Figma (marca KURIO) | [Frontend Challenge](https://www.figma.com/design/Ff0SksUi7UFtPWUO8kyNtw/Frontend-Challenge?node-id=0-1) |
 
 ## Stack
 
@@ -52,6 +52,8 @@ npx playwright install chromium
 | `VITE_ENABLE_MOCKS` | `true` | Liga o MSW (REST e Socket.IO). Fica ligado também no build de demonstração. |
 | `VITE_API_URL` | `/api` | Base das chamadas REST feitas pelo Axios. |
 | `VITE_SOCKET_URL` | `ws://localhost/socket` | Endereço do Socket.IO interceptado pelo MSW. |
+
+| `FIGMA_TOKEN` | (vazio) | Opcional. Token pessoal do Figma, só para `node scripts/export-figma-assets.mjs`, que reexporta ícones e imagens do layout. Os arquivos gerados já estão versionados. |
 
 O arquivo `.env.mocks`, versionado, liga os mocks no modo `mocks`, usado pelo `dev:mocks`, pelos testes e pelo deploy.
 

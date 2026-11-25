@@ -6,6 +6,11 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Identidade visual do Figma: tokens de cor, tipografia (Roboto Mono local), raios, sombras e contêiner de 1200 px em `src/index.css`.
+- Componentes shadcn/ui adaptados: button, input, label, select, dialog, sheet, tabs, badge, skeleton com shimmer, sonner, form, pagination, checkbox, radio-group, slider, separator e avatar.
+- Layout base: header desktop, header compacto com menu lateral no tablet, barra inferior no mobile, footer, link para pular ao conteúdo, página 404 e página de erro de rota.
+- Script `scripts/export-figma-assets.mjs` e os assets exportados: 27 ícones, forma da barra inferior e 4 imagens em WebP.
+- Testes E2E de layout: navegação por viewport, itens fora do escopo, footer, newsletter, foco no menu lateral, link para pular, 404 e ausência de rolagem horizontal.
 - Setup do projeto: Vite 8, React 19, TypeScript 6 (`strict`), Tailwind CSS 4, shadcn/ui (Radix), TanStack Router com rotas por arquivo, TanStack Query, Axios, Socket.IO client, MSW 2 com `@mswjs/socket.io-binding`, Zod, React Hook Form, ESLint, Prettier, Playwright e Lighthouse CI.
 - Modo `mocks` do Vite e inicialização do MSW antes da primeira renderização.
 - Testes de fumaça em Chromium, desktop e mobile.

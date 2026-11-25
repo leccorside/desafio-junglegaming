@@ -37,4 +37,15 @@ Meta: WCAG 2.2 nível AA nas telas da entrega e Lighthouse Accessibility ≥ 95.
 
 ## Ajustes em relação ao Figma
 
-A preencher. Todo ajuste de contraste, tamanho de alvo de toque ou texto adicionado por acessibilidade é registrado aqui e em [ARCHITECTURE.md](../ARCHITECTURE.md).
+Todo ajuste de contraste, tamanho de alvo de toque ou texto adicionado por acessibilidade é registrado aqui e em [ARCHITECTURE.md](../ARCHITECTURE.md).
+
+| Ajuste | Onde | Motivo |
+| --- | --- | --- |
+| Texto de erro em `#ff5c66` (`--destructive-foreground`) | Mensagens de erro | `#ed1b2e` do Figma tem 4,39:1, abaixo de AA |
+| Borda de campo em `#8a5c40` (`--input`) | `Input` e campos de formulário | `#3f2319` do Figma tem 1,34:1, abaixo dos 3:1 de componente de interface |
+| Anel de foco de 2 px `Primary` com afastamento de 2 px | Todos os elementos focáveis (`:focus-visible` global) | O Figma não desenha foco |
+| Link "Pular para o conteúdo" | Primeiro item do Tab, leva o foco ao `<main id="conteudo">` | Pular o header em toda página |
+| Alvos de toque de 44 × 44 px | Itens da barra inferior mobile | O ícone do Figma tem 20 px |
+| Nomes acessíveis em botões só com ícone | Busca, carrinho, menu, itens da barra inferior, redes sociais ("abre em nova aba") | Os ícones não têm texto visível |
+| Itens fora do escopo como texto com `aria-disabled` e aviso oculto "(indisponível nesta demonstração)" | Header, menu lateral e footer | Não anunciar como link algo que não funciona |
+| `prefers-reduced-motion` desliga animações e transições | Global, incluindo o shimmer do skeleton | Preferência do sistema |

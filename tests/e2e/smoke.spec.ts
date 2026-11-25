@@ -7,10 +7,10 @@ test.describe('fumaça', () => {
 
     await page.goto('/')
 
-    await expect(page).toHaveTitle(/GreenMint/)
+    await expect(page).toHaveTitle(/KURIO/)
     await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR')
     await expect(page.getByRole('main')).toBeVisible()
-    await expect(page.getByRole('heading', { level: 1, name: 'GreenMint' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'KURIO' })).toBeVisible()
     expect(errors).toEqual([])
   })
 

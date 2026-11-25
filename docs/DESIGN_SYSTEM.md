@@ -195,15 +195,17 @@ Em 390 px a margem lateral continua 24 px, e as colunas da grade mobile ficam co
 | Valor | Usos | Onde aparece | Token |
 | ---: | ---: | --- | --- |
 | 3 px | 53 | Botão "Salvar", campo de cupom, inputs de senha | `rounded-xs` |
-| 4 px | 38 | Elementos internos de cards | `rounded-sm` |
-| 5 px | 17 | Inputs de login e cadastro, botões de entrar, login social, botão Etherscan | `rounded-[5px]` |
-| 6 px | 48 | Botão de login do header, botão "Aplicar" | `rounded-md` |
+| 4 px | 38 | Elementos internos de cards, botões das redes sociais | `rounded-sm` |
+| 5 px | 17 | Inputs de login e cadastro, botões de entrar, login social, botão Etherscan | `rounded-control` |
+| 6 px | 48 | Botão de login do header, botão "Aplicar", newsletter | `rounded-md` |
 | 8 px | 22 | Cards de blog e promocionais | `rounded-lg` |
 | 10 px | 13 | Campo de busca mobile | `rounded-[10px]` |
 | 12 px | | Banner hero mobile | `rounded-xl` |
 | 14 px | 12 | Botão de filtro mobile | `rounded-[14px]` |
 | 16 px | 29 | Imagens e cards de produto | `rounded-2xl` |
 | 20 px ou mais | 45 | Botões de adicionar (pílula), avatares, chips | `rounded-full` |
+
+Os tokens estão em `src/index.css` (`--radius-*`). Como o projeto define tokens próprios de raio e de texto, o `cn` (`src/lib/utils.ts`) estende o `tailwind-merge` com esses nomes. Sem isso, `text-body-sm` seria confundido com cor de texto e descartado ao lado de `text-foreground`.
 
 ## Bordas
 
@@ -247,9 +249,29 @@ Em 390 px a margem lateral continua 24 px, e as colunas da grade mobile ficam co
 | Card promocional | 250 px | 8 px | Imagem de fundo |
 | Badge de contagem do carrinho | 16 px | | Fundo `Primary`, borda 2 px `Ink`, texto `Tiny/9 Bold` |
 
-## Ícones
+## Ícones e assets exportados
 
-Os ícones vêm do pacote Iconly (variante Bold), como mostram os nomes das instâncias (`Iconly/Bold/Home`, `Shop`, `User`). Vão ser exportados do Figma como SVG e usados como componentes React, em vez dos ícones `lucide-react` que o shadcn usa por padrão.
+Os ícones do layout vêm do pacote Iconly (variantes Bold, Curved, Two-tone e Light-Outline), além dos ícones de redes sociais, busca e carrinho desenhados no arquivo. O script `scripts/export-figma-assets.mjs` exporta tudo pela API do Figma, usando o `FIGMA_TOKEN` do `.env`:
+
+| Saída | Conteúdo |
+| --- | --- |
+| `src/components/icons/figma-icons.tsx` | 27 ícones como componentes React (`SearchIcon`, `CartIcon`, `HomeIcon`, `YoutubeIcon`...), com `currentColor`. Arquivo gerado, não editar à mão. |
+| `src/assets/tab-bar-background.svg` | Forma curva da barra inferior mobile, com a sombra do Figma |
+| `public/images/nfts/nft-0{1..4}-{480,960}.webp` | As 4 imagens do arquivo, em WebP (16 a 69 kB cada) |
+
+Cada ícone aceita `size` (padrão 20) e `title`. Sem `title` ele é decorativo (`aria-hidden`), que é o caso quando o botão ou link já tem nome acessível. Os componentes do shadcn mantêm os ícones internos do `lucide-react` (fechar, setas do select), e o botão de menu do header usa o `MenuIcon` do lucide, porque o Figma não tem ícone de menu.
+
+O arquivo só tem 4 imagens, reaproveitadas em 81 lugares. As fixtures do catálogo (Passo 3) vão repetir essas imagens.
+
+## Layout implementado
+
+| Faixa | Header | Navegação | Footer |
+| --- | --- | --- | --- |
+| Desktop (≥ 1024 px) | Logo, navegação com item ativo sublinhado, busca, carrinho e botão "Entrar", com divisória `Primary` a 30% | No header | Três faixas do Figma, em 4 colunas |
+| Tablet (768 a 1023 px) | Logo, busca, carrinho e botão de menu | Menu lateral (Sheet) com os itens e o "Entrar" | 2 colunas |
+| Mobile (< 768 px) | Não há, como no Figma | Barra inferior fixa: Início, Favoritos, botão central (abre o menu), Carrinho e Perfil | 1 coluna, com espaço livre para a barra |
+
+O botão central da barra inferior usa o ícone de leitura (scan) do Figma, que não tem função definida no escopo. Ele abre o menu lateral, para que a navegação principal fique acessível no mobile.
 
 ## Contraste
 
@@ -269,17 +291,17 @@ Razão de contraste WCAG de cada cor de texto sobre cada superfície. O mínimo 
 
 `Ink` sobre `Primary` (texto dos botões) dá 6,85:1.
 
-Dois pontos não passam e precisam de ajuste no Passo 1, registrado como desvio em [ARCHITECTURE.md](../ARCHITECTURE.md):
+Dois pontos não passam. Os ajustes foram aplicados no Passo 1 e estão registrados como desvio em [ARCHITECTURE.md](../ARCHITECTURE.md):
 
-1. **Texto de erro.** `Color/Error` (`#ed1b2e`) fica abaixo de 4,5:1 em todas as superfícies. Proposta: manter `#ed1b2e` em ícones e bordas de erro e usar `#ff5c66` no texto da mensagem (6,39:1 sobre Ink, 5,82:1 sobre Surface Card, 4,97:1 sobre Surface Dark).
-2. **Borda dos campos.** `Color/Border` (`#3f2319`) tem 1,34:1 sobre o fundo, e o critério 1.4.11 da WCAG pede 3:1 para identificar um campo. Proposta: borda dos inputs em `#8a5c40` (3,38:1 sobre Ink, 3,08:1 sobre Surface Card), mantendo `Color/Border` nos cards e divisórias, que são decorativos.
+1. **Texto de erro.** `Color/Error` (`#ed1b2e`) fica abaixo de 4,5:1 em todas as superfícies. Aplicado: `#ed1b2e` continua em ícones e bordas de erro (`--destructive`), e o texto da mensagem usa `#ff5c66` (`--destructive-foreground`: 6,39:1 sobre Ink, 5,82:1 sobre Surface Card, 4,97:1 sobre Surface Dark).
+2. **Borda dos campos.** `Color/Border` (`#3f2319`) tem 1,34:1 sobre o fundo, e o critério 1.4.11 da WCAG pede 3:1 para identificar um campo. Aplicado: borda dos inputs em `#8a5c40` (`--input`: 3,38:1 sobre Ink, 3,08:1 sobre Surface Card). `Color/Border` continua nos cards e divisórias, que são decorativos.
 
 ## Inconsistências do arquivo
 
 Diferenças que o código vai normalizar. A decisão final de cada uma fica em [ARCHITECTURE.md](../ARCHITECTURE.md).
 
-- Botões primários com cinco alturas (35, 36, 40, 45 e 48 px) e três raios (3, 5 e 6 px). Proposta: tamanhos `sm` 36 px, `md` 40 px e `lg` 48 px, raio de 5 px, mantendo cada tela com o tamanho mais próximo do Figma.
-- Campos com raio de 5 px no login e no cadastro e de 3 px no perfil e no cupom. Proposta: 5 px em todos.
+- Botões primários com cinco alturas (35, 36, 40, 45 e 48 px) e três raios (3, 5 e 6 px). Aplicado no `Button`: tamanhos `sm` 36 px, `default` 40 px e `lg` 48 px, raio de 5 px (`rounded-control`). Onde o Figma pede outra medida, a tela passa a classe (o "Entrar" do header usa 35 px e raio de 6 px).
+- Campos com raio de 5 px no login e no cadastro e de 3 px no perfil e no cupom. Aplicado no `Input`: 5 px em todos.
 - Vários estilos de texto têm altura de linha menor que o tamanho da fonte (por exemplo 18 px com 16 px de altura), o que corta acentos e descendentes quando o texto quebra. No código a altura mínima é o tamanho da fonte.
 - `Text/Primary` (`#f7f3ec`) e `Color/Foreground` (`#f5f1eb`) são quase iguais. O código usa só `Foreground`.
 - `Color/Border` aparece aplicado também com `#2f1d15` e `#241612` em 6 elementos, o que indica estilo desvinculado. O código usa sempre `#3f2319`.
