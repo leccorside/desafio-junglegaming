@@ -63,13 +63,18 @@ O `mockServiceWorker.js` precisa ser servido como arquivo, sem rewrite e sem cac
 
 ## Como publicar
 
-O projeto `desafio-junglegaming` está vinculado pela pasta `.vercel/` (fora do repositório). Com o CLI logado:
+O projeto `desafio-junglegaming` na Vercel está conectado ao repositório `leccorside/desafio-junglegaming` no GitHub, com `main` como branch de produção:
+
+- push na `main`: deploy de produção automático;
+- push em outro branch ou pull request: deploy de preview.
+
+Para publicar sem push, pelo CLI (a pasta `.vercel/`, fora do repositório, guarda o vínculo):
 
 ```bash
 npx vercel deploy --prod --yes
 ```
 
-O CLI respeita o `.gitignore`, então o `.env` local não é enviado. O build roda na Vercel com o comando do `vercel.json`.
+O CLI respeita o `.gitignore`, então o `.env` local não é enviado. Nos dois caminhos o build roda na Vercel com o comando do `vercel.json`. A Vercel usa o Node 26.x, o mais recente aceito pelo `engines` (`>=22`).
 
 ## Alternativas aceitas
 
