@@ -209,6 +209,41 @@ test.describe('catálogo', () => {
     await expect(resultCount(page)).toHaveText('0 NFTs encontrados')
   })
 
+  test('catálogo vazio: sem faixa de preço falsa e hero com imagem fixa', async ({
+    page,
+    isMobile,
+  }) => {
+    const hero = page.locator('section[aria-labelledby="hero-title"]')
+    const fallback = hero.locator('img[data-hero-fallback]')
+    // Com destaques, a imagem é a da API.
+    await expect(
+      hero.locator('img:not([data-hero-fallback])').filter({ visible: true }).first(),
+    ).toBeVisible()
+    expect(await fallback.count()).toBe(0)
+
+    await setScenario(page, ['empty-catalog'])
+    await page.reload()
+    await waitForApp(page)
+    await expect(page.getByText('Nenhum NFT encontrado.')).toBeVisible()
+
+    // Hero: imagem fixa carregada no lugar do destaque, sem link para NFT.
+    const visibleFallback = fallback.filter({ visible: true })
+    await expect(visibleFallback).toHaveCount(1)
+    await expect
+      .poll(() => visibleFallback.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0)
+    expect(await hero.getByRole('link', { name: /^Ver / }).count()).toBe(0)
+
+    // Filtros: nada de "0,00 - 0,00 ETH" nem slider sem faixa.
+    const panel = await filters(page, isMobile)
+    await expect(panel.getByText('Faixa de preço indisponível no momento.')).toBeVisible()
+    expect(await panel.getByRole('slider').count()).toBe(0)
+    expect(await panel.getByRole('button', { name: 'Aplicar' }).count()).toBe(0)
+    expect(await panel.getByText(/0,00 - 0,00/).count()).toBe(0)
+    await expect(panel.getByRole('button', { name: 'Música (0)' })).toBeVisible()
+    await closeFilters(page, isMobile)
+  })
+
   test('mostra skeleton enquanto a API demora', async ({ page }) => {
     await setScenario(page, ['slow'], { routes: ['/nfts'] })
     await page.reload()

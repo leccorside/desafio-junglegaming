@@ -48,10 +48,18 @@ function Dots({
 }
 
 /**
+ * Imagem fixa do projeto (asset do Figma) para quando a API não tem destaques
+ * ou falha: o hero não fica com a metade direita vazia. Não é link, porque
+ * não representa um NFT do catálogo.
+ */
+const HERO_FALLBACK_IMAGE = '/images/nfts/nft-01-960.webp'
+
+/**
  * Destaques da tela inicial. Desktop (frame "Hero", 1200 × 450): texto à
  * esquerda, imagem do destaque à direita e pontos para trocar. Mobile
  * ("Hero Banner", 366 × 190): cartão em gradiente com duas imagens.
  * As imagens vêm de `GET /nfts/featured`; o texto é fixo, como no Figma.
+ * Sem destaques, entra a `HERO_FALLBACK_IMAGE`.
  */
 export function HomeHero() {
   const featured = useFeaturedNfts()
@@ -107,7 +115,17 @@ export function HomeHero() {
               className="size-[450px] rounded-3xl object-cover"
             />
           </Link>
-        ) : null}
+        ) : (
+          <img
+            {...nftImageSources(HERO_FALLBACK_IMAGE, '450px')}
+            alt=""
+            width={450}
+            height={450}
+            decoding="async"
+            data-hero-fallback=""
+            className="size-[450px] shrink-0 rounded-3xl object-cover"
+          />
+        )}
       </div>
 
       {/* Mobile */}
@@ -140,7 +158,17 @@ export function HomeHero() {
             decoding="async"
             className="absolute top-4 right-4 size-[138px] rounded-xl object-cover"
           />
-        ) : null}
+        ) : featured.isPending ? null : (
+          <img
+            {...nftImageSources(HERO_FALLBACK_IMAGE, '138px')}
+            alt=""
+            width={138}
+            height={138}
+            decoding="async"
+            data-hero-fallback=""
+            className="absolute top-4 right-4 size-[138px] rounded-xl object-cover"
+          />
+        )}
         {second && second.id !== nft?.id && second.images[0] ? (
           <img
             {...nftImageSources(second.images[0].url, '58px')}

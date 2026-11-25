@@ -45,6 +45,8 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Catálogo vazio: a faixa de preço mostrava "Preço: 0,00 - 0,00 ETH" com os dois pontos do slider sobrepostos e o botão "Aplicar". Sem faixa para escolher (catálogo vazio, um único preço ou API fora do ar), aparece "Faixa de preço indisponível no momento.", sem slider e sem "Aplicar"; "Limpar preço" continua quando há preço na URL.
+- Hero: sem destaques na API (catálogo vazio ou falha), a metade direita ficava vazia no desktop e o banner mobile ficava sem imagem. Agora entra uma imagem fixa do projeto, sem link.
 - Catálogo: quando a API falhava, o status acima da grade continuava em "Carregando NFTs…" (anunciado pelo leitor de tela), e as contagens dos filtros e o slider de preço ficavam em skeleton para sempre. Agora o status diz "Não foi possível carregar os NFTs.", os filtros aparecem sem contagem e a faixa de preço mostra "Faixa de preço indisponível no momento." até a nova tentativa dar certo.
 - Catálogo no mobile: o ponto coral que indica filtro aplicado no botão de filtros não era anunciado. Com busca, aba ou filtro ativo, o botão se chama "Filtros e ordenação (filtros aplicados)". Só a ordenação não muda o nome.
 - Catálogo: na página 2, os links "Página anterior" e "Página 1" também eram anunciados como página atual (`aria-current="page"`), junto com a página 2. Os links "EXPLORAR" do hero também recebiam essa marca. Agora só a página e a aba atuais têm a marca.

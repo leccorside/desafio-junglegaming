@@ -90,6 +90,8 @@ export function CatalogFilters({
   const priceId = useId()
   const min = facets ? Number(facets.priceRange.min) : 0
   const max = facets ? Number(facets.priceRange.max) : 0
+  // Sem faixa para escolher: API falhou, catálogo vazio ou um único preço.
+  const noRange = noFacets || (facets !== undefined && min >= max)
   const fromUrl = (): [number, number] => [
     search.minPrice ? Number(search.minPrice) : min,
     search.maxPrice ? Number(search.maxPrice) : max,
@@ -140,7 +142,7 @@ export function CatalogFilters({
           Faixa de preço
         </legend>
         <div className="flex flex-col gap-3 pl-3">
-          {facets ? (
+          {noRange ? null : facets ? (
             <Slider
               min={min}
               max={max}
@@ -151,16 +153,16 @@ export function CatalogFilters({
               thumbLabels={['Preço mínimo', 'Preço máximo']}
               aria-describedby={priceId}
             />
-          ) : noFacets ? null : (
+          ) : (
             <Skeleton className="h-[21px] w-full" />
           )}
           <p id={priceId} className="text-body text-foreground" aria-live="polite">
-            {noFacets
+            {noRange
               ? 'Faixa de preço indisponível no momento.'
               : `Preço: ${facets ? `${formatPrice(range[0])} - ${formatPrice(range[1])}` : '…'} ETH`}
           </p>
           <div className="flex items-center gap-3">
-            {noFacets ? null : (
+            {noRange ? null : (
               <Button size="sm" onClick={applyPrice} disabled={!priceChanged} className="w-[92px]">
                 Aplicar
               </Button>
