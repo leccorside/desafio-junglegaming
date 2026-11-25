@@ -31,10 +31,12 @@ Os dois lados do MSW leem e escrevem no mesmo banco. Uma mudança de preço feit
 ```text
 src/
   api/
-    client.ts            instância Axios, interceptors, normalização de erros
+    client.ts            instância Axios, interceptors e apiRequest (valida com o schema)
+    errors.ts            ApiError e normalizeError
     contracts/           schemas Zod e tipos compartilhados (REST e eventos)
+  hooks/                 hooks genéricos (useMediaQuery)
   features/
-    auth/                sessão, login, cadastro, logout
+    auth/                sessão (store, ciclo de vida), login, cadastro, logout, redirect seguro
     catalog/             início, destaques, busca e filtros
     nft/                 detalhe, galeria, edição, quantidade
     favorites/
@@ -44,7 +46,7 @@ src/
     profile/
     wallets/
     realtime/            cliente Socket.IO e aplicação de eventos no cache
-  routes/                rotas do TanStack Router (por arquivo)
+  routes/                rotas do TanStack Router (por arquivo); _authenticated/ privadas, _guest/ entrada
   assets/                formas SVG exportadas do Figma
   components/
     ui/                  componentes shadcn adaptados
@@ -84,6 +86,11 @@ Cada pasta em `features/` concentra os hooks de query e mutation, as query keys,
 | Zod nos contratos | Um schema gera o tipo e valida a resposta no limite da rede. |
 | Valores em ETH como string + big.js (`src/lib/eth.ts`) | Evita erro de ponto flutuante e segue o enunciado. O big.js (cerca de 6 kB) cobre soma, multiplicação, comparação e arredondamento. O decimal.js seria 5 vezes maior, com funções que o projeto não usa. |
 | Contratos em `src/api/contracts` como schemas Zod | Um schema gera o tipo e valida a resposta. O mesmo schema serve aos handlers do MSW, aos formulários (React Hook Form) e aos search params da URL do catálogo. |
+| Sessão fora do React (`session-store.ts`) com `useSyncExternalStore` | O interceptor do Axios precisa do token sem depender de componente. O Axios recebe as funções da sessão por `configureApiClient`, sem import circular. |
+| Rotas privadas num layout `_authenticated` com `beforeLoad` | Uma proteção só, que revalida a sessão na API e guarda o `redirect`. A expiração chama `router.invalidate()`, que reexecuta a proteção. |
+| `queryClient.clear()` no fim de toda sessão | Garante que nenhum dado do usuário anterior sobreviva, sem depender de lembrar quais chaves são privadas. Os dados públicos são buscados de novo. |
+| Login e cadastro no desktop como modal sobre a tela inicial | É como o Figma desenha (frames "Sign In/Up Modal" sobre a "Marketplace Page"). As rotas `/login` e `/register` continuam existindo, então acesso direto e refresh funcionam. |
+| `apiRequest` valida toda resposta com o schema | Uma resposta fora do contrato vira `INVALID_RESPONSE` em vez de dado errado no cache. |
 | Mocks em camadas: handlers → serviços → banco (`src/mocks`) | Os handlers só traduzem HTTP e validam com os contratos. As regras ficam em serviços testados pela API HTTP real (`msw/node`). Separar isso evita regra de negócio duplicada entre REST e Socket.IO. |
 | Pagamento decidido por prazo (`settleAt`) e liquidado antes de cada requisição | O resultado do pedido sobrevive a refresh e funciona com relógio controlado nos testes, sem depender de `setTimeout` vivo. |
 | Cotação com assinatura do conteúdo | A API percebe qualquer mudança de preço, estoque, cupom ou taxa entre a revisão e a confirmação e devolve `QUOTE_OUTDATED` com o que mudou. |
@@ -114,6 +121,11 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Newsletter do footer | O envio mostra um toast informativo dizendo que a newsletter não está disponível. Não simula cadastro. |
 | Redes sociais | Abrem a página inicial de cada rede em nova aba (`rel="noopener noreferrer"`), com o aviso no nome acessível. |
 | Contador do carrinho | O Figma mostra "6". O badge só vai aparecer no Passo 7, com a quantidade real do carrinho. |
+| Login social e "Esqueceu a senha?" | Fora do escopo. Os botões aparecem como no Figma, mas mostram um aviso de indisponível, sem simular sucesso. |
+| Sessão expirada | Em rota privada, vai ao login com o aviso "Sua sessão expirou. Entre de novo para continuar de onde parou." e volta depois. Em rota pública, fica na página e recebe um aviso. |
+| Fechar o modal de login | X, Esc ou clique fora voltam ao início (a rota de origem pode ser privada, e não dá para voltar a ela sem sessão). |
+| Menu da conta | O Figma só desenha o botão "Entrar". Com sessão, o header mostra avatar (iniciais) e nome, com menu: Meu perfil, Carteiras, Lista de interesse e Sair. |
+| Favoritos | Ganham a rota `/favorites`, com o nome "Lista de interesse" do Figma (menu do perfil e footer). O coração da barra inferior leva a ela. |
 | Página 404 e erro de rota | Mesmo layout das outras telas, com o código em `Primary`, texto e botão "Voltar ao início". O erro de rota oferece "Tentar de novo" sem recarregar a página. |
 
 ## Desvios do Figma
@@ -126,6 +138,8 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Campos com raio de 5 px em todas as telas | O Figma alterna entre 3 e 5 px. |
 | Altura de linha mínima igual ao tamanho da fonte | Vários estilos do Figma têm altura de linha menor que a fonte (18 px com 16 px), o que corta acentos quando o texto quebra. |
 | Marca KURIO no título da página | O nome da página no Figma é "GreenMint", mas o wordmark em todas as telas é KURIO. |
+| Rótulos dos campos de login e cadastro só para leitor de tela | O Figma só tem placeholder. Os campos ganharam `<label>` visualmente oculto e mensagens de erro ligadas por `aria-describedby`. |
+| Sem footer nas telas de entrada no mobile | O Figma mobile de login e cadastro é tela cheia. |
 | Ícone de menu (`MenuIcon` do lucide) no header do tablet | O Figma não tem ícone de menu, porque não desenha o tablet. |
 
 Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens vêm do arquivo do Figma (ver [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)).
@@ -137,4 +151,5 @@ Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens v
 - O transporte Socket.IO é interceptado pelo MSW. As limitações do binding ficam registradas em [docs/REALTIME.md](docs/REALTIME.md).
 - Os dados vivem no navegador de quem acessa. Dois navegadores não compartilham estado.
 - O pacote `shadcn`, que fornece o `shadcn/tailwind.css`, traz um `minimatch` antigo (via `ts-morph`) com alerta moderado de DoS no `npm audit`. Ele só roda no build e não chega ao navegador. O `npm audit fix --force` trocaria a versão do shadcn por uma incompatível.
-- Até o Passo 4, os links do layout usam `<a href>` e recarregam a página. Com as rotas criadas, passam a `<Link>` tipado do TanStack Router.
+- O chunk principal passou de 500 kB (cerca de 225 kB gzip) com Zod, Axios, Radix e os formulários. O Vite avisa no build. A divisão de código entra no Passo 15.
+- O `Link` do TanStack Router concatena `className` com `activeProps` sem tailwind-merge. Cores que mudam com o estado vão só em `activeClassName`/`inactiveClassName` (ver `NavLink`).

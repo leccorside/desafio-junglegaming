@@ -1,3 +1,4 @@
+import { useMatchRoute } from '@tanstack/react-router'
 import { useId, type ComponentType, type FormEvent } from 'react'
 import { toast } from 'sonner'
 
@@ -9,6 +10,8 @@ import {
   TwitterIcon,
   YoutubeIcon,
 } from '@/components/icons/figma-icons'
+
+import { cn } from '@/lib/utils'
 
 import { footerColumns, footerFeatures, socialLinks } from './nav-config'
 import { NavLink } from './nav-link'
@@ -27,6 +30,9 @@ const socialIcons: Record<(typeof socialLinks)[number]['label'], ComponentType<I
  */
 export function SiteFooter() {
   const emailId = useId()
+  const matchRoute = useMatchRoute()
+  // No mobile, entrar e criar conta ocupam a tela inteira, sem footer (Figma).
+  const onAuthScreen = Boolean(matchRoute({ to: '/login' }) || matchRoute({ to: '/register' }))
 
   // Newsletter está fora do escopo: o envio avisa que não há cadastro, sem simular sucesso.
   const handleNewsletter = (event: FormEvent<HTMLFormElement>) => {
@@ -35,7 +41,12 @@ export function SiteFooter() {
   }
 
   return (
-    <footer className="mx-auto mt-24 w-full max-w-content px-6 pb-[150px] md:pb-6 xl:px-0">
+    <footer
+      className={cn(
+        'mx-auto mt-24 w-full max-w-content px-6 pb-[150px] md:pb-6 xl:px-0',
+        onAuthScreen && 'hidden md:block',
+      )}
+    >
       <div className="bg-card p-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.35fr] lg:gap-0">
           {footerFeatures.map((feature) => (

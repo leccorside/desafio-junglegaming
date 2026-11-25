@@ -1,56 +1,54 @@
-import { useLocation } from '@tanstack/react-router'
+import { Link, useMatchRoute, type LinkProps } from '@tanstack/react-router'
 import type { ComponentType } from 'react'
 
 import tabBarBackground from '@/assets/tab-bar-background.svg'
 import type { IconProps } from '@/components/icons/create-icon'
 import { HeartIcon, HomeIcon, ScanIcon, ShopIcon, UserIcon } from '@/components/icons/figma-icons'
-import { cn } from '@/lib/utils'
 
 import { MobileMenu } from './mobile-menu'
 
 interface TabItem {
   label: string
-  href: string
+  to: LinkProps['to']
   icon: ComponentType<IconProps>
 }
 
 const leftTabs: TabItem[] = [
-  { label: 'Início', href: '/', icon: HomeIcon },
-  { label: 'Favoritos', href: '/profile#favoritos', icon: HeartIcon },
+  { label: 'Início', to: '/', icon: HomeIcon },
+  { label: 'Lista de interesse', to: '/favorites', icon: HeartIcon },
 ]
 
 const rightTabs: TabItem[] = [
-  { label: 'Carrinho', href: '/cart', icon: ShopIcon },
-  { label: 'Perfil', href: '/profile', icon: UserIcon },
+  { label: 'Carrinho', to: '/cart', icon: ShopIcon },
+  { label: 'Perfil', to: '/profile', icon: UserIcon },
 ]
 
 /**
  * Barra de navegação inferior do Figma (frame "Tab Bar", 414 × 126 px),
- * só abaixo de 768 px. O botão central abre o menu lateral.
+ * só abaixo de 768 px. O botão central abre o menu lateral. Some nas telas de
+ * entrada e cadastro, que no Figma mobile ocupam a tela inteira.
  * A forma curva vem do Figma (src/assets/tab-bar-background.svg), com a sombra
  * embutida numa margem de 30 px nas laterais e 40 px em cima.
  */
 export function MobileTabBar() {
-  const { pathname } = useLocation()
+  const matchRoute = useMatchRoute()
+  if (matchRoute({ to: '/login' }) || matchRoute({ to: '/register' })) return null
 
-  const renderTab = ({ label, href, icon: Icon }: TabItem) => {
-    const active = href === '/' ? pathname === '/' : pathname === href.split('#')[0]
-    return (
-      <li key={label}>
-        <a
-          href={href}
-          aria-label={label}
-          aria-current={active ? 'page' : undefined}
-          className={cn(
-            'flex size-11 items-center justify-center rounded-full transition-colors',
-            active ? 'text-accent-foreground' : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          <Icon size={20} />
-        </a>
-      </li>
-    )
-  }
+  const renderTab = ({ label, to, icon: Icon }: TabItem) => (
+    <li key={label}>
+      <Link
+        to={to}
+        aria-label={label}
+        activeOptions={{ exact: to === '/' }}
+        className="flex size-11 items-center justify-center rounded-full transition-colors"
+        // Cor só por estado: o Link concatena classes sem tailwind-merge (ver NavLink).
+        activeProps={{ className: 'text-accent-foreground' }}
+        inactiveProps={{ className: 'text-muted-foreground hover:text-foreground' }}
+      >
+        <Icon size={20} />
+      </Link>
+    </li>
+  )
 
   return (
     <nav

@@ -49,3 +49,10 @@ Todo ajuste de contraste, tamanho de alvo de toque ou texto adicionado por acess
 | Nomes acessíveis em botões só com ícone | Busca, carrinho, menu, itens da barra inferior, redes sociais ("abre em nova aba") | Os ícones não têm texto visível |
 | Itens fora do escopo como texto com `aria-disabled` e aviso oculto "(indisponível nesta demonstração)" | Header, menu lateral e footer | Não anunciar como link algo que não funciona |
 | `prefers-reduced-motion` desliga animações e transições | Global, incluindo o shimmer do skeleton | Preferência do sistema |
+| Rótulo oculto (`sr-only`) em cada campo de login e cadastro | Formulários de entrada | O Figma só tem placeholder, que some ao digitar e não é rótulo |
+| Erro de campo ligado por `aria-describedby`, `aria-invalid` e foco no primeiro campo com erro da API | Formulários (shadcn `Form` + `applyApiError`) | Leitor de tela anuncia o erro junto com o campo |
+| Erro geral do formulário com `role="alert"` | Login e cadastro (ex.: credenciais erradas) | Anúncio imediato sem mover o foco |
+| Foco inicial no primeiro campo do modal de login | Modal desktop (`onOpenAutoFocus`) | O Radix focaria o botão de fechar |
+| Botão de mostrar senha com `aria-label` e `aria-pressed` | Campos de senha | O ícone "Hide" não tem texto |
+| Aviso de sessão expirada com `role="status"` | Tela de login | Explica por que a pessoa voltou ao login |
+| Botões de login social e "Esqueceu a senha?" com `aria-disabled` e aviso oculto | Entrar e criar conta | Fora do escopo: focáveis, mas anunciados como indisponíveis |

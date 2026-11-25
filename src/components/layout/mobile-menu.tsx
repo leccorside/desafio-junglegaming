@@ -1,3 +1,4 @@
+import { Link, useLocation } from '@tanstack/react-router'
 import { MenuIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
@@ -11,9 +12,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { UserAvatar } from '@/features/auth/components/user-menu'
+import { useSignOut } from '@/features/auth/use-sign-out'
+import { useSession } from '@/features/auth/session-store'
 
 import { Logo } from './logo'
-import { mainNav } from './nav-config'
+import { accountNav, mainNav } from './nav-config'
 import { NavLink } from './nav-link'
 
 interface MobileMenuProps {
@@ -27,6 +31,11 @@ interface MobileMenuProps {
  */
 export function MobileMenu({ trigger }: MobileMenuProps) {
   const [open, setOpen] = useState(false)
+  const session = useSession()
+  const location = useLocation()
+  const { signOut, pending } = useSignOut()
+  const close = () => setOpen(false)
+  const linkClass = 'rounded-md px-3 py-3 text-body-lg hover:bg-accent'
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -40,7 +49,7 @@ export function MobileMenu({ trigger }: MobileMenuProps) {
       <SheetContent side="left" className="w-72 border-border bg-card p-0">
         <SheetHeader className="border-b border-border p-6">
           <SheetTitle asChild>
-            <div>
+            <div onClick={close}>
               <Logo />
             </div>
           </SheetTitle>
@@ -48,22 +57,59 @@ export function MobileMenu({ trigger }: MobileMenuProps) {
             Navegação principal do marketplace
           </SheetDescription>
         </SheetHeader>
-        <nav aria-label="Menu" className="flex flex-1 flex-col gap-1 p-4">
+        <nav aria-label="Menu" className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
           {mainNav.map((item) => (
             <NavLink
               key={item.label}
               item={item}
-              className="rounded-md px-3 py-3 text-body-lg text-foreground hover:bg-accent"
+              onClick={close}
+              className={linkClass}
+              activeClassName="font-bold text-accent-foreground"
+              inactiveClassName="text-foreground"
             />
           ))}
+          {session ? (
+            <>
+              <div className="mt-4 mb-1 flex items-center gap-3 border-t border-border px-3 pt-5">
+                <UserAvatar user={session.user} size={32} />
+                <span className="truncate text-body-sm font-bold">{session.user.displayName}</span>
+              </div>
+              {accountNav.map((item) => (
+                <NavLink
+                  key={item.label}
+                  item={item}
+                  onClick={close}
+                  className={linkClass}
+                  activeClassName="font-bold text-accent-foreground"
+                  inactiveClassName="text-foreground"
+                />
+              ))}
+            </>
+          ) : null}
         </nav>
         <div className="border-t border-border p-4">
-          <Button asChild size="lg" className="w-full">
-            <a href="/login">
+          {session ? (
+            <Button
+              size="lg"
+              variant="secondary"
+              className="w-full"
+              disabled={pending}
+              onClick={() => {
+                close()
+                void signOut()
+              }}
+            >
               <LogoutIcon size={20} />
-              Entrar
-            </a>
-          </Button>
+              Sair
+            </Button>
+          ) : (
+            <Button asChild size="lg" className="w-full">
+              <Link to="/login" search={{ redirect: location.href }} onClick={close}>
+                <LogoutIcon size={20} />
+                Entrar
+              </Link>
+            </Button>
+          )}
         </div>
       </SheetContent>
     </Sheet>

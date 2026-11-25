@@ -51,6 +51,18 @@ const SHAPES = {
   'tab-bar-background': '15:5504',
 }
 
+/**
+ * Formas montadas a partir da geometria vetorial (`/files/:key/nodes?geometry=paths`),
+ * sem passar pelo endpoint de renderização `/images`, que tem cota baixa no plano.
+ */
+const GEOMETRY_SHAPES = {
+  'google-logo': 'I70484:260;70483:242',
+  'facebook-logo': 'I70484:240;70483:259',
+}
+
+/** Formas que esticam na horizontal (as outras mantêm a proporção). */
+const STRETCH = new Set(['tab-bar-background'])
+
 /** imageRef do Figma → nome do arquivo. São as 4 imagens usadas no layout. */
 const IMAGES = {
   84592047: 'nft-01',
@@ -143,9 +155,57 @@ async function exportShapes(token) {
   for (const [name, id] of Object.entries(SHAPES)) {
     const svg = (await (await fetch(images[id])).text())
       // Escala livre na horizontal: a forma acompanha a largura da tela.
-      .replace('<svg ', '<svg preserveAspectRatio="none" ')
+      .replace('<svg ', STRETCH.has(name) ? '<svg preserveAspectRatio="none" ' : '<svg ')
     await writeFile(resolve(outDir, `${name}.svg`), svg)
     console.log(`forma: src/assets/${name}.svg`)
+  }
+}
+
+const toHex = (c) =>
+  '#' +
+  [c.r, c.g, c.b]
+    .map((v) =>
+      Math.round(v * 255)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')
+
+async function exportGeometryShapes(token) {
+  const ids = Object.values(GEOMETRY_SHAPES).join(',')
+  const { nodes } = await figma(
+    token,
+    `files/${FILE_KEY}/nodes?ids=${encodeURIComponent(ids)}&geometry=paths`,
+  )
+  const outDir = resolve(ROOT, 'src/assets')
+  await mkdir(outDir, { recursive: true })
+
+  for (const [name, id] of Object.entries(GEOMETRY_SHAPES)) {
+    const root = nodes[id]?.document
+    if (!root) throw new Error(`Forma ${name} (${id}) não encontrada`)
+    const origin = root.absoluteBoundingBox
+    const paths = []
+    const walk = (node) => {
+      if (node.visible === false) return
+      const fill = (node.fills ?? []).find((f) => f.visible !== false && f.type === 'SOLID')
+      if (node.type !== 'FRAME' && fill && node.fillGeometry?.length) {
+        const box = node.absoluteBoundingBox
+        const dx = +(box.x - origin.x).toFixed(3)
+        const dy = +(box.y - origin.y).toFixed(3)
+        for (const geometry of node.fillGeometry) {
+          const rule = geometry.windingRule === 'EVENODD' ? ' fill-rule="evenodd"' : ''
+          paths.push(
+            `<path transform="translate(${dx} ${dy})" d="${geometry.path}" fill="${toHex(fill.color)}"${rule}/>`,
+          )
+        }
+      }
+      for (const child of node.children ?? []) walk(child)
+    }
+    walk(root)
+    const { width, height } = origin
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${paths.join('')}</svg>\n`
+    await writeFile(resolve(outDir, `${name}.svg`), svg)
+    console.log(`forma: src/assets/${name}.svg (${paths.length} caminhos)`)
   }
 }
 
@@ -171,7 +231,15 @@ async function exportImages(token) {
   }
 }
 
+// `--only=icons,shapes,images` exporta só parte (a API do Figma limita requisições).
+const only = process.argv
+  .find((a) => a.startsWith('--only='))
+  ?.slice(7)
+  .split(',')
+const wants = (part) => !only || only.includes(part)
+
 const token = await readToken()
-await exportIcons(token)
-await exportShapes(token)
-await exportImages(token)
+if (wants('icons')) await exportIcons(token)
+if (wants('shapes')) await exportShapes(token)
+if (wants('logos')) await exportGeometryShapes(token)
+if (wants('images')) await exportImages(token)

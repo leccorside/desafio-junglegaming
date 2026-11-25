@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
@@ -7,22 +8,44 @@ import type { NavItem } from './nav-config'
 interface NavLinkProps {
   item: NavItem
   className?: string
+  /** Classes só da rota ativa (o Link também marca `aria-current="page"`). */
+  activeClassName?: string
+  /**
+   * Classes só da rota inativa. Cor e peso que mudam com o estado vão aqui e em
+   * `activeClassName`, nunca em `className`: o Link concatena as classes sem
+   * tailwind-merge, e `text-foreground` + `text-accent-foreground` juntos
+   * deixariam a cor por conta da ordem do CSS.
+   */
+  inactiveClassName?: string
   disabledClassName?: string
-  active?: boolean
+  onClick?: () => void
   children?: ReactNode
 }
 
 /**
- * Link de navegação. Sem `href`, o item é uma área fora do escopo: vira texto
- * não interativo, com aviso para leitores de tela, em vez de um link morto.
+ * Link de navegação tipado. Sem `to`, o item é uma área fora do escopo: vira
+ * texto não interativo, com aviso para leitores de tela, em vez de link morto.
  */
-export function NavLink({ item, className, disabledClassName, active, children }: NavLinkProps) {
-  if (!item.href) {
+export function NavLink({
+  item,
+  className,
+  activeClassName,
+  inactiveClassName,
+  disabledClassName,
+  onClick,
+  children,
+}: NavLinkProps) {
+  if (!item.to) {
     return (
       <span
         aria-disabled="true"
         title="Indisponível nesta demonstração"
-        className={cn(className, 'cursor-not-allowed opacity-60', disabledClassName)}
+        className={cn(
+          className,
+          inactiveClassName,
+          'cursor-not-allowed opacity-60',
+          disabledClassName,
+        )}
       >
         {children ?? item.label}
         <span className="sr-only"> (indisponível nesta demonstração)</span>
@@ -31,8 +54,16 @@ export function NavLink({ item, className, disabledClassName, active, children }
   }
 
   return (
-    <a href={item.href} aria-current={active ? 'page' : undefined} className={className}>
+    <Link
+      to={item.to}
+      hash={item.hash}
+      onClick={onClick}
+      activeOptions={{ exact: item.exact ?? false, includeHash: Boolean(item.hash) }}
+      className={className}
+      activeProps={{ className: activeClassName }}
+      inactiveProps={{ className: inactiveClassName }}
+    >
       {children ?? item.label}
-    </a>
+    </Link>
   )
 }

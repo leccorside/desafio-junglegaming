@@ -36,6 +36,21 @@ test.describe('layout base', () => {
     }
   })
 
+  test('o item ativo usa a cor de destaque e os inativos a cor de texto', async ({ page }) => {
+    await page.goto('/')
+    const nav = page.getByRole('navigation', {
+      name: isMobile(page) ? 'Navegação inferior' : 'Principal',
+    })
+    // Text/Accent (#e89b55) no ativo. Inativo: Foreground (#f5f1eb) no header,
+    // Text/Secondary (#cfb28c) na barra inferior.
+    await expect(nav.getByRole('link', { name: 'Início' })).toHaveCSS('color', 'rgb(232, 155, 85)')
+    const inactive = isMobile(page) ? 'Carrinho' : 'Mercado'
+    await expect(nav.getByRole('link', { name: inactive })).toHaveCSS(
+      'color',
+      isMobile(page) ? 'rgb(207, 178, 140)' : 'rgb(245, 241, 235)',
+    )
+  })
+
   test('itens fora do escopo não são links', async ({ page }) => {
     test.skip(isMobile(page), 'a navegação principal fica no menu lateral no mobile')
     await page.goto('/')

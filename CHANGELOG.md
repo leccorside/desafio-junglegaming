@@ -6,6 +6,12 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Sessão completa: cadastro, login e logout integrados à API simulada, sessão recuperada depois do refresh, revalidação a cada rota privada, expiração tratada na navegação (login com aviso e volta ao destino) e limpeza de todo o cache no fim da sessão e na troca de usuário.
+- Telas de entrada como no Figma: modal sobre a tela inicial no desktop (abas Entrar e Criar conta) e tela cheia no mobile, com React Hook Form, validação pelos contratos, erros da API por campo, mostrar e ocultar senha, login social e recuperação de senha como indisponíveis.
+- Camada de dados: Axios com token, `X-Cart-Id` do visitante, timeout de 15 s e erros normalizados em `ApiError`; `apiRequest` valida toda resposta com o schema; TanStack Query repete só falhas transitórias, com backoff.
+- Árvore de rotas: início, detalhe, carrinho, login, cadastro e as privadas (pagamento, pedido, perfil, carteiras, lista de interesse) num layout protegido, com `redirect` seguro contra open redirect.
+- Menu da conta no header e no menu lateral (Meu perfil, Carteiras, Lista de interesse, Sair) e links do layout como `Link` tipado do TanStack Router.
+- 23 testes unitários (cliente HTTP, erros, retry, redirect) e 12 cenários E2E de sessão (item 3 do enunciado), além do teste de cor do item de navegação ativo.
 - API simulada completa com MSW: sessão e conta, catálogo com filtros e facetas, favoritos, carrinho do visitante e do usuário com merge, cupons, cotação com detecção de mudanças, pedidos com idempotência, reserva de estoque e pagamento simulado, perfil, avatar, senha e carteiras com conexão simulada.
 - Banco dos mocks persistido no `localStorage` e fixtures determinísticas: 60 NFTs (os 10 do Figma incluídos), 2 usuários, carteiras, cupons e pedidos anteriores.
 - 19 cenários de rede e de negócio, ativados pela URL, pelo painel de desenvolvimento ou por `/__mocks/scenario`, e reset completo.
@@ -28,6 +34,8 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Item ativo da navegação ficava branco: o `Link` concatenava `text-foreground` e `text-accent-foreground`. As cores de estado foram para `activeClassName`/`inactiveClassName`.
+- `setupMockServer` não desfazia os overrides de `server.use()` entre testes.
 - Mocks: `mutate` passou a persistir e avisar os interessados mesmo quando a regra termina em erro. Antes, a cotação nova e o preço alterado do `QUOTE_OUTDATED` se perdiam no refresh.
 - Mocks: um cenário corrompido no `localStorage` impedia a aplicação de subir.
 - Mocks: o `?scenario=` da URL era reaplicado a cada reload, desfazendo a escolha do painel e redisparando cenários de uso único. Agora ele é aplicado uma vez e removido da URL.

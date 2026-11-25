@@ -1,5 +1,5 @@
 import { useQueryErrorResetBoundary } from '@tanstack/react-query'
-import { useRouter, type ErrorComponentProps } from '@tanstack/react-router'
+import { Link, useRouter, type ErrorComponentProps } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -40,7 +40,7 @@ export function RouteErrorPage({ error, reset }: ErrorComponentProps) {
               Tentar de novo
             </Button>
             <Button asChild size="lg" variant="secondary">
-              <a href="/">Voltar ao início</a>
+              <Link to="/">Voltar ao início</Link>
             </Button>
           </>
         }

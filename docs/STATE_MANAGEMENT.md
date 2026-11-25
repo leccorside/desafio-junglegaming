@@ -41,13 +41,24 @@ walletKeys.all(userId)        // ['wallets', userId]
 
 `gcTime` padrão de 5 minutos. No catálogo, `placeholderData: keepPreviousData` mantém a página anterior visível durante a troca de filtro, com indicador de atualização.
 
-Valores finais confirmados no Passo 4.
+Padrões globais em `src/lib/query-client.ts` (Passo 4): `staleTime` 30 s, `gcTime` 5 min, sem refetch ao focar a janela. Cada feature ajusta o `staleTime` conforme a tabela acima.
+
+| Query | Chave | Política |
+| --- | --- | --- |
+| Sessão | `['session', token]` | `staleTime: Infinity` no carregamento; `0` ao entrar em rota privada (revalida a cada entrada); sem retry |
 
 ## Retries
 
-- Queries: até 2 novas tentativas com backoff exponencial, só para erro de rede e `retryable: true` (503). Nunca para 4xx.
-- Mutations: sem retry automático, exceto a criação de pedido, que pode ser reenviada com a mesma `Idempotency-Key`.
-- Erros 401 não são repetidos: disparam o fluxo de expiração de sessão.
+Implementados em `shouldRetry` e `retryDelay` (`src/lib/query-client.ts`):
+
+- Queries: até 2 novas tentativas (`MAX_QUERY_RETRIES`), só quando o `ApiError` tem `retryable: true`. Isso vale para rede (`NETWORK_ERROR`), timeout (`TIMEOUT`, 15 s no Axios), 5xx e 503 (`SERVICE_UNAVAILABLE`). Nunca para 4xx.
+- Backoff exponencial: 0,5 s, 1 s, 2 s, com teto de 4 s.
+- Mutations: sem retry automático (`retry: false`). A criação de pedido repete por conta própria, com a mesma `Idempotency-Key` (Passo 10).
+- `SESSION_EXPIRED` e `UNAUTHENTICATED` não se repetem: disparam o fluxo de expiração de sessão ([SECURITY.md](SECURITY.md)).
+
+## Erros
+
+Todo erro de requisição vira `ApiError` (`src/api/errors.ts`), com `code`, `status`, `fields`, `details` e `retryable`. A interface decide só pelo `code`. `apiRequest` (`src/api/client.ts`) valida toda resposta com o schema do contrato, e uma resposta fora dele vira `INVALID_RESPONSE`, sem chegar ao cache. Nos formulários, `applyApiError` coloca cada `fields[campo]` no campo certo do React Hook Form, e o resto vira mensagem geral.
 
 ## Respostas obsoletas
 
@@ -83,4 +94,6 @@ Eventos atualizam o cache por `setQueryData` quando trazem o dado completo, ou p
 
 ## Sessão e troca de usuário
 
-No logout ou troca de usuário: desconectar o socket, cancelar queries em andamento, remover as queries privadas e limpar o registro de eventos. Ver [SECURITY.md](SECURITY.md).
+No logout, na expiração ou na troca de usuário (`endSession`), na ordem: avisa os registrados em `onSessionEnd` (o socket desconecta e limpa o registro de eventos no Passo 8), apaga a sessão, cancela as queries em andamento e limpa **todo** o cache (`queryClient.clear()`). Os dados públicos são buscados de novo. É mais simples e seguro do que escolher quais chaves privadas remover. O login também limpa o cache antes de gravar a sessão nova. Ver [SECURITY.md](SECURITY.md).
+
+A sessão em si não vive no cache do Query: fica em `session-store.ts`, porque o Axios precisa ler o token fora do React. Os componentes leem com `useSession()` (`useSyncExternalStore`).

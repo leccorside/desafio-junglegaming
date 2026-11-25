@@ -9,6 +9,7 @@ import { SiteFooter } from '@/components/layout/site-footer'
 import { SiteHeader } from '@/components/layout/site-header'
 import { SkipLink } from '@/components/layout/skip-link'
 import { Toaster } from '@/components/ui/sonner'
+import { ensureSession } from '@/features/auth/session'
 import { env } from '@/lib/env'
 
 export interface RouterContext {
@@ -38,6 +39,10 @@ const Devtools = import.meta.env.DEV
 const MockPanel = env.enableMocks ? lazy(() => import('@/mocks/panel/mock-panel')) : () => null
 
 export const Route = createRootRouteWithContext<RouterContext>()({
+  // Valida a sessão salva uma vez por carregamento (depois fica em cache).
+  beforeLoad: async () => {
+    await ensureSession()
+  },
   component: RootLayout,
   notFoundComponent: NotFoundPage,
   errorComponent: RouteErrorPage,

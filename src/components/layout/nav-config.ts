@@ -1,19 +1,21 @@
+import type { LinkProps } from '@tanstack/react-router'
+
 /**
- * Itens de navegação do layout. `href` ausente indica área fora do escopo do
- * desafio (páginas editoriais, suporte, atividade): o item aparece, mas não
- * finge funcionar (ver README-DESAFIO.md, seção 3).
- *
- * Os destinos usam `<a href>` enquanto as rotas não existem. No Passo 4 eles
- * passam para `<Link>` tipado do TanStack Router.
+ * Itens de navegação do layout. Sem `to`, o item é uma área fora do escopo do
+ * desafio (páginas editoriais, suporte, atividade): aparece, mas não finge
+ * funcionar (ver README-DESAFIO.md, seção 3).
  */
 export interface NavItem {
   label: string
-  href?: string
+  to?: LinkProps['to']
+  hash?: string
+  /** Ativo só na rota exata (o Início não fica ativo em /nft/...). */
+  exact?: boolean
 }
 
 export const mainNav: NavItem[] = [
-  { label: 'Início', href: '/' },
-  { label: 'Mercado', href: '/#catalogo' },
+  { label: 'Início', to: '/', exact: true },
+  { label: 'Mercado', to: '/', hash: 'catalogo', exact: true },
   { label: 'Criadores' },
   { label: 'Aprenda' },
 ]
@@ -27,11 +29,11 @@ export const footerColumns: FooterColumn[] = [
   {
     title: 'Meu perfil',
     links: [
-      { label: 'Meu perfil', href: '/profile' },
+      { label: 'Meu perfil', to: '/profile' },
       { label: 'Minha coleção' },
       { label: 'Atividade' },
       { label: 'Estúdio do criador' },
-      { label: 'Lista de interesse' },
+      { label: 'Lista de interesse', to: '/favorites' },
     ],
   },
   {
@@ -55,6 +57,13 @@ export const footerColumns: FooterColumn[] = [
       { label: 'Utilidade' },
     ],
   },
+]
+
+/** Itens do menu da conta (header e menu lateral). */
+export const accountNav: NavItem[] = [
+  { label: 'Meu perfil', to: '/profile' },
+  { label: 'Carteiras', to: '/wallets' },
+  { label: 'Lista de interesse', to: '/favorites' },
 ]
 
 export const footerFeatures = [

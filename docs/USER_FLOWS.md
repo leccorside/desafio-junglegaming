@@ -13,9 +13,14 @@
 | `/register` | Cadastro | Visitante |
 | `/profile` | Perfil | Autenticado |
 | `/wallets` | Carteiras | Autenticado |
+| `/favorites` | Lista de interesse (favoritos) | Autenticado |
 | `*` | Página não encontrada | Público |
 
-Os nomes finais das rotas podem seguir a nomenclatura do Figma.
+Rotas criadas no Passo 4, com arquivos em `src/routes`. As privadas ficam no layout `_authenticated` e as de entrada no `_guest`. Telas ainda sem conteúdo mostram "Esta tela está em construção" até o passo delas.
+
+"Lista de interesse" é o nome que o Figma dá aos favoritos, no menu do perfil e no footer. O coração da barra inferior mobile leva a essa rota.
+
+Os parâmetros de `/login` e `/register` são `redirect` (destino depois de entrar, só caminho interno) e `reason=expired` (mostra o aviso de sessão expirada).
 
 ## 1. Descoberta
 
@@ -60,12 +65,17 @@ Os nomes finais das rotas podem seguir a nomenclatura do Figma.
 
 ## 6. Cadastro e login
 
-1. Cadastro valida os campos. E-mail já usado mostra erro no campo.
-2. Login valida e mostra erro de credenciais sem dizer qual campo está errado.
-3. Depois do login, volta à rota de origem (`redirect`).
-4. A sessão sobrevive ao refresh.
-5. Sessão expirada na navegação leva ao login e depois de volta. No checkout, os dados preenchidos são preservados.
-6. Logout limpa os dados privados. Outro usuário que entrar em seguida não vê nada do anterior.
+Implementado no Passo 4.
+
+1. **Formato:** no desktop, entrar e criar conta abrem em modal sobre a tela inicial, com abas "Entrar | Criar conta". Fechar (X, Esc ou clique fora) volta ao início. No mobile, são telas cheias com o logo grande, sem barra inferior nem footer. O link "Novo na Kurio? Crie uma conta" alterna entre as duas.
+2. **Cadastro:** pede nome de usuário, e-mail, senha e confirmação. A validação no cliente usa as regras do contrato. Um e-mail ou nome de usuário já usado mostra o erro no campo, que recebe o foco.
+3. **Login:** valida os campos e mostra "E-mail ou senha incorretos." sem dizer qual campo está errado.
+4. **Depois de entrar:** a pessoa volta à rota de origem (`redirect`), ou ao início, e recebe uma mensagem de boas-vindas.
+5. **Refresh:** a sessão sobrevive a ele.
+6. **Sessão expirada:** em rota privada, leva ao login com o aviso "Sua sessão expirou..." e depois volta. Em rota pública, mostra só um aviso. Preservar os dados do checkout entra no Passo 10.
+7. **Logout:** fica no menu da conta (header) ou no menu lateral (mobile) e limpa todos os dados em cache. Outro usuário que entrar em seguida não vê nada do anterior.
+8. **Fora do escopo:** "Esqueceu a senha?" e "Continuar com Google/Facebook" mostram um aviso de indisponível.
+9. **Já com sessão:** abrir `/login` ou `/register` leva ao destino ou ao início.
 
 ## 7. Perfil e carteiras
 

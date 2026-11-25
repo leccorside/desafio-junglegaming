@@ -1,5 +1,5 @@
 import { setupServer } from 'msw/node'
-import { afterAll, beforeAll, beforeEach } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest'
 
 import { sessionSchema, type Session } from '@/api/contracts'
 
@@ -18,6 +18,8 @@ export function setupMockServer() {
     resetDb()
     resetScenario()
   })
+  // Desfaz overrides de `server.use()` para não vazarem entre testes.
+  afterEach(() => server.resetHandlers())
   afterAll(() => server.close())
   return server
 }
