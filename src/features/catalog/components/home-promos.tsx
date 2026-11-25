@@ -43,7 +43,12 @@ export function HomePromos() {
             </h2>
             <p className="text-body-sm text-muted-foreground">{promo.text}</p>
             <Button asChild className="mt-1 h-9 w-fit gap-1 rounded-md px-4 font-bold">
-              <Link to="/" search={promo.search} hash="catalogo">
+              <Link
+                to="/"
+                search={promo.search}
+                hash="catalogo"
+                activeOptions={{ exact: true, includeHash: true }}
+              >
                 Explorar <ArrowRightIcon size={16} />
                 <span className="sr-only">{`${promo.title[0]} ${promo.title[1]}`}</span>
               </Link>

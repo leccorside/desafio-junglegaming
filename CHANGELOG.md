@@ -45,6 +45,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Catálogo: na página 2, os links "Página anterior" e "Página 1" também eram anunciados como página atual (`aria-current="page"`), junto com a página 2. Os links "EXPLORAR" do hero também recebiam essa marca. Agora só a página e a aba atuais têm a marca.
 - Toasts: no mobile, cobriam a barra inferior e o botão "Sair" do menu lateral. Abaixo de 768 px (onde a barra existe) ficam a 142 px da base, mais a área segura do aparelho. A faixa de 600 a 767 px também foi corrigida: nela o Sonner já usava a posição de desktop.
 - Sessão: o toast de boas-vindas da conta anterior ("Que bom ver você, Ana Ribeiro.") continuava na página depois do logout e da entrada de outra conta. Agora todos os toasts fecham no fim da sessão.
 - Sessão: um 401 atrasado de requisição feita com token antigo derrubava a sessão nova. Agora só o token atual conta.

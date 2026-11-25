@@ -36,6 +36,8 @@ export function CatalogTabs({ search }: { search: CatalogSearch }) {
                 to="/"
                 search={(prev: Partial<CatalogSearch>) => ({ ...prev, feed: feed.value, page: 1 })}
                 resetScroll={false}
+                // Busca comparada por inteiro: só a aba da URL atual fica ativa.
+                activeOptions={{ exact: true }}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'relative block pb-1.5 text-body-sm whitespace-nowrap md:text-body',

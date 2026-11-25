@@ -146,6 +146,15 @@ test.describe('catálogo', () => {
       'aria-current',
       'page',
     )
+    // Só a página atual e a aba atual são "página atual" para o leitor de tela.
+    const current = page.locator('#catalogo [aria-current="page"]')
+    await expect(current).toHaveCount(2)
+    await expect(
+      page.getByRole('navigation', { name: 'Paginação do catálogo' }).locator('[aria-current]'),
+    ).toHaveText('2')
+    await expect(
+      page.getByRole('navigation', { name: 'Vitrines do catálogo' }).locator('[aria-current]'),
+    ).toHaveText('Todos os NFTs')
     await expect(cards(page).first()).not.toHaveText(firstOnPage1 ?? '')
     const firstOnPage2 = await cards(page).first().textContent()
 

@@ -21,6 +21,9 @@ export function CatalogPagination({ page, totalPages }: { page: number; totalPag
     search: (prev: Partial<CatalogSearch>) => ({ ...prev, page: target }),
     hash: 'catalogo',
     resetScroll: false,
+    // Sem `exact`, o Router compara a busca de forma parcial: na página 2, o
+    // link da página 1 (sem `page` na URL) também ganharia aria-current="page".
+    activeOptions: { exact: true },
   })
 
   return (

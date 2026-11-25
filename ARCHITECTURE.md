@@ -165,4 +165,5 @@ Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens v
 - Os dados vivem no navegador de quem acessa. Dois navegadores não compartilham estado.
 - O pacote `shadcn`, que fornece o `shadcn/tailwind.css`, traz um `minimatch` antigo (via `ts-morph`) com alerta moderado de DoS no `npm audit`. Ele só roda no build e não chega ao navegador. O `npm audit fix --force` trocaria a versão do shadcn por uma incompatível.
 - O chunk principal passou de 500 kB (cerca de 225 kB gzip) com Zod, Axios, Radix e os formulários. O Vite avisa no build. A divisão de código entra no Passo 15.
+- O `Link` do TanStack Router põe `aria-current="page"` em todo link ativo e, por padrão, compara a busca de forma parcial: o link `/` sem `page` fica ativo em qualquer página do catálogo. Links que mudam só a busca (paginação, abas, atalhos para `#catalogo`) usam `activeOptions={{ exact: true }}`.
 - O `Link` do TanStack Router concatena `className` com `activeProps` sem tailwind-merge. Cores que mudam com o estado vão só em `activeClassName`/`inactiveClassName` (ver `NavLink`).

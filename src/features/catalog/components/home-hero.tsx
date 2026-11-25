@@ -9,6 +9,12 @@ import { cn } from '@/lib/utils'
 
 import { useFeaturedNfts } from '../queries'
 
+/**
+ * Atalho para o catálogo na mesma tela: só conta como página atual na URL
+ * exata (o padrão do Router marcaria aria-current em qualquer estado de `/`).
+ */
+const IN_PAGE_LINK = { exact: true, includeHash: true }
+
 /** Pontos do carrossel: um botão por destaque, o atual em Primary. */
 function Dots({
   count,
@@ -75,7 +81,7 @@ export function HomeHero() {
             rara, apoie artistas e tenha uma parte da cultura da internet.
           </p>
           <Button asChild className="h-10 w-[140px] rounded-md font-bold">
-            <Link to="/" hash="catalogo">
+            <Link to="/" hash="catalogo" activeOptions={IN_PAGE_LINK}>
               EXPLORAR
             </Link>
           </Button>
@@ -119,6 +125,7 @@ export function HomeHero() {
           <Link
             to="/"
             hash="catalogo"
+            activeOptions={IN_PAGE_LINK}
             className="mt-1 flex items-center gap-1 text-caption-sm font-bold text-accent-foreground uppercase"
           >
             Explorar <ArrowRightIcon size={14} />
