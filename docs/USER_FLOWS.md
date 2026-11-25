@@ -45,7 +45,7 @@ Detalhes implementados no Passo 5:
 - Valor inválido na URL volta ao padrão sem quebrar a tela. Faixa de preço invertida é corrigida.
 - Busca: no mobile, campo "Explorar coleções" com debounce de 400 ms (substitui a entrada no histórico em vez de criar uma por letra). No desktop, a lupa do header abre um diálogo de busca que leva ao catálogo com `?q=`.
 - Qualquer mudança de busca, aba, filtro ou ordenação volta para a página 1. A paginação são links (abrir em nova aba funciona).
-- Filtros: sidebar no desktop (Coleções, Faixa de preço com "Aplicar", Rede). No mobile, o botão ao lado da busca abre um menu lateral com ordenação e filtros; o foco fica preso nele e volta ao botão ao fechar.
+- Filtros: sidebar no desktop (Coleções, Faixa de preço com "Aplicar", Rede). No mobile, o botão ao lado da busca abre um menu lateral com ordenação e filtros; o foco fica preso nele e volta ao botão ao fechar. Com busca, aba ou filtro ativo, o botão ganha um ponto coral e passa a se chamar "Filtros e ordenação (filtros aplicados)".
 - Os links de Coleções do footer abrem o catálogo filtrado pela categoria. As promoções abrem "Novos lançamentos" e "Arte digital".
 
 ## 2. Detalhe e favoritos

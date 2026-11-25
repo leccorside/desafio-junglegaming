@@ -133,12 +133,16 @@ export function CatalogSection({ search }: { search: CatalogSearch }) {
       <SheetTrigger asChild>
         <button
           type="button"
-          aria-label="Filtros e ordenação"
+          // O ponto coral só é visual: o nome acessível diz o mesmo.
+          aria-label={filtered ? 'Filtros e ordenação (filtros aplicados)' : 'Filtros e ordenação'}
           className="relative flex size-[45px] shrink-0 cursor-pointer items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,var(--primary-hover),var(--primary))] text-foreground"
         >
           <FilterIcon size={22} />
           {filtered ? (
-            <span className="absolute -top-1 -right-1 size-3 rounded-full border-2 border-background bg-highlight" />
+            <span
+              aria-hidden="true"
+              className="absolute -top-1 -right-1 size-3 rounded-full border-2 border-background bg-highlight"
+            />
           ) : null}
         </button>
       </SheetTrigger>

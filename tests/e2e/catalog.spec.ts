@@ -277,6 +277,49 @@ test.describe('catálogo', () => {
     await expectTotal(page, await apiTotal(page, 'category=photography'))
   })
 
+  test('o botão de filtros do mobile anuncia quando há filtro aplicado', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'O botão de filtros só existe abaixo de 1024 px')
+    const plain = page.getByRole('button', { name: 'Filtros e ordenação', exact: true })
+    const applied = page.getByRole('button', {
+      name: 'Filtros e ordenação (filtros aplicados)',
+      exact: true,
+    })
+    await expect(plain).toBeVisible()
+
+    // Ordenar não é filtrar: o nome não muda.
+    await plain.click()
+    const dialog = page.getByRole('dialog', { name: 'Filtros' })
+    await dialog.getByRole('combobox', { name: 'Ordenar por:' }).click()
+    await page.getByRole('option', { name: 'Menor preço' }).click()
+    await expect(page).toHaveURL(/sort=price_asc/)
+    await dialog.getByRole('button', { name: 'Fechar' }).click()
+    await expect(plain).toBeFocused()
+
+    // Busca conta como filtro.
+    await page.getByRole('searchbox', { name: 'Buscar NFTs' }).fill('ape')
+    await expect(applied).toBeVisible()
+
+    // Filtro do menu, mantido no refresh.
+    await applied.click()
+    await dialog.getByRole('button', { name: /^Ethereum/ }).click()
+    await dialog.getByRole('button', { name: 'Fechar' }).click()
+    await expect(applied).toBeFocused()
+    await page.reload()
+    await waitForApp(page)
+    await expect(applied).toBeVisible()
+
+    // "Limpar filtros" volta ao nome simples.
+    await applied.click()
+    await dialog.getByRole('button', { name: 'Limpar filtros' }).click()
+    await expect(page).not.toHaveURL(/[?&](q|network)=/)
+    await dialog.getByRole('button', { name: 'Fechar' }).click()
+    await expect(plain).toBeFocused()
+    await expect(applied).toHaveCount(0)
+  })
+
   test('não há rolagem horizontal na tela inicial', async ({ page }) => {
     await expect(cards(page)).toHaveCount(9)
     const overflow = await page.evaluate(
