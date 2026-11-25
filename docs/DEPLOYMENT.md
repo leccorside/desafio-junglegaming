@@ -74,7 +74,16 @@ Para publicar sem push, pelo CLI (a pasta `.vercel/`, fora do repositório, guar
 npx vercel deploy --prod --yes
 ```
 
-O CLI respeita o `.gitignore`, então o `.env` local não é enviado. Nos dois caminhos o build roda na Vercel com o comando do `vercel.json`. A Vercel usa o Node 26.x, o mais recente aceito pelo `engines` (`>=22`).
+O CLI respeita o `.gitignore`, então o `.env` local não é enviado. Nos dois caminhos o build roda na Vercel com o comando do `vercel.json`.
+
+### Versão do Node
+
+O build na Vercel roda no **Node 24.x**, a mesma versão do desenvolvimento local (`.nvmrc`). Duas configurações garantem isso:
+
+- `engines.node` no `package.json` é `">=22 <25"`. A Vercel dá prioridade ao `engines` sobre a configuração do projeto e escolhe a **maior** versão que ele permite. Com `>=22 <27`, ela usava o 26.x mesmo com o projeto em 24.x (conferido em 25/11/2026).
+- O projeto na Vercel também está em 24.x (Settings → General → Node.js Version), como reforço.
+
+Para subir de versão: testar localmente, trocar o `.nvmrc`, ampliar o limite do `engines` e ajustar o projeto na Vercel.
 
 ## Alternativas aceitas
 

@@ -34,7 +34,7 @@ Marketplace de NFTs em React e TypeScript, feito para o desafio frontend descrit
 
 ## Requisitos
 
-- Node.js 22 ou superior (desenvolvido com o 24.13)
+- Node.js 22 ou 24 (`engines: ">=22 <25"`). O projeto é desenvolvido e publicado no 24, e o `.nvmrc` aponta para ele (`nvm use`).
 - npm 10 ou superior (o lockfile versionado é o `package-lock.json`)
 
 ## Instalação
