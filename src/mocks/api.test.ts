@@ -89,8 +89,8 @@ describe('catálogo', () => {
   it('lista com paginação e facetas coerentes', async () => {
     const res = await call('GET', '/nfts')
     const page = nftListResponseSchema.parse(res.json)
-    expect(page).toMatchObject({ page: 1, pageSize: 12, total: 60, totalPages: 5 })
-    expect(page.items).toHaveLength(12)
+    expect(page).toMatchObject({ page: 1, pageSize: 9, total: 60, totalPages: 7 })
+    expect(page.items).toHaveLength(9)
     const totalByCategory = Object.values(page.facets.categories).reduce((a, b) => a + b, 0)
     expect(totalByCategory).toBe(60)
     const prices = getDb()

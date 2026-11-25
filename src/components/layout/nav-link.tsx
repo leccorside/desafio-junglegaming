@@ -57,6 +57,7 @@ export function NavLink({
     <Link
       to={item.to}
       hash={item.hash}
+      search={item.search}
       onClick={onClick}
       // Itens exatos comparam também o hash: "Início" (/) não fica ativo junto
       // com "Mercado" (/#catalogo).

@@ -6,6 +6,12 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Tela inicial do Figma: hero com os destaques da API e pontos do carrossel (banner compacto no mobile), "NFT em destaque" na sidebar, promoções que abrem o catálogo filtrado e o "Diário da Cunhagem" com o "Ler mais" indisponível.
+- Catálogo com estado na URL validado por schema: busca, abas (Todos, Novos lançamentos, Em alta), coleções e redes combináveis, faixa de preço, ordenação e paginação de 9 em 9. Refresh, voltar e avançar restauram a lista, e valores inválidos na URL voltam ao padrão.
+- Busca com debounce no mobile e diálogo de busca pela lupa do header no desktop. Filtros em menu lateral no mobile, com ordenação e foco preso.
+- Estados do catálogo: skeleton do card, atualização em segundo plano com a página anterior visível, vazio com "Limpar filtros", erro com "Tentar de novo". Requisições antigas são canceladas e respostas fora de ordem não trocam o resultado.
+- Links de Coleções do footer abrem o catálogo filtrado.
+- 15 testes unitários do estado do catálogo e 13 cenários E2E do catálogo (itens 1 e 12 do enunciado), em desktop e mobile.
 - Sessão completa: cadastro, login e logout integrados à API simulada, sessão recuperada depois do refresh, revalidação a cada rota privada, expiração tratada na navegação (login com aviso e volta ao destino) e limpeza de todo o cache no fim da sessão e na troca de usuário.
 - Telas de entrada como no Figma: modal sobre a tela inicial no desktop (abas Entrar e Criar conta) e tela cheia no mobile, com React Hook Form, validação pelos contratos, erros da API por campo, mostrar e ocultar senha, login social e recuperação de senha como indisponíveis.
 - Camada de dados: Axios com token, `X-Cart-Id` do visitante, timeout de 15 s e erros normalizados em `ApiError`; `apiRequest` valida toda resposta com o schema; TanStack Query repete só falhas transitórias, com backoff.
@@ -31,6 +37,11 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 - `vercel.json` com fallback de SPA e cabeçalhos de cache.
 - Design system com os valores do Figma.
 - Estrutura de documentação: `README.md`, `ARCHITECTURE.md`, `CHANGELOG.md` e os documentos de `docs/` (contexto, requisitos, regras de negócio, API, mocks, tempo real, estado, segurança, design system, acessibilidade, fluxos, testes, performance e deploy).
+
+### Alterado
+
+- Página do catálogo com 9 NFTs (grade 3 × 3 do Figma), em vez de 12.
+- Botão do painel de cenários mais alto no mobile, acima da área dos toasts.
 
 ### Corrigido
 

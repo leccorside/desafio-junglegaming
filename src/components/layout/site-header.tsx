@@ -1,9 +1,10 @@
 import { Link, useLocation } from '@tanstack/react-router'
 
-import { CartIcon, LogoutIcon, SearchIcon } from '@/components/icons/figma-icons'
+import { CartIcon, LogoutIcon } from '@/components/icons/figma-icons'
 import { Button } from '@/components/ui/button'
 import { UserMenu } from '@/features/auth/components/user-menu'
 import { useSession } from '@/features/auth/session-store'
+import { SearchDialog } from '@/features/catalog/components/search-dialog'
 
 import { Logo } from './logo'
 import { MobileMenu } from './mobile-menu'
@@ -44,14 +45,7 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex h-[35px] items-center gap-7">
-            <Link
-              to="/"
-              hash="busca"
-              aria-label="Buscar NFTs"
-              className="text-foreground transition-colors hover:text-accent-foreground"
-            >
-              <SearchIcon size={20} />
-            </Link>
+            <SearchDialog />
             <Link
               to="/cart"
               aria-label="Carrinho"

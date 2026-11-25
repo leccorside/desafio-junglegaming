@@ -273,6 +273,21 @@ O arquivo só tem 4 imagens, reaproveitadas em 81 lugares. As fixtures do catál
 
 Toasts (Sonner, `src/components/ui/sonner.tsx`): no canto inferior direito, a 24 px da base, a partir de 768 px. Abaixo disso ficam a `calc(142px + env(safe-area-inset-bottom))` da base, com 16 px nas laterais: acima da barra inferior (126 px) e do botão "Sair" do menu lateral (cerca de 81 px). A regra segue a media query do projeto (768 px), e não a do Sonner (600 px).
 
+### Tela inicial (Passo 5)
+
+| Bloco | Desktop (≥ 1024 px) | Mobile (< 768 px) |
+| --- | --- | --- |
+| Hero | 1200 × 450: texto `display` (43 px) à esquerda, imagem do destaque de 450 px com raio 24 à direita, botão "EXPLORAR" de 140 × 40 e pontos do carrossel | Cartão de 190 px de altura, raio 12, gradiente `Primary` de 20% a 10%, duas imagens (138 e 58 px) e "EXPLORAR →" em `Text/Accent` |
+| Filtros | Sidebar de 310 px em `Surface Card` com padding 20: Coleções, Faixa de preço (slider de trilho 4 px e pontos de 15 px, botão "Aplicar" de 92 px) e Rede | Botão de 45 × 45 com raio 14 e gradiente `Primary`, ao lado da busca de 45 px com raio 10; abre um menu lateral de 320 px |
+| NFT em destaque | 310 × 470 abaixo dos filtros: "NFT EM DESTAQUE" (24 px, `Text/Accent`), "OFERTA LIMITADA" (22 px) e imagem de 368 px com raio 22 | Não aparece (o Figma mobile não tem) |
+| Grade | 3 colunas de 258 px com 32 px de espaço; card em `Surface Card` de 258 × 300 com imagem de raio 15 | 2 colunas com 16 px, a da direita 32 px mais baixa; card em gradiente com raio 20 e imagem de raio 16 |
+| Abas e ordenação | Abas de 15 px com sublinhado `Primary` de 2 px; "Ordenar por:" à direita | Abas de 14 px; ordenação dentro do menu de filtros |
+| Paginação | Quadrados de 35 px alinhados à direita, página atual em `Primary` | Igual |
+| Promoções | 2 cartões de 586 × 250 com raio 8 | Empilhados |
+| Diário da Cunhagem | 4 cartões com imagem de 195 px | 1 coluna (2 a partir de 640 px) |
+
+O selo de raridade ("RARO", "LENDÁRIO") aparece em `Primary` no canto do card; NFTs comuns não têm selo. NFT esgotado mostra o preço em `Secondary` com "ESGOTADO".
+
 O botão central da barra inferior usa o ícone de leitura (scan) do Figma, que não tem função definida no escopo. Ele abre o menu lateral, para que a navegação principal fique acessível no mobile.
 
 ## Contraste
@@ -326,6 +341,7 @@ Cada decisão nova fica registrada em [ARCHITECTURE.md](../ARCHITECTURE.md), na 
 - Base `Surface Card` com faixa de brilho em `Surface Raised`, animada em CSS.
 - Animação desligada com `prefers-reduced-motion: reduce`.
 - Usados no catálogo, nos destaques, no detalhe, no resumo do carrinho e no perfil.
+- Catálogo (Passo 5): `NftCardSkeleton` com as proporções do card (175/200 no mobile, 258/300 no desktop), 9 por página, e contagens dos filtros em skeleton até as facetas chegarem.
 
 ## Assets
 

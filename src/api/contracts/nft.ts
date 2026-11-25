@@ -118,7 +118,8 @@ export const NFT_SORT_LABELS: Record<NftSort, string> = {
 
 export const availabilityFilterSchema = z.enum(['available', 'sold_out'])
 
-export const DEFAULT_PAGE_SIZE = 12
+/** 3 colunas × 3 linhas, como a grade do Figma. */
+export const DEFAULT_PAGE_SIZE = 9
 export const MAX_PAGE_SIZE = 48
 
 /**

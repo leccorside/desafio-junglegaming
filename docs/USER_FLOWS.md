@@ -25,10 +25,28 @@ Os parâmetros de `/login` e `/register` são `redirect` (destino depois de entr
 ## 1. Descoberta
 
 1. O visitante abre o início e vê destaques e catálogo (skeleton durante o carregamento).
-2. Busca, filtra, ordena e pagina. A URL muda a cada ação (`/?q=ape&category=art&sort=price_asc&page=2`).
+2. Busca, filtra, ordena e pagina. A URL muda a cada ação (`/?q=ape&category=["music"]&sort=price_asc&page=2`).
 3. Recarregar ou usar voltar e avançar restaura o mesmo estado.
 4. Sem resultados: estado vazio com opção de limpar filtros. Falha: mensagem com botão de tentar de novo.
 5. Clica num NFT e vai para o detalhe.
+
+Detalhes implementados no Passo 5:
+
+| Parâmetro | Valores | Padrão (fora da URL) |
+| --- | --- | --- |
+| `q` | texto, até 80 caracteres | vazio |
+| `feed` | `all`, `new`, `trending` (abas "Todos os NFTs", "Novos lançamentos", "Em alta") | `all` |
+| `category` | lista JSON das 9 coleções | todas |
+| `network` | lista JSON de `ethereum`, `polygon`, `solana` | todas |
+| `minPrice`, `maxPrice` | ETH em string decimal | sem limite |
+| `sort` | `recent`, `price_asc`, `price_desc`, `popular` | `recent` |
+| `page` | inteiro a partir de 1 (9 NFTs por página) | 1 |
+
+- Valor inválido na URL volta ao padrão sem quebrar a tela. Faixa de preço invertida é corrigida.
+- Busca: no mobile, campo "Explorar coleções" com debounce de 400 ms (substitui a entrada no histórico em vez de criar uma por letra). No desktop, a lupa do header abre um diálogo de busca que leva ao catálogo com `?q=`.
+- Qualquer mudança de busca, aba, filtro ou ordenação volta para a página 1. A paginação são links (abrir em nova aba funciona).
+- Filtros: sidebar no desktop (Coleções, Faixa de preço com "Aplicar", Rede). No mobile, o botão ao lado da busca abre um menu lateral com ordenação e filtros; o foco fica preso nele e volta ao botão ao fechar.
+- Os links de Coleções do footer abrem o catálogo filtrado pela categoria. As promoções abrem "Novos lançamentos" e "Arte digital".
 
 ## 2. Detalhe e favoritos
 

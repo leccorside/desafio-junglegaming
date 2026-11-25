@@ -155,7 +155,7 @@ O mesmo schema (`nftListParamsSchema`) valida os search params da URL do catálo
 | `availability` | `available` \| `sold_out` | | `available` |
 | `sort` | `recent` \| `price_asc` \| `price_desc` \| `popular` | `recent` | `price_asc` |
 | `page` | inteiro ≥ 1 | `1` | `2` |
-| `pageSize` | inteiro de 1 a 48 | `12` | `24` |
+| `pageSize` | inteiro de 1 a 48 | `9` (grade 3 × 3 do Figma) | `24` |
 
 ### Resposta de `/nfts`
 

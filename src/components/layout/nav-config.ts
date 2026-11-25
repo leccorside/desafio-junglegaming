@@ -1,5 +1,7 @@
 import type { LinkProps } from '@tanstack/react-router'
 
+import { NFT_CATEGORY_LABELS, type NftCategory } from '@/api/contracts'
+
 /**
  * Itens de navegação do layout. Sem `to`, o item é uma área fora do escopo do
  * desafio (páginas editoriais, suporte, atividade): aparece, mas não finge
@@ -9,6 +11,8 @@ export interface NavItem {
   label: string
   to?: LinkProps['to']
   hash?: string
+  /** Estado do catálogo na URL (links de Coleções do footer). */
+  search?: { category?: NftCategory[] }
   /** Ativo só na rota exata (o Início não fica ativo em /nft/...). */
   exact?: boolean
 }
@@ -48,14 +52,15 @@ export const footerColumns: FooterColumn[] = [
   },
   {
     title: 'Coleções',
-    // Viram filtros de categoria do catálogo no Passo 5.
-    links: [
-      { label: 'Arte digital' },
-      { label: 'Fotografia' },
-      { label: 'Música' },
-      { label: 'Arte 3D' },
-      { label: 'Utilidade' },
-    ],
+    // Abrem o catálogo filtrado pela categoria.
+    links: (['digital-art', 'photography', 'music', '3d-art', 'utility'] as const).map(
+      (category) => ({
+        label: NFT_CATEGORY_LABELS[category],
+        to: '/' as const,
+        hash: 'catalogo',
+        search: { category: [category] },
+      }),
+    ),
   },
 ]
 

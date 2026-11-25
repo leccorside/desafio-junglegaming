@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { HomePage } from '@/features/catalog/home-page'
+import { EMPTY_CATALOG_SEARCH } from '@/features/catalog/search'
 import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query'
 
 import { AuthTabs, LoginForm, RegisterForm } from './auth-forms'
@@ -56,7 +57,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   if (isDesktop) {
     return (
       <>
-        <HomePage />
+        <HomePage search={EMPTY_CATALOG_SEARCH} />
         <Dialog
           open
           onOpenChange={(open) => {

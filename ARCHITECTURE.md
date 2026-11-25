@@ -95,6 +95,10 @@ Cada pasta em `features/` concentra os hooks de query e mutation, as query keys,
 | Pagamento decidido por prazo (`settleAt`) e liquidado antes de cada requisição | O resultado do pedido sobrevive a refresh e funciona com relógio controlado nos testes, sem depender de `setTimeout` vivo. |
 | Cotação com assinatura do conteúdo | A API percebe qualquer mudança de preço, estoque, cupom ou taxa entre a revisão e a confirmação e devolve `QUOTE_OUTDATED` com o que mudou. |
 | Painel de cenários no build de demonstração | O avaliador consegue reproduzir as falhas na URL publicada, sem rodar nada local. Ele fica escondido em navegador automatizado, para não entrar nas regressões visuais. |
+| Estado do catálogo na URL, validado pelo `catalogSearchSchema` (Zod) | Refresh, voltar, avançar e links compartilhados reproduzem a mesma lista. O `stripSearchParams` tira os valores padrão, então `/` continua limpo. |
+| Query key do catálogo com todos os parâmetros, `signal` e `keepPreviousData` | A troca de filtro cancela a requisição anterior, e uma resposta atrasada nunca ocupa o lugar da consulta atual (testado com o cenário `jitter`). |
+| 9 NFTs por página | É a grade 3 × 3 do Figma desktop. No mobile, as mesmas 9 em duas colunas. |
+| Slider de preço em `number`, convertido para string com `ethRound` ao aplicar | O Radix Slider só trabalha com número. O valor vai para a URL e para a API como string decimal com 2 casas, e nenhuma conta de dinheiro usa o número. |
 | Vitest para regras puras | Aritmética, contratos e reconciliação de eventos se testam melhor isolados. Os fluxos da interface ficam no Playwright. |
 | Banco dos mocks no `localStorage` | Sustenta refresh sem backend, e o reset volta às fixtures. |
 | Carrinho do visitante com `X-Cart-Id` | Permite persistir e depois juntar ao carrinho do usuário no login. |
@@ -126,6 +130,13 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Fechar o modal de login | X, Esc ou clique fora voltam ao início (a rota de origem pode ser privada, e não dá para voltar a ela sem sessão). |
 | Menu da conta | O Figma só desenha o botão "Entrar". Com sessão, o header mostra avatar (iniciais) e nome, com menu: Meu perfil, Carteiras, Lista de interesse e Sair. |
 | Favoritos | Ganham a rota `/favorites`, com o nome "Lista de interesse" do Figma (menu do perfil e footer). O coração da barra inferior leva a ela. |
+| Catálogo carregando | Skeleton com shimmer nas proporções do card (9 itens), sem deslocar o layout. A contagem "Carregando NFTs…" fica numa região `aria-live`. |
+| Troca de filtro com resultado na tela | A página anterior continua visível com 60% de opacidade, `aria-busy` e "Atualizando…" até a resposta nova (`placeholderData`). |
+| Catálogo vazio | "Nenhum NFT encontrado." com "Limpar filtros" quando há filtro. Página além da última mostra "Voltar à primeira página". |
+| Falha do catálogo | Sem dados: cartão de erro com a mensagem da API e "Tentar de novo". Com dados antigos na tela: aviso curto acima da grade, sem apagar o que já aparece. |
+| Busca no desktop | O Figma desktop não tem campo de busca, só a lupa do header. Ela abre um diálogo com o campo, que leva ao catálogo com `?q=`. |
+| Diário da Cunhagem (blog) | Fora do escopo. Os cartões aparecem com o texto do Figma, e o "Ler mais" fica como indisponível. |
+| Carrossel do hero | Troca só pelos pontos (sem rotação automática, que atrapalharia a leitura e o leitor de tela). As imagens vêm de `GET /nfts/featured`. |
 | Página 404 e erro de rota | Mesmo layout das outras telas, com o código em `Primary`, texto e botão "Voltar ao início". O erro de rota oferece "Tentar de novo" sem recarregar a página. |
 
 ## Desvios do Figma
@@ -140,6 +151,8 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Marca KURIO no título da página | O nome da página no Figma é "GreenMint", mas o wordmark em todas as telas é KURIO. |
 | Rótulos dos campos de login e cadastro só para leitor de tela | O Figma só tem placeholder. Os campos ganharam `<label>` visualmente oculto e mensagens de erro ligadas por `aria-describedby`. |
 | Sem footer nas telas de entrada no mobile | O Figma mobile de login e cadastro é tela cheia. |
+| Imagens das promoções e do blog | O Figma usa fotos que não estão entre os assets exportáveis. Os cartões usam as 4 imagens de NFT do projeto. |
+| Coração e contagem de favoritos fora dos cards | Entram no Passo 6, com os favoritos. |
 | Ícone de menu (`MenuIcon` do lucide) no header do tablet | O Figma não tem ícone de menu, porque não desenha o tablet. |
 
 Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens vêm do arquivo do Figma (ver [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)).

@@ -96,7 +96,7 @@ describe('listagem de NFTs', () => {
       feed: 'all',
       sort: 'recent',
       page: 1,
-      pageSize: 12,
+      pageSize: 9,
     })
   })
 

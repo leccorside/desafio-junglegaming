@@ -97,7 +97,7 @@ export default function MockPanel() {
         <button
           type="button"
           aria-label={`Cenários de teste${activeCount ? ` (${activeCount} ativos)` : ''}`}
-          className="fixed bottom-[140px] left-3 z-30 flex size-10 items-center justify-center rounded-full border border-border-soft bg-card text-muted-foreground opacity-80 shadow-md transition-opacity hover:opacity-100 md:bottom-4"
+          className="fixed bottom-[calc(210px+env(safe-area-inset-bottom))] left-3 z-30 flex size-10 items-center justify-center rounded-full border border-border-soft bg-card text-muted-foreground opacity-80 shadow-md transition-opacity hover:opacity-100 md:bottom-4"
         >
           <FlaskConicalIcon className="size-5" />
           {activeCount ? (
