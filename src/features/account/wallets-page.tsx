@@ -17,6 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { applyApiError } from '@/features/auth/form-errors'
+import { centerFocusedField } from '@/lib/focus'
 import { FormError } from '@/features/auth/components/form-error'
 
 import { AccountLayout } from './components/account-layout'
@@ -257,7 +258,7 @@ function WalletForm({
     } catch (error) {
       setFormError(applyApiError(error, form.setError, WALLET_FIELDS))
     }
-  })
+  }, centerFocusedField)
 
   return (
     <Form {...form}>

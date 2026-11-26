@@ -47,7 +47,16 @@ export function AvatarField({
     if (!file) return
     const valid = avatarFileSchema.safeParse(file)
     if (!valid.success) {
-      onError(valid.error.issues[0]?.message ?? 'Imagem inválida.')
+      // Diz qual arquivo foi recusado e o que continua valendo: a recusa não
+      // desfaz a escolha anterior nem o avatar salvo.
+      const reason = valid.error.issues[0]?.message ?? 'Imagem inválida.'
+      const kept =
+        change.kind === 'new'
+          ? ' A imagem escolhida antes continua.'
+          : change.kind === 'keep' && currentUrl
+            ? ' O avatar atual continua.'
+            : ''
+      onError(`${file.name} não foi usado. ${reason}${kept}`)
       return
     }
     onError(null)

@@ -392,3 +392,104 @@ test.describe('perfil e carteiras', () => {
     }
   })
 })
+
+/** O retângulo de `a` cruza o de `b`? */
+const overlaps = (
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number },
+) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+
+test.describe('perfil: avisos do avatar e foco nos erros', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await waitForApp(page)
+    await resetMocks(page)
+  })
+
+  test('recusa de arquivo diz o que continua valendo e some quando a imagem é salva', async ({
+    page,
+  }) => {
+    await openAs(page, 'ana@example.com', '/profile')
+    const input = page.locator('[data-avatar-input]')
+    const refusal = page.getByRole('alert').filter({ hasText: 'não foi usado' })
+
+    // Sem avatar e sem escolha: só o motivo.
+    await input.setInputFiles({
+      name: 'notas.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('oi'),
+    })
+    await expect(refusal).toHaveText('notas.txt não foi usado. Use uma imagem PNG, JPEG ou WebP.')
+
+    // Com uma imagem escolhida: a recusa avisa que ela continua.
+    await input.setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: PNG_1PX })
+    await expect(refusal).toHaveCount(0)
+    await input.setInputFiles({
+      name: 'notas.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('oi'),
+    })
+    await expect(refusal).toHaveText(
+      'notas.txt não foi usado. Use uma imagem PNG, JPEG ou WebP. A imagem escolhida antes continua.',
+    )
+    await expect(page.getByRole('img', { name: 'Prévia do novo avatar' })).toBeVisible()
+
+    await save(page)
+    await expect(page.getByText('Avatar atualizado.')).toBeVisible()
+    // Salvo: o erro da recusa não vale mais.
+    expect(await refusal.count()).toBe(0)
+    await expect(page.getByText('PNG, JPEG ou WebP, até 2 MB.')).toBeVisible()
+
+    // Com o avatar salvo: a recusa avisa que o atual continua.
+    await input.setInputFiles({
+      name: 'notas.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('oi'),
+    })
+    await expect(refusal).toHaveText(
+      'notas.txt não foi usado. Use uma imagem PNG, JPEG ou WebP. O avatar atual continua.',
+    )
+    await expect(page.getByRole('img', { name: 'Avatar atual' })).toBeVisible()
+  })
+
+  test('campo com erro fica no meio da tela, fora do toast (erro da API e do cliente)', async ({
+    page,
+  }) => {
+    await openAs(page, 'ana@example.com', '/profile')
+    const viewport = page.viewportSize()!
+    const current = field(page, /^Senha atual/)
+
+    // Erro da API depois de uma parte salva: toast de sucesso + foco no campo.
+    await field(page, /^Nome de exibição/).fill('Ana Foco')
+    await current.fill('Errada@123')
+    await field(page, /^Nova senha/).fill('Nova@Senha1')
+    await field(page, /^Confirmar nova senha/).fill('Nova@Senha1')
+    await save(page)
+    const toast = page.locator('[data-sonner-toast]').filter({ hasText: 'Dados do perfil salvos.' })
+    await expect(toast).toBeVisible()
+    await expect(page.getByText('A senha atual está incorreta.')).toBeVisible()
+    await expect(current).toBeFocused()
+    await expect
+      .poll(async () => {
+        const box = (await current.boundingBox())!
+        return Math.abs(box.y + box.height / 2 - viewport.height / 2)
+      })
+      .toBeLessThan(viewport.height * 0.15)
+    expect(overlaps((await current.boundingBox())!, (await toast.boundingBox())!)).toBe(false)
+
+    // Erro do cliente: o campo também é centralizado.
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await current.fill('Senha@123')
+    await field(page, /^Confirmar nova senha/).fill('Outra@Senha1')
+    await save(page)
+    const confirm = field(page, /^Confirmar nova senha/)
+    await expect(page.getByText('As senhas não conferem.')).toBeVisible()
+    await expect(confirm).toBeFocused()
+    await expect
+      .poll(async () => {
+        const box = (await confirm.boundingBox())!
+        return Math.abs(box.y + box.height / 2 - viewport.height / 2)
+      })
+      .toBeLessThan(viewport.height * 0.15)
+  })
+})

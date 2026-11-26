@@ -64,7 +64,7 @@ Implementados em `shouldRetry` e `retryDelay` (`src/lib/query-client.ts`):
 
 ## Erros
 
-Todo erro de requisição vira `ApiError` (`src/api/errors.ts`), com `code`, `status`, `fields`, `details` e `retryable`. A interface decide só pelo `code`. `apiRequest` (`src/api/client.ts`) valida toda resposta com o schema do contrato, e uma resposta fora dele vira `INVALID_RESPONSE`, sem chegar ao cache. Nos formulários, `applyApiError` coloca cada `fields[campo]` no campo certo do React Hook Form, e o resto vira mensagem geral.
+Todo erro de requisição vira `ApiError` (`src/api/errors.ts`), com `code`, `status`, `fields`, `details` e `retryable`. A interface decide só pelo `code`. `apiRequest` (`src/api/client.ts`) valida toda resposta com o schema do contrato, e uma resposta fora dele vira `INVALID_RESPONSE`, sem chegar ao cache. Nos formulários, `applyApiError` coloca cada `fields[campo]` no campo certo do React Hook Form (o primeiro recebe o foco e vai para o meio da tela, `centerFocusedField`), e o resto vira mensagem geral.
 
 ## Respostas obsoletas
 

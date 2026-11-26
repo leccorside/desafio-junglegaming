@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { applyApiError } from '@/features/auth/form-errors'
 import { FormError } from '@/features/auth/components/form-error'
 import { PasswordInput } from '@/features/auth/components/password-input'
+import { centerFocusedField } from '@/lib/focus'
 import { cn } from '@/lib/utils'
 
 import { AccountLayout } from './components/account-layout'
@@ -109,6 +110,8 @@ function ProfileForm({ profile }: { profile: Profile }) {
    */
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null)
+    // A recusa de um arquivo (ou uma falha anterior) não vale mais depois de salvar.
+    setAvatarError(null)
     const saved: string[] = []
     const report = () => {
       if (saved.length) toast.success(`${saved.join(' ')}`)
@@ -161,7 +164,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
     } finally {
       setSaving(false)
     }
-  })
+  }, centerFocusedField)
 
   return (
     <Form {...form}>

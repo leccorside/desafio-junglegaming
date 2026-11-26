@@ -1,6 +1,7 @@
 import type { FieldValues, Path, UseFormSetError } from 'react-hook-form'
 
 import { normalizeError } from '@/api/errors'
+import { centerFocusedField } from '@/lib/focus'
 
 /**
  * Distribui o erro da API no formulário: cada `fields[campo]` vai para o
@@ -20,5 +21,7 @@ export function applyApiError<T extends FieldValues>(
       assigned = true
     }
   }
+  // O campo com erro vai para o meio da tela, longe dos toasts.
+  if (assigned) centerFocusedField()
   return assigned ? null : apiError.message
 }

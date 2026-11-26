@@ -72,6 +72,8 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Perfil: o aviso de arquivo recusado no avatar continuava na tela depois de a imagem ser salva; agora some ao salvar, e a recusa diz qual arquivo não foi usado e que a imagem escolhida antes (ou o avatar atual) continua.
+- Formulários: o campo com erro que recebe o foco vai para o meio da tela; no mobile, o toast de sucesso de outra parte do "Salvar" cobria o campo.
 - Depois do reset dos mocks sem recarregar, a aba deixava de receber eventos (`eventId` e versões repetidos).
 - O socket simulado aceitava token vencido e continuava entregando eventos de pedido a ele.
 - O reset não limpava o servidor simulado: o reenvio de teste devolvia um evento de antes do reset.

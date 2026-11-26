@@ -119,9 +119,9 @@ Implementado no Passo 4.
 ## 7. Perfil e carteiras
 
 1. Edita nome de exibição, nome de usuário e nome ENS, com validação e erros da API no campo certo (o campo com erro recebe o foco). O e-mail aparece só para leitura.
-2. Troca o avatar: "Alterar" abre o seletor de arquivo, a imagem aparece na hora (prévia) e tipo e tamanho são conferidos antes do envio. "Remover" tira o avatar.
+2. Troca o avatar: "Alterar" abre o seletor de arquivo, a imagem aparece na hora (prévia) e tipo e tamanho são conferidos antes do envio. Um arquivo recusado é nomeado no aviso, que diz o que continua valendo ("A imagem escolhida antes continua." ou "O avatar atual continua."), e o aviso some ao salvar. "Remover" tira o avatar.
 3. Altera a senha informando a atual, a nova e a confirmação.
-4. Um "Salvar", como no Figma, grava em sequência o que mudou: dados, avatar e senha. Cada parte salva avisa ("Dados do perfil salvos.", "Avatar atualizado.", "Senha alterada."); se uma falha, o erro vai para o campo dela e o resto que já foi salvo continua salvo. Nome e avatar mudam no header na hora.
+4. Um "Salvar", como no Figma, grava em sequência o que mudou: dados, avatar e senha. Cada parte salva avisa ("Dados do perfil salvos.", "Avatar atualizado.", "Senha alterada."); se uma falha, o erro vai para o campo dela, que recebe o foco no meio da tela (longe do toast de sucesso no mobile), e o resto que já foi salvo continua salvo. Nome e avatar mudam no header na hora.
 5. Cadastra e edita as carteiras principal (sempre aberta) e secundária ("Adicionar" ou "Editar", com "Igual à carteira principal" e "Cancelar"). A secundária salva aparece num resumo.
 6. Tudo persiste depois do refresh, e as carteiras ficam disponíveis para o pagamento.
 
