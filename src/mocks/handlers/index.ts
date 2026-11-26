@@ -60,6 +60,12 @@ import { featuredNfts, getNft, listNfts } from '../services/catalog'
 import { addFavorite, listFavorites, removeFavorite } from '../services/favorites'
 import { createOrder, getOrder, listOrders } from '../services/orders'
 import { createQuote } from '../services/quotes'
+import {
+  connectedPeers,
+  dropConnections,
+  replayLastNftEvent,
+  sendStaleNftEvent,
+} from '../socket/server'
 
 type IdParams = { id: string }
 type NftParams = { nftId: string }
@@ -339,6 +345,41 @@ const mocksHandlers = [
       },
       { network: false },
     ),
+  ),
+  // Tempo real: as ações de teste passam pelo servidor Socket.IO simulado.
+  http.post(
+    apiPath(`${MOCKS_PREFIX}/realtime/replay`),
+    route(() => ({ event: replayLastNftEvent() }), { network: false }),
+  ),
+  http.post(
+    apiPath(`${MOCKS_PREFIX}/realtime/stale`),
+    route(
+      async ({ request }) => {
+        const body = await readBody(
+          request,
+          z.object({ nftId: z.string(), price: ethAmountSchema }),
+        )
+        return { event: sendStaleNftEvent(body.nftId, body.price) }
+      },
+      { network: false },
+    ),
+  ),
+  http.post(
+    apiPath(`${MOCKS_PREFIX}/realtime/disconnect`),
+    route(
+      async ({ request }) => {
+        const body = await readBody(
+          request,
+          z.object({ downMs: z.number().int().nonnegative().max(60_000).default(0) }),
+        )
+        return dropConnections(body.downMs)
+      },
+      { network: false },
+    ),
+  ),
+  http.get(
+    apiPath(`${MOCKS_PREFIX}/realtime/peers`),
+    route(() => ({ peers: connectedPeers() }), { network: false }),
   ),
 ]
 

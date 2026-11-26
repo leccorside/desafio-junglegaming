@@ -59,7 +59,7 @@ src/
     fixtures/            NFTs, usuários, cupons, carteiras, pedidos anteriores
     services/            regras de negócio da API simulada
     handlers/            rotas MSW (validação com os contratos → serviço)
-    socket/              servidor Socket.IO simulado (Passo 8)
+    socket/              servidor Socket.IO simulado
     scenarios/           cenários de rede e de negócio
     panel/               painel de desenvolvimento (cenários e reset)
     http.ts              envelope das rotas: cenários, erros, liquidação de pagamentos
@@ -183,7 +183,8 @@ Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens v
 
 - Não há blockchain, extensão de carteira nem gateway de pagamento. Conexão, assinatura, hash de transação e link de explorador são simulados.
 - A sessão é simulada: o token é opaco, emitido pelo MSW e guardado no navegador. Ver [docs/SECURITY.md](docs/SECURITY.md).
-- O transporte Socket.IO é interceptado pelo MSW. As limitações do binding ficam registradas em [docs/REALTIME.md](docs/REALTIME.md).
+- O transporte Socket.IO é interceptado pelo MSW, só por WebSocket (sem long-polling), sem salas e com o `socket.io-client` importado sob demanda depois de o MSW iniciar. As limitações do binding e como foram contornadas estão em [docs/REALTIME.md](docs/REALTIME.md).
+- Os eventos saem do navegador de quem acessa: só a própria aba recebe a mudança feita nela (painel ou rota `/__mocks`). Duas abas não trocam eventos.
 - Os dados vivem no navegador de quem acessa. Dois navegadores não compartilham estado.
 - O pacote `shadcn`, que fornece o `shadcn/tailwind.css`, traz um `minimatch` antigo (via `ts-morph`) com alerta moderado de DoS no `npm audit`. Ele só roda no build e não chega ao navegador. O `npm audit fix --force` trocaria a versão do shadcn por uma incompatível.
 - O chunk principal passou de 500 kB (cerca de 225 kB gzip) com Zod, Axios, Radix e os formulários. O Vite avisa no build. A divisão de código entra no Passo 15.

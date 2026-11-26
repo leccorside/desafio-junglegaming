@@ -1,6 +1,6 @@
 # Mocks com MSW
 
-A API REST é simulada na camada de rede com MSW 2. Componentes, hooks e o cliente Axios não sabem que falam com um mock: as requisições saem pelo `fetch`/XHR normal e o service worker as intercepta. Respostas fictícias e regras de negócio simuladas existem só em `src/mocks`. O Socket.IO simulado entra no Passo 8 ([REALTIME.md](REALTIME.md)).
+A API REST é simulada na camada de rede com MSW 2. Componentes, hooks e o cliente Axios não sabem que falam com um mock: as requisições saem pelo `fetch`/XHR normal e o service worker as intercepta. Respostas fictícias e regras de negócio simuladas existem só em `src/mocks`. O Socket.IO simulado (`src/mocks/socket/server.ts`) roda no mesmo worker e está descrito em [REALTIME.md](REALTIME.md).
 
 ## Ativação
 
@@ -30,7 +30,7 @@ Os handlers só traduzem HTTP: leem o corpo com o schema Zod do contrato (`readB
 
 ## Banco dos mocks
 
-- Estado único (`DbState`) com usuários, sessões, NFTs, favoritos, carrinhos, cupons, cotações, pedidos, chaves de idempotência e carteiras. REST e Socket.IO (Passo 8) leem e escrevem no mesmo estado, e `onDbChange` avisa o socket a cada mudança.
+- Estado único (`DbState`) com usuários, sessões, NFTs, favoritos, carrinhos, cupons, cotações, pedidos, chaves de idempotência e carteiras. REST e Socket.IO leem e escrevem no mesmo estado, e `onDbChange` avisa o socket a cada mudança.
 - Persistido no `localStorage` em `kurio:mocks:db`, com `schemaVersion` (hoje 2). Versão diferente ou JSON corrompido fazem o banco voltar às fixtures.
 - `mutate` persiste e avisa os interessados mesmo quando a regra termina em erro. Algumas regras alteram o banco de propósito antes de recusar (o cenário de preço alterado sobe o preço e guarda a cotação nova, e só então devolve `QUOTE_OUTDATED`). Regra que não deve deixar rastro valida antes de alterar.
 - Sem `localStorage` (Node, navegação privada bloqueada), fica só em memória.
@@ -112,7 +112,11 @@ Sempre sem cenários de rede, para o painel e os testes funcionarem mesmo com `o
 | POST | `/api/__mocks/reset` | Restaura as fixtures e o cenário padrão |
 | GET | `/api/__mocks/scenario` | Cenário ativo |
 | PUT | `/api/__mocks/scenario` | Ativa cenários `{ names, options }` |
-| POST | `/api/__mocks/nfts/:id/update` | Altera preço, estoque ou status de uma edição (`{ editionId?, price?, available?, status? }`), incrementa a `version` do NFT. No Passo 8 também emite `nft.updated` |
+| POST | `/api/__mocks/nfts/:id/update` | Altera preço, estoque ou status de uma edição (`{ editionId?, price?, available?, status? }`), incrementa a `version` do NFT e, por isso, emite `nft.updated` pelo socket |
+| POST | `/api/__mocks/realtime/replay` | Reenvia o último `nft.updated` com o mesmo `eventId` (duplicado). Devolve `{ event }` |
+| POST | `/api/__mocks/realtime/stale` | Envia um `nft.updated` com `version` anterior à atual e um preço que nunca existiu (`{ nftId, price }`). Devolve `{ event }` |
+| POST | `/api/__mocks/realtime/disconnect` | Derruba as conexões e recusa novas por `downMs` (`{ downMs }`). Eventos desse intervalo se perdem |
+| GET | `/api/__mocks/realtime/peers` | Conexões abertas, com o `userId` de cada uma (`null` para visitante) |
 
 ## Reset
 

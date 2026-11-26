@@ -105,8 +105,12 @@ O carrinho não usa atualização otimista (decisão do Passo 7): o limite de qu
 
 Eventos atualizam o cache por `setQueryData` quando trazem o dado completo, ou por `invalidateQueries` quando não trazem. Regras de versão e duplicados em [REALTIME.md](REALTIME.md).
 
+- `nft.updated` traz preço e estoque das edições: `applyNftUpdated` grava direto no detalhe (`nftKeys.detail`), nas páginas da listagem (`['nfts','list']`), nos destaques e na lista de interesse, só onde a cópia tem `version` menor. Assim o preço muda na tela sem nova requisição.
+- O carrinho e a cotação não são recalculados no cliente: se o NFT está em algum carrinho do cache, os dois são invalidados e a API devolve o preço novo (com `previousUnitPrice`) e a cotação nova. O aviso compara o carrinho em cache com o evento; se o carrinho ainda não carregou, não há aviso, e a busca que já está em andamento traz o dado novo.
+- Na reconexão, `nfts`, `cart`, `quote` e `orders` são invalidados: o que mudou com a conexão fora volta pela API.
+
 ## Sessão e troca de usuário
 
-No logout, na expiração ou na troca de usuário (`endSession`), na ordem: avisa os registrados em `onSessionEnd` (o socket desconecta e limpa o registro de eventos no Passo 8), apaga a sessão e reinicia o cache (`resetCache`): `cancelQueries()`, `removeQueries({ type: "inactive" })` e `resetQueries({ type: "active" })`. As queries na tela voltam ao estado inicial e buscam de novo já sem a sessão, e as que não estão na tela somem. Só `clear()` não basta: os observers montados ficariam presos às queries removidas e continuariam mostrando os dados do usuário anterior. O login (`startSession`) faz o mesmo reinício antes de gravar a sessão nova no cache, para respostas de visitante atrasadas não aparecerem na conta. Ver [SECURITY.md](SECURITY.md).
+No logout, na expiração ou na troca de usuário (`endSession`), na ordem: avisa os registrados em `onSessionEnd` (o socket da conta fecha, e a conexão seguinte começa com o registro de eventos vazio), apaga a sessão e reinicia o cache (`resetCache`): `cancelQueries()`, `removeQueries({ type: "inactive" })` e `resetQueries({ type: "active" })`. As queries na tela voltam ao estado inicial e buscam de novo já sem a sessão, e as que não estão na tela somem. Só `clear()` não basta: os observers montados ficariam presos às queries removidas e continuariam mostrando os dados do usuário anterior. O login (`startSession`) faz o mesmo reinício antes de gravar a sessão nova no cache, para respostas de visitante atrasadas não aparecerem na conta. Ver [SECURITY.md](SECURITY.md).
 
 A sessão em si não vive no cache do Query: fica em `session-store.ts`, porque o Axios precisa ler o token fora do React. Os componentes leem com `useSession()` (`useSyncExternalStore`).

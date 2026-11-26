@@ -6,6 +6,11 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Tempo real com Socket.IO: servidor simulado com `@mswjs/socket.io-binding` que emite `nft.updated` quando um NFT muda no banco dos mocks e `order.updated` só para o dono do pedido. O cliente (`socket.io-client`) conecta por sessão (visitante ou conta), fecha no logout e na troca de conta antes de reiniciar o cache, e ignora eventos duplicados, antigos e de outro usuário.
+- Preço e estoque mudam na hora no catálogo, no detalhe, nos destaques e na lista de interesse, sem nova requisição. Com o NFT no carrinho, um aviso conta o que mudou e o carrinho e o resumo são buscados de novo.
+- Reconexão automática que busca pela API o que mudou com a conexão fora.
+- Rotas de teste `/__mocks/realtime/{replay,stale,disconnect,peers}` para evento duplicado, evento antigo, queda de conexão e conexões abertas.
+- Testes: 4 unitários das regras de eventos e 6 cenários E2E de tempo real em desktop e mobile (parte dos itens 9 e 10 do enunciado).
 - Painel de cenários: seção "Estoque" para escolher um NFT e uma edição e marcar como esgotada, na hora e sem recarregar a página.
 - Carrinho do Figma (desktop e mobile): itens com quantidade limitada pelo estoque, remoção com "Desfazer", cupom com erro no campo (inválido, expirado, valor mínimo) e remoção, resumo da cotação da API (subtotal, desconto, taxa de rede estimada e total) com skeleton e indicador de atualização, aviso de preço alterado, item esgotado ou acima do estoque bloqueando a finalização, "Conectar e finalizar", "Continuar explorando", estados vazio e de erro e "Colecionadores também viram".
 - Carrinho do visitante persistido (refresh) e juntado ao da conta no login, com aviso do que não coube no estoque; o `X-Cart-Id` é trocado depois do merge.

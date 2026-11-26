@@ -11,6 +11,7 @@ import { SkipLink } from '@/components/layout/skip-link'
 import { Toaster } from '@/components/ui/sonner'
 import { ensureSession } from '@/features/auth/session'
 import { PendingFavoriteRunner } from '@/features/favorites/components/pending-favorite-runner'
+import { useRealtime } from '@/features/realtime/use-realtime'
 import { env } from '@/lib/env'
 
 export interface RouterContext {
@@ -51,6 +52,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 })
 
 function RootLayout() {
+  useRealtime()
   return (
     <div className="flex min-h-dvh flex-col overflow-x-clip">
       <SkipLink />

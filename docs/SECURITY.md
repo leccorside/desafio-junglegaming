@@ -7,7 +7,7 @@ Toda a autenticação é simulada pelo MSW. O objetivo é reproduzir o comportam
 | Arquivo | Papel |
 | --- | --- |
 | `src/features/auth/session-store.ts` | Sessão atual (token, validade, usuário) fora do React, persistida em `kurio:session`. `useSession()` para os componentes. |
-| `src/features/auth/session.ts` | Ciclo de vida: `ensureSession`, `startSession`, `logout`, `expireSession`, `endSession` e `onSessionEnd` (registro para o socket do Passo 8). |
+| `src/features/auth/session.ts` | Ciclo de vida: `ensureSession`, `startSession`, `logout`, `expireSession`, `endSession` e `onSessionEnd` (registro usado pelo socket, entre outros). |
 | `src/api/client.ts` | Axios: envia o token, ou o `X-Cart-Id` do visitante, e avisa a sessão quando a API responde `SESSION_EXPIRED` ou `UNAUTHENTICATED` para uma requisição feita com o token **atual** (uma resposta atrasada com token antigo não derruba a sessão nova). |
 | `src/features/auth/redirect.ts` | `safeRedirect`: só aceita destino interno depois do login. |
 | `src/routes/_authenticated.tsx` e `src/routes/_guest.tsx` | Proteção das rotas privadas e das telas só para visitante. |
@@ -54,13 +54,13 @@ A proteção acontece no `beforeLoad` do layout `_authenticated`, que redirecion
 
 - Toda query key privada inclui o ID do usuário. A da sessão inclui o token.
 - No logout e na troca de usuário, `endSession` faz, nesta ordem:
-  1. avisa os registrados em `onSessionEnd` (o socket desconecta no Passo 8);
+  1. avisa os registrados em `onSessionEnd` (o socket da conta fecha aqui, com os listeners removidos);
   2. apaga a sessão;
   3. cancela as requisições em andamento;
   4. reinicia o cache: cancela as buscas em andamento, apaga as queries que não estão na tela e reinicia (`resetQueries`) as que estão, que buscam de novo já sem a sessão. Só `clear()` não basta: as telas montadas continuariam mostrando os dados antigos.
 - O login (`startSession`) faz o mesmo reinício: respostas de visitante ainda em andamento são canceladas e não gravam no cache da conta. Entrar com outra conta sem sair também avisa `onSessionEnd('switch')`.
 - Todos os toasts fecham no fim da sessão (`onSessionEnd(() => toast.dismiss())` em `router.ts`), para uma mensagem como "Que bom ver você, Ana Ribeiro." não ficar na tela de quem entra depois. Os avisos do próprio fim ("Você saiu da sua conta.", "Sua sessão expirou...") são criados depois e continuam visíveis.
-- Eventos com `userId` diferente do usuário atual são descartados (Passo 8).
+- Eventos com `userId` diferente do usuário atual são descartados. O servidor simulado já não envia evento de pedido para outra conta, e o cliente confere de novo (`createEventGate`).
 - A API responde `403 FORBIDDEN` para pedido ou carteira de outro usuário.
 - O carrinho do visitante é juntado ao do usuário no login (Passo 7) e depois deixa de ser usado.
 

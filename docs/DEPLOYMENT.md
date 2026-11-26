@@ -20,7 +20,7 @@ O modo `mocks` carrega o `.env.mocks` (versionado), que liga o MSW. O `mockServi
 | --- | --- | --- |
 | `VITE_ENABLE_MOCKS` | `true` (vem do `.env.mocks`) | Liga o MSW REST e Socket.IO |
 | `VITE_API_URL` | `/api` (padrão do código) | Base REST |
-| `VITE_SOCKET_URL` | a definir no Passo 8 | Endereço interceptado pelo binding |
+| `VITE_SOCKET_URL` | `ws://localhost/socket` (padrão do `env.ts`) | Endereço interceptado pelo binding. O cliente conecta na origem com o caminho `/socket/`; não existe servidor nesse endereço, então o MSW precisa estar ligado |
 
 Os valores ficam espelhados em `.env.example`. Só é preciso cadastrar variáveis no painel da Vercel se algum valor diferir do padrão.
 
