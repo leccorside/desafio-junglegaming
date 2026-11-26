@@ -23,5 +23,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "tests"]
+  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "build", "tests"]
 }

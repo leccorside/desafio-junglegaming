@@ -2,7 +2,7 @@ import { useRouterState } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
 
 import { takeNextFocusTarget } from '@/lib/next-focus'
-import { DEFAULT_TITLE, pageTitle } from '@/lib/page-title'
+import { DEFAULT_TITLE, pageDescription, pageTitle, setPageDescription } from '@/lib/page-title'
 
 const HEADING_WAIT_MS = 4000
 
@@ -106,6 +106,7 @@ export function RouteFocus() {
       const inDialog = Boolean(heading?.closest('[role="dialog"]'))
       document.title =
         pathname === '/' && !inDialog ? DEFAULT_TITLE : pageTitle(heading?.textContent)
+      setPageDescription(pageDescription(pathname, inDialog ? null : heading?.textContent))
       if (initial || hash || !heading || focusIsBusy()) return
       if (heading.closest('[role="dialog"]')) return
       const target = requested?.() ?? heading

@@ -27,9 +27,7 @@ playwright-report/
 blob-report/
 playwright/.cache/
 
-# Lighthouse: só a pasta temporária do Lighthouse CI.
-# Os relatórios finais em lighthouse/reports/ são versionados (exigência do desafio).
-.lighthouseci/
+# Lighthouse: os relatórios em lighthouse/reports/ são versionados (exigência do desafio).
 
 # Deploy
 .vercel/

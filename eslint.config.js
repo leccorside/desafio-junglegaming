@@ -11,7 +11,6 @@ export default defineConfig([
     'coverage',
     'playwright-report',
     'test-results',
-    '.lighthouseci',
     'public/mockServiceWorker.js',
     'src/routeTree.gen.ts',
   ]),

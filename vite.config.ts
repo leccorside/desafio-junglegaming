@@ -5,12 +5,15 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-export default defineConfig({
+import { preloadHints } from './build/preload-hints'
+
+export default defineConfig(({ mode }) => ({
   plugins: [
     // O plugin do router precisa vir antes do plugin do React.
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),
     react(),
     tailwindcss(),
+    preloadHints(mode),
   ],
   resolve: {
     alias: {
@@ -23,4 +26,4 @@ export default defineConfig({
   preview: {
     port: 4173,
   },
-})
+}))

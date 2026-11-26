@@ -71,6 +71,8 @@ export function MobileTabBar() {
         src={tabBarBackground}
         alt=""
         aria-hidden="true"
+        width={474}
+        height={155}
         className="pointer-events-none absolute top-[-9px] left-[calc(-30/414*100%)] h-[155px] w-[calc(474/414*100%)] max-w-none select-none"
       />
       <div className="absolute top-0 left-1/2 -translate-x-1/2">

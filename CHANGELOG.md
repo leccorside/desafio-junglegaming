@@ -6,6 +6,13 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Performance e Lighthouse (Passo 15):
+  - `lighthouse/run.mjs` (`npm run lighthouse`) audita início e detalhe, mobile e desktop, três vezes cada, no build com mocks; relatórios HTML/JSON da medição mediana e `summary.json` em `lighthouse/reports/`. Substitui o `lhci autorun` (`@lhci/cli` saiu; `lighthouse` e `chrome-launcher` entraram como dependências de desenvolvimento);
+  - `build/preload-hints.ts`, plugin do Vite que injeta `preload` das fontes e, no modo mocks, `modulepreload` do chunk do MSW;
+  - descrição da página (`<meta name="description">`) por rota, com o nome do NFT no detalhe;
+  - `public/robots.txt`;
+  - `seo-performance.spec.ts` confere o `robots.txt`, as dicas de carregamento, o download único das fontes e a descrição por rota.
+  - Resultado: Accessibility, Best Practices e SEO em 100 nos quatro casos; Performance 98/99 no desktop e 78/70 no mobile, abaixo da meta por causa do MSW no caminho crítico (docs/PERFORMANCE.md).
 - Fechamento da suíte Playwright (Passo 14):
   - `loading-states.spec.ts` completa o item 12 (skeleton, falha e recuperação no detalhe, carrinho, pagamento, perfil, carteiras, lista de interesse e pedido);
   - `visual.spec.ts` faz a regressão visual de início, detalhe, carrinho e pagamento em desktop e mobile, com baselines versionadas por sistema operacional;
@@ -93,6 +100,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 - Botão do painel de cenários mais alto no mobile, acima da área dos toasts.
 
 ### Corrigido
+
+- CLS de 0,256 no detalhe do NFT (desktop): as fontes só eram descobertas depois do CSS e a troca de fonte deslocava as abas. Agora têm `preload` no `index.html`.
+- `/robots.txt` devolvia o `index.html` (SEO 92 no Lighthouse). Agora existe um `robots.txt` que libera o catálogo e bloqueia as telas da conta.
 
 - Os pedidos de exemplo (`ord-0001` e `ord-0002`) tinham um hash de transação que não era hexadecimal (`0xORD0…AAAA`), e o link do explorador apontava para um hash inválido. Agora usam o mesmo gerador das compras feitas na demo (`src/mocks/transaction.ts`); o `schemaVersion` do banco simulado subiu para 3, então quem já tinha o banco salvo volta às fixtures.
 

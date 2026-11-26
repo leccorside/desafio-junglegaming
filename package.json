@@ -19,7 +19,7 @@
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
-    "lighthouse": "lhci autorun"
+    "lighthouse": "node lighthouse/run.mjs"
   },
   "msw": {
     "workerDirectory": [
@@ -48,7 +48,6 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.1",
     "@eslint/js": "^10.0.1",
-    "@lhci/cli": "^0.16.1",
     "@mswjs/socket.io-binding": "^0.2.0",
     "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.5",
@@ -60,10 +59,12 @@
     "@types/react": "^19.3.3",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "chrome-launcher": "^1.2.3",
     "eslint": "^10.15.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.8",
     "globals": "^17.14.0",
+    "lighthouse": "^13.6.0",
     "msw": "~2.15.0",
     "prettier": "^3.10.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
