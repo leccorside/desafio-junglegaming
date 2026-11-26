@@ -1,3 +1,5 @@
+import { dismissFormSuccessToasts } from './form-toasts'
+
 /**
  * Centraliza na tela o campo que acabou de receber o foco por erro.
  *
@@ -10,6 +12,9 @@
  */
 export function centerFocusedField() {
   if (typeof window === 'undefined') return
+  // Erro na tela: os avisos de sucesso anteriores saem (não cobrem o campo
+  // nem dizem "salvo" enquanto há algo para corrigir).
+  dismissFormSuccessToasts()
   requestAnimationFrame(() => {
     const element = document.activeElement
     if (!(element instanceof HTMLElement) || element === document.body) return

@@ -351,6 +351,62 @@ test.describe('acessibilidade: teclado e foco', () => {
     expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true)
   })
 
+  test('carteiras: foco no "Salvar" durante o envio, no "Editar" ao salvar ou cancelar a secundária, e o aviso de sucesso sai com um erro', async ({
+    page,
+  }) => {
+    await loginViaUi(page, 'ana@example.com')
+    await page.goto('/wallets')
+    await settled(page)
+    const primary = page.getByRole('form', { name: 'Carteira principal' })
+    const save = primary.getByRole('button', { name: /^(Salvar carteira|Salvando…)$/ })
+
+    // Latência de 2,5 s: o botão fica em envio, com o foco nele.
+    await setScenario(page, ['slow'])
+    await tabTo(page, save)
+    await page.keyboard.press('Enter')
+    await expect(save).toHaveAttribute('aria-disabled', 'true')
+    await expect(save).toBeFocused()
+    const saved = page
+      .locator('[data-sonner-toast]')
+      .filter({ hasText: 'Carteira principal salva.' })
+    await expect(saved).toBeVisible({ timeout: 15_000 })
+    await expect(save).toBeFocused()
+    await expect(save).not.toHaveAttribute('aria-disabled', 'true')
+    await setScenario(page, [])
+
+    // Secundária com erro: o aviso de sucesso da principal sai da tela.
+    const edit = page.getByRole('button', { name: 'Editar carteira secundária' })
+    await tabTo(page, edit)
+    await page.keyboard.press('Enter')
+    const secondary = page.getByRole('form', { name: 'Carteira secundária' })
+    const nick = secondary.getByRole('textbox', { name: /^Apelido da carteira/ })
+    await expect(nick).toBeFocused()
+    await page.keyboard.press('Control+A')
+    await page.keyboard.press('Backspace')
+    await tabTo(page, secondary.getByRole('button', { name: 'Salvar carteira' }), 15)
+    await page.keyboard.press('Enter')
+    await expect(nick).toBeFocused()
+    await expect(nick).toHaveAccessibleDescription('Informe um apelido.')
+    await expect(saved).toHaveCount(0)
+
+    // Salvar: o formulário fecha e o foco vai ao "Editar", na tela.
+    await page.keyboard.type('Reserva da Ana')
+    await tabTo(page, secondary.getByRole('button', { name: 'Salvar carteira' }), 15)
+    await page.keyboard.press('Enter')
+    await expect(secondary).toHaveCount(0)
+    await expect(edit).toBeFocused()
+    await expect(edit).toBeInViewport()
+    await expect(page.getByText('Apelido:').last()).toBeVisible()
+
+    // Cancelar também devolve o foco ao "Editar".
+    await page.keyboard.press('Enter')
+    await expect(nick).toBeFocused()
+    await tabTo(page, secondary.getByRole('button', { name: 'Cancelar' }), 15)
+    await page.keyboard.press('Enter')
+    await expect(secondary).toHaveCount(0)
+    await expect(edit).toBeFocused()
+  })
+
   test('carrinho: token e edição em linhas próprias, sem corte', async ({ page }) => {
     test.skip(isMobileViewport(page), 'No mobile a linha do item tem outro layout')
     await loginViaUi(page, 'ana@example.com')

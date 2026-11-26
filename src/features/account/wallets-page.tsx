@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useForm, useWatch, type Resolver } from 'react-hook-form'
-import { toast } from 'sonner'
 
 import {
   NETWORK_LABELS,
@@ -18,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { applyApiError } from '@/features/auth/form-errors'
 import { centerFocusedField } from '@/lib/focus'
+import { formSuccessToast } from '@/lib/form-toasts'
 import { FormError } from '@/features/auth/components/form-error'
 
 import { AccountLayout } from './components/account-layout'
@@ -94,8 +94,11 @@ function PrimaryWallet({ wallet }: { wallet: Wallet | undefined }) {
         </h2>
         <p className="text-body-sm leading-[15px] text-muted-foreground">{DESCRIPTION}</p>
       </div>
+      {/* A chave é o id (não a data de atualização): salvar não remonta o
+          formulário, que perderia o foco do "Salvar"; os valores salvos voltam
+          pelo `form.reset` do próprio formulário. */}
       <WalletForm
-        key={wallet?.updatedAt ?? 'new'}
+        key={wallet?.id ?? 'new'}
         role="primary"
         wallet={wallet}
         initial={walletDefaults(wallet)}
@@ -120,6 +123,16 @@ function SecondaryWallet({
   const sameId = useId()
   const [open, setOpen] = useState(false)
   const [sameAsPrimary, setSameAsPrimary] = useState(false)
+  // Salvar ou cancelar fecha o formulário (o elemento focado some): o foco
+  // volta ao "Editar"/"Adicionar", que também traz o resumo para a tela.
+  const toggleRef = useRef<HTMLButtonElement>(null)
+  const returnFocus = useRef(false)
+  useEffect(() => {
+    if (open || !returnFocus.current) return
+    returnFocus.current = false
+    toggleRef.current?.focus({ preventScroll: true })
+    toggleRef.current?.scrollIntoView({ block: 'center', behavior: 'auto' })
+  }, [open])
 
   const initial: WalletFormValues =
     sameAsPrimary && primary
@@ -155,6 +168,7 @@ function SecondaryWallet({
           </label>
           {!open ? (
             <button
+              ref={toggleRef}
               type="button"
               onClick={() => setOpen(true)}
               className="cursor-pointer text-body-lg font-medium text-accent-foreground hover:underline"
@@ -176,6 +190,7 @@ function SecondaryWallet({
             initial={initial}
             autoFocus
             onDone={() => {
+              returnFocus.current = true
               setOpen(false)
               setSameAsPrimary(false)
             }}
@@ -247,18 +262,30 @@ function WalletForm({
   const pending = create.isPending || update.isPending
   const which = role === 'primary' ? 'principal' : 'secundária'
 
-  const onSubmit = form.handleSubmit(async (values) => {
+  const submit = form.handleSubmit(async (values) => {
     setFormError(null)
     const body = toWalletRequest(values)
     try {
-      if (wallet) await update.mutateAsync({ id: wallet.id, body })
-      else await create.mutateAsync({ ...body, role })
-      toast.success(`Carteira ${which} salva.`)
+      const saved = wallet
+        ? await update.mutateAsync({ id: wallet.id, body })
+        : await create.mutateAsync({ ...body, role })
+      // O que a API gravou (endereço normalizado, ENS) passa a ser o padrão.
+      form.reset(walletDefaults(saved))
+      formSuccessToast(`Carteira ${which} salva.`)
       onDone?.()
     } catch (error) {
       setFormError(applyApiError(error, form.setError, WALLET_FIELDS))
     }
   }, centerFocusedField)
+  // O botão fica com `aria-disabled` (não `disabled`) enquanto salva, para o
+  // foco não cair no topo; o Enter repetido para aqui.
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    if (pending) {
+      event.preventDefault()
+      return
+    }
+    void submit(event)
+  }
 
   return (
     <Form {...form}>
@@ -365,8 +392,9 @@ function WalletForm({
         <div className="flex flex-col gap-3 md:flex-row">
           <Button
             type="submit"
-            disabled={pending}
-            className="h-10 w-full rounded-[3px] px-4 text-body-sm font-bold md:w-auto md:min-w-[131px]"
+            aria-disabled={pending || undefined}
+            aria-busy={pending || undefined}
+            className="h-10 w-full rounded-[3px] px-4 text-body-sm font-bold aria-disabled:cursor-wait aria-disabled:opacity-60 md:w-auto md:min-w-[131px]"
           >
             {pending ? 'Salvando…' : 'Salvar carteira'}
           </Button>

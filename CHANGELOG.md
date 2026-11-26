@@ -85,6 +85,11 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Carteiras pelo teclado (demonstração no mobile):
+  - o foco caía no topo depois de salvar a principal (o formulário era remontado e o botão ficava `disabled`);
+  - depois de salvar a secundária, o foco se perdia e a tela ficava no rodapé (agora vai ao "Editar carteira secundária", também ao cancelar);
+  - o aviso "Carteira principal salva." cobria o erro de um campo da secundária (os avisos de sucesso saem quando um formulário mostra erros).
+
 - Cupom pelo teclado (demonstração no desktop):
   - o campo do cupom não mostrava foco;
   - ao aplicar, o foco caía no topo da página (agora vai para "Remover cupom", e ao remover volta ao campo);

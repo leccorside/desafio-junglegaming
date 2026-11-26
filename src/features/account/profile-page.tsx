@@ -13,6 +13,7 @@ import { applyApiError } from '@/features/auth/form-errors'
 import { FormError } from '@/features/auth/components/form-error'
 import { PasswordInput } from '@/features/auth/components/password-input'
 import { centerFocusedField } from '@/lib/focus'
+import { formSuccessToast } from '@/lib/form-toasts'
 import { cn } from '@/lib/utils'
 
 import { AccountLayout } from './components/account-layout'
@@ -114,7 +115,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
     setAvatarError(null)
     const saved: string[] = []
     const report = () => {
-      if (saved.length) toast.success(`${saved.join(' ')}`)
+      if (saved.length) formSuccessToast(`${saved.join(' ')}`)
     }
     setSaving(true)
     try {
