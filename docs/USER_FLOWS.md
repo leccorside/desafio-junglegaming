@@ -118,11 +118,14 @@ Implementado no Passo 4.
 
 ## 7. Perfil e carteiras
 
-1. Edita nome e outros dados do layout, com validação e erros da API.
-2. Troca o avatar com preview, validando tipo e tamanho.
-3. Altera a senha informando a atual.
-4. Cadastra e edita as carteiras principal e secundária.
-5. Tudo persiste depois do refresh.
+1. Edita nome de exibição, nome de usuário e nome ENS, com validação e erros da API no campo certo (o campo com erro recebe o foco). O e-mail aparece só para leitura.
+2. Troca o avatar: "Alterar" abre o seletor de arquivo, a imagem aparece na hora (prévia) e tipo e tamanho são conferidos antes do envio. "Remover" tira o avatar.
+3. Altera a senha informando a atual, a nova e a confirmação.
+4. Um "Salvar", como no Figma, grava em sequência o que mudou: dados, avatar e senha. Cada parte salva avisa ("Dados do perfil salvos.", "Avatar atualizado.", "Senha alterada."); se uma falha, o erro vai para o campo dela e o resto que já foi salvo continua salvo. Nome e avatar mudam no header na hora.
+5. Cadastra e edita as carteiras principal (sempre aberta) e secundária ("Adicionar" ou "Editar", com "Igual à carteira principal" e "Cancelar"). A secundária salva aparece num resumo.
+6. Tudo persiste depois do refresh, e as carteiras ficam disponíveis para o pagamento.
+
+Telas: `/profile` e `/wallets`, com o menu "Meu perfil" do Figma no desktop (Dados do perfil, Carteiras, Lista de interesse e Sair; Atividade, Ofertas, Arquivos baixados e Suporte aparecem como indisponíveis). No mobile, sem frame, voltar e título no topo, abas das seções e uma coluna.
 
 ## Ações fora do escopo
 

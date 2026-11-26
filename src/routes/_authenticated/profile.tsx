@@ -1,10 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { PagePlaceholder } from '@/components/feedback/page-placeholder'
+import { ProfilePage } from '@/features/account/profile-page'
 
-// Rota privada: Passo 9.
 export const Route = createFileRoute('/_authenticated/profile')({
-  component: function ProfilePage() {
-    return <PagePlaceholder title="Perfil do colecionador" />
-  },
+  component: ProfilePage,
 })

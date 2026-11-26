@@ -49,6 +49,8 @@ Padrões globais em `src/lib/query-client.ts` (Passo 4): `staleTime` 30 s, `gcTi
 | Mais desta coleção | `['nfts', 'list', { collection, sort: 'popular', pageSize: 6 }]` | Mesma query da listagem, com `select` que tira o próprio NFT e corta em 5 |
 | Lista de interesse | `['favorites', userId]` | `staleTime` 5 min; desligada para visitante |
 | Sessão | `['session', token]` | `staleTime: Infinity` no carregamento; `0` ao entrar em rota privada (revalida a cada entrada); sem retry |
+| Perfil | `['profile', userId]` | `staleTime` 5 min; as mutations gravam a resposta da API direto no cache |
+| Carteiras | `['wallets', userId]` | `staleTime` 5 min; criar ou editar troca a carteira na lista em cache (ordem: principal, secundária) |
 
 ## Retries
 
@@ -77,8 +79,9 @@ Todo erro de requisição vira `ApiError` (`src/api/errors.ts`), com `code`, `st
 | Adicionar, alterar, remover item | `cart`, `quote` |
 | Aplicar / remover cupom | `cart`, `quote` |
 | Criar pedido | `orders`; o carrinho só depois da confirmação |
-| Atualizar perfil / avatar | `profile`, `session` |
-| Cadastrar / editar carteira | `wallets` |
+| Atualizar perfil / avatar | `profile` (resposta gravada no cache) e o usuário da sessão: `updateSessionUser` no store (header na hora) e no cache `['session', token]`, senão a próxima conferência da raiz gravaria o nome antigo de volta |
+| Trocar senha | nada (a sessão continua válida) |
+| Cadastrar / editar carteira | `wallets` (resposta gravada no cache, sem nova busca) |
 | Login / cadastro | `session`, `cart` (merge), `favorites` |
 | Logout | `queryClient.clear()` dos dados privados |
 

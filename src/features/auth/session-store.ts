@@ -62,6 +62,16 @@ export function setSession(session: Session) {
   emit()
 }
 
+/**
+ * Atualiza os dados públicos do usuário na sessão atual (nome, usuário,
+ * avatar), depois de salvar o perfil, para o header mudar na hora. Não mexe
+ * no token. Ignora se a sessão já é de outra pessoa.
+ */
+export function updateSessionUser(userId: string, patch: Partial<Omit<Session['user'], 'id'>>) {
+  if (!current || current.user.id !== userId) return
+  setSession({ ...current, user: { ...current.user, ...patch } })
+}
+
 export function clearSession() {
   current = null
   try {

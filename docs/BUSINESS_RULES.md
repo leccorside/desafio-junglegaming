@@ -55,6 +55,9 @@ Regras aplicadas pela API simulada e respeitadas pela interface. A fonte da verd
 - O endereço é validado conforme a rede: `0x` seguido de 40 caracteres hexadecimais em Ethereum e Polygon, base58 com 32 a 44 caracteres em Solana.
 - Tipos de carteira: MetaMask, WalletConnect e Coinbase Wallet.
 - Cada carteira tem apelido e pode ter um nome ENS, digitado sem o ".eth".
+- Validações finais (cliente e API com as mesmas regras): apelido obrigatório, até 40 caracteres; rede e tipo obrigatórios; endereço obrigatório e conferido pela rede escolhida (trocar a rede refaz a checagem e o placeholder do campo); ENS opcional, 3 a 63 letras minúsculas, números ou hífen, guardado em minúsculas.
+- Cadastrar um papel que já existe devolve erro no campo `role`: a principal é sempre editada no lugar, e a secundária só pode ser criada uma vez.
+- "Igual à carteira principal" copia rede, tipo, endereço e ENS da principal para a secundária, com o apelido da principal seguido de "(secundária)", que pode ser trocado antes de salvar.
 - A conexão da carteira no checkout é simulada e pode terminar em conectada, recusada pelo usuário ou desconectada no meio do fluxo.
 
 ## Pedidos
@@ -74,6 +77,8 @@ Regras aplicadas pela API simulada e respeitadas pela interface. A fonte da verd
 - Senha com 8 a 72 caracteres, uma letra maiúscula, uma minúscula, um número e um símbolo.
 - Troca de senha exige a senha atual, e a nova precisa ser diferente dela.
 - O e-mail não é editável no perfil.
+- Nome de exibição: 2 a 50 caracteres. Nome ENS do perfil: opcional, mesma regra das carteiras.
+- No perfil, os campos de senha ficam em branco para manter a senha atual. Preencher qualquer um deles pede os três.
 - Login com credenciais erradas devolve `401 INVALID_CREDENTIALS`, sem dizer qual campo está errado.
 - Avatar: PNG, JPEG ou WebP, até 2 MB.
 - Senhas ficam guardadas como hash no banco dos mocks.

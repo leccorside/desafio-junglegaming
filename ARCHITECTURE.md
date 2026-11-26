@@ -129,6 +129,9 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Sessão expirada | Em rota privada, vai ao login com o aviso "Sua sessão expirou. Entre de novo para continuar de onde parou." e volta depois. Em rota pública, fica na página e recebe um aviso. |
 | Fechar o modal de login | X, Esc ou clique fora voltam ao início (a rota de origem pode ser privada, e não dá para voltar a ela sem sessão). |
 | Menu da conta | O Figma só desenha o botão "Entrar". Com sessão, o header mostra avatar (iniciais) e nome, com menu: Meu perfil, Carteiras, Lista de interesse e Sair. |
+| Perfil e carteiras no mobile | Sem frame no Figma. Voltar e título no topo (como o carrinho), as seções disponíveis da conta em abas roláveis (Dados do perfil, Carteiras, Lista de interesse) e os campos em uma coluna, com os botões na largura toda. "Sair" e as áreas fora do escopo ficam no menu lateral, para a tela começar no formulário. |
+| Um "Salvar" no perfil | Como no Figma. Grava em sequência o que mudou (dados, avatar, senha), cada parte com seu aviso; se uma falha, o erro vai para o campo dela e as já salvas não voltam atrás. O avatar escolhido só é enviado no "Salvar" (prévia antes). |
+| Selects nativos nas carteiras | Rede e tipo usam `<select>` com a seta do Figma: teclado, leitor de tela e celular funcionam sem código extra. |
 | Favoritos | Ganham a rota `/favorites`, com o nome "Lista de interesse" do Figma (menu do perfil e footer). O coração da barra inferior leva a ela. |
 | Catálogo carregando | Skeleton com shimmer nas proporções do card (9 itens), sem deslocar o layout. A contagem "Carregando NFTs…" fica numa região `aria-live`. |
 | Troca de filtro com resultado na tela | A página anterior continua visível com 60% de opacidade, `aria-busy` e "Atualizando…" até a resposta nova (`placeholderData`). |
@@ -176,6 +179,12 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Ícone de círculo sobre a imagem do detalhe (desktop) | Sem função identificável no Figma; não foi implementado. O favorito usa o botão "Favoritar". |
 | Coração preenchido | O Figma só tem o contorno. O estado "favoritado" usa o contorno externo do mesmo ícone, preenchido em `Text/Coral`. |
 | Ícone de menu (`MenuIcon` do lucide) no header do tablet | O Figma não tem ícone de menu, porque não desenha o tablet. |
+| Perfil sem "Apelido da carteira" | O frame do perfil repete um campo da carteira. O apelido é da carteira (contrato `Wallet.label`) e fica na tela de carteiras; o lugar dele no perfil passou para o avatar. |
+| Carteiras sem "Nome de exibição", "Nome do perfil", "Código de indicação", "E-mail" e "ENS ou carteira secundária" | O frame parece reaproveitar campos de outro formulário: nenhum deles existe numa carteira. Ficaram os do contrato: apelido, rede, endereço, tipo e nome ENS. |
+| Asterisco só nos campos obrigatórios | O Figma põe asterisco em todos, inclusive no nome ENS, que é opcional. |
+| Caixa ".eth" sem seta | No Figma ela parece um seletor, mas só existe ".eth": vira um sufixo fixo, para não parecer que abre opções. |
+| Campos de senha em branco no perfil | O Figma desenha os três campos sem dizer quando são obrigatórios. Em branco, a senha não muda; preenchido um, os três são pedidos. |
+| Carteira secundária com resumo, "Editar" e "Cancelar" | O Figma só desenha o estado vazio ("Você ainda não adicionou..."). "Igual à carteira principal" vira uma caixa de seleção que abre o formulário já preenchido. |
 
 Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens vêm do arquivo do Figma (ver [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)).
 

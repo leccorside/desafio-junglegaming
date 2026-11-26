@@ -6,6 +6,10 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Perfil do colecionador (`/profile`) do Figma: nome de exibição, nome de usuário, e-mail só para leitura, nome ENS, avatar com prévia e conferência de tipo e tamanho, e troca de senha, num único "Salvar" que grava em sequência o que mudou e põe cada erro no campo certo. Nome e avatar mudam no header na hora.
+- Carteiras (`/wallets`) do Figma: carteira principal sempre aberta (cria ou edita) e secundária com "Adicionar"/"Editar", "Igual à carteira principal", resumo e "Cancelar". Endereço conferido pela rede escolhida.
+- Menu "Meu perfil" do Figma no desktop (com as áreas fora do escopo como indisponíveis e "Sair") e, no mobile, voltar, título e abas das seções em uma coluna.
+- Testes: 6 unitários das regras dos formulários e 8 cenários E2E de perfil e carteiras em desktop e mobile (item 8 do enunciado).
 - Aviso de queda do tempo real ("Atualizações em tempo real pausadas. Reconectando… Os preços podem ter mudado.") por cima do topo da página, sem empurrar o conteúdo e à vista com a página rolada, com anúncio para leitor de tela quando a conexão volta.
 - Na reconexão, o aviso do carrinho mostra o que mudou durante a queda (preço, esgotado, estoque menor).
 - Reset dos dados de demonstração sem recarregar: aviso "Os dados de demonstração foram restaurados." e a tela busca tudo de novo (o carrinho do visitante volta vazio).
