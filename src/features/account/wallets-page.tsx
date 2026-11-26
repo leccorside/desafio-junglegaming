@@ -11,6 +11,7 @@ import {
   type WalletType,
 } from '@/api/contracts'
 import { errorMessage } from '@/api/errors'
+import { LoadingRegion } from '@/components/feedback/loading-region'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -67,7 +68,11 @@ export function WalletsPage() {
 
 function WalletsSkeleton() {
   return (
-    <div aria-hidden="true" data-wallets-skeleton="" className="flex flex-col gap-6">
+    <LoadingRegion
+      label="Carregando as carteiras…"
+      data-wallets-skeleton=""
+      className="flex flex-col gap-6"
+    >
       <Skeleton className="h-4 w-48" />
       <div className="grid gap-6 md:grid-cols-2 md:gap-x-7">
         {Array.from({ length: 4 }, (_, i) => (
@@ -77,7 +82,7 @@ function WalletsSkeleton() {
           </div>
         ))}
       </div>
-    </div>
+    </LoadingRegion>
   )
 }
 

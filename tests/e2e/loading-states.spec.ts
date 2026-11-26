@@ -24,6 +24,8 @@ interface Screen {
   route: string
   /** Skeleton (marcado com `aria-busy` ou atributo próprio). */
   skeleton: string
+  /** Aviso de carregamento só para leitor de tela (role="status"). */
+  busy: string
   /** Mensagem de erro da tela. */
   error: string | RegExp
   /** O que aparece quando os dados chegam. */
@@ -35,6 +37,7 @@ interface Screen {
 const SCREENS: Screen[] = [
   {
     name: 'detalhe do NFT',
+    busy: 'Carregando NFT…',
     path: '/nft/nft-042',
     route: '/nfts/nft-042',
     skeleton: '[aria-busy="true"]',
@@ -43,6 +46,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: 'carrinho',
+    busy: 'Carregando o carrinho…',
     path: '/cart',
     route: '/cart',
     skeleton: '[data-cart-skeleton]',
@@ -58,6 +62,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: 'pagamento',
+    busy: 'Carregando o pagamento…',
     path: '/checkout',
     route: '/me/wallets',
     skeleton: '[data-checkout-skeleton]',
@@ -73,6 +78,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: 'perfil',
+    busy: 'Carregando o perfil…',
     path: '/profile',
     route: '/me/profile',
     skeleton: '[data-profile-skeleton]',
@@ -82,6 +88,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: 'carteiras',
+    busy: 'Carregando as carteiras…',
     path: '/wallets',
     route: '/me/wallets',
     skeleton: '[data-wallets-skeleton]',
@@ -91,6 +98,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: 'lista de interesse',
+    busy: 'Carregando sua lista…',
     path: '/favorites',
     route: '/me/favorites',
     skeleton: '[data-favorites-skeleton]',
@@ -100,6 +108,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: 'pedido',
+    busy: 'Carregando o pedido…',
     path: '/orders/ord-0001',
     route: '/orders/ord-0001',
     skeleton: '[data-order-skeleton]',
@@ -130,9 +139,17 @@ test.describe('carregamento lento, falha e recuperação nas telas', () => {
       const skeleton = page.locator('main#conteudo').locator(screen.skeleton).first()
       await expect(skeleton).toBeVisible()
       await expect(screen.ready(page)).toBeHidden()
+      // Leitor de tela: a área do skeleton está ocupada (aria-busy) e um aviso
+      // fora dela diz o que carrega (dentro, o anúncio poderia ser calado).
+      await expect(skeleton.locator('xpath=ancestor-or-self::*[@aria-busy="true"]')).toHaveCount(1)
+      const status = page.getByRole('status').filter({ hasText: screen.busy })
+      await expect(status).toHaveCount(1)
+      expect(await status.evaluate((el) => el.closest('[aria-busy="true"]'))).toBeNull()
       // Depois da latência, os dados substituem o skeleton.
       await expect(screen.ready(page)).toBeVisible({ timeout: 15_000 })
       await expect(page.locator('main#conteudo').locator(screen.skeleton)).toHaveCount(0)
+      await expect(page.locator('main#conteudo [aria-busy="true"]')).toHaveCount(0)
+      await expect(page.getByRole('status').filter({ hasText: screen.busy })).toHaveCount(0)
     })
 
     test(`${screen.name}: falha com aviso e "Tentar de novo" que recupera`, async ({ page }) => {

@@ -4,6 +4,7 @@ import { TriangleAlertIcon as WarningIcon, XIcon } from 'lucide-react'
 
 import { errorMessage } from '@/api/errors'
 import { ArrowLeftIcon } from '@/components/icons/figma-icons'
+import { LoadingRegion } from '@/components/feedback/loading-region'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { NftCard, NftCardSkeleton } from '@/features/catalog/components/nft-card'
@@ -93,7 +94,7 @@ function CartChangeNotice() {
 
 function CartSkeleton() {
   return (
-    <ul aria-hidden="true" data-cart-skeleton="" className="flex flex-col gap-5 md:gap-3">
+    <ul data-cart-skeleton="" className="flex flex-col gap-5 md:gap-3">
       {Array.from({ length: 3 }, (_, i) => (
         <li key={i}>
           <Skeleton className="h-[100px] rounded-[14px] md:h-[70px] md:rounded-none" />
@@ -165,12 +166,15 @@ export function CartPage() {
         <CartChangeNotice />
 
         {cart.isPending ? (
-          <div className="flex flex-col gap-8 md:flex-row md:justify-between">
+          <LoadingRegion
+            label="Carregando o carrinho…"
+            className="flex flex-col gap-8 md:flex-row md:justify-between"
+          >
             <div className="md:w-[782px]">
               <CartSkeleton />
             </div>
             <Skeleton className="h-[300px] md:w-[332px]" />
-          </div>
+          </LoadingRegion>
         ) : cart.isError ? (
           <div
             role="alert"

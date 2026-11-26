@@ -94,6 +94,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Perfil, carteiras, carrinho, pagamento e pedido não avisavam o leitor de tela enquanto carregavam (skeleton escondido, sem `aria-busy` nem texto). Agora usam `LoadingRegion`, com `aria-busy` na área e "Carregando…" só para leitor de tela; no detalhe e na lista de interesse o aviso saiu de dentro da área ocupada.
+- O contador do botão do painel de cenários só mudava ao recarregar; agora acompanha o cenário trocado pela rota de teste.
+
 - Lista de interesse sem `aria-busy` enquanto carregava (as outras telas tinham).
 - Teste de compra intermitente: com a máquina carregada, o pagamento (1 a 1,5 s) era decidido antes de a tela do pedido abrir, e o teste não via "Aguardando". Os testes do estado pendente passaram a 3 s.
 

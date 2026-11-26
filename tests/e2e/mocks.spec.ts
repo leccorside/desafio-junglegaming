@@ -177,6 +177,38 @@ test.describe('painel de cenários visível (como para o avaliador)', () => {
     await expect(button).toHaveAccessibleName('Cenários de teste (2 ativos)')
   })
 
+  test('o contador e as caixas acompanham o cenário trocado fora do painel, sem recarregar', async ({
+    page,
+  }) => {
+    const button = page.getByRole('button', { name: /^Cenários de teste/ })
+    const navigations = await page.evaluate(() => performance.getEntriesByType('navigation').length)
+
+    await setScenario(page, ['slow'], { routes: ['/me/wallets'] })
+    await expect(button).toHaveAccessibleName('Cenários de teste (1 ativo)')
+    await setScenario(page, ['slow', 'server-error'])
+    await expect(button).toHaveAccessibleName('Cenários de teste (2 ativos)')
+    await expect(button.locator('span').filter({ hasText: /^2$/ })).toBeVisible()
+
+    // Ao abrir, as caixas mostram o que está em vigor.
+    await button.click()
+    const panel = page.getByRole('dialog', { name: 'Cenários de teste' })
+    await expect(panel.getByRole('checkbox', { name: /^slow/ })).toBeChecked()
+    await expect(panel.getByRole('checkbox', { name: /^server-error/ })).toBeChecked()
+    await expect(panel.getByRole('checkbox', { name: /^jitter/ })).not.toBeChecked()
+    await page.keyboard.press('Escape')
+    await expect(panel).toBeHidden()
+
+    await setScenario(page, [])
+    await expect(button).toHaveAccessibleName('Cenários de teste')
+    await button.click()
+    await expect(panel.getByRole('checkbox', { name: /^slow/ })).not.toBeChecked()
+    // Nada foi recarregado no caminho.
+    expect(await page.evaluate(() => performance.getEntriesByType('navigation').length)).toBe(
+      navigations,
+    )
+    expect(await page.evaluate(() => window.location.pathname)).toBe('/')
+  })
+
   test('no mobile, o botão fica na margem da barra inferior sem cobrir nada clicável', async ({
     page,
     isMobile,

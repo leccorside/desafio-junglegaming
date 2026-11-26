@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 
 import { NETWORK_LABELS, type Order } from '@/api/contracts'
 import { errorMessage, normalizeError } from '@/api/errors'
+import { LoadingRegion } from '@/components/feedback/loading-region'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QuoteTotals } from '@/features/checkout/components/checkout-summary'
@@ -27,11 +28,15 @@ export function OrderPage({ orderId }: { orderId: string }) {
   if (order.isPending) {
     return (
       <Shell>
-        <div aria-hidden="true" data-order-skeleton="" className="flex flex-col gap-4">
+        <LoadingRegion
+          label="Carregando o pedido…"
+          data-order-skeleton=""
+          className="flex flex-col gap-4"
+        >
           <Skeleton className="h-6 w-64" />
           <Skeleton className="h-4 w-80" />
           <Skeleton className="h-[140px]" />
-        </div>
+        </LoadingRegion>
       </Shell>
     )
   }

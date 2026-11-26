@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import type { Profile } from '@/api/contracts'
 import { errorMessage, normalizeError } from '@/api/errors'
+import { LoadingRegion } from '@/components/feedback/loading-region'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -72,7 +73,11 @@ export function ProfilePage() {
 
 function ProfileSkeleton() {
   return (
-    <div aria-hidden="true" data-profile-skeleton="" className="flex flex-col gap-6">
+    <LoadingRegion
+      label="Carregando o perfil…"
+      data-profile-skeleton=""
+      className="flex flex-col gap-6"
+    >
       <div className={grid}>
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="flex flex-col gap-2.5">
@@ -82,7 +87,7 @@ function ProfileSkeleton() {
         ))}
       </div>
       <Skeleton className="size-[50px] rounded-full" />
-    </div>
+    </LoadingRegion>
   )
 }
 

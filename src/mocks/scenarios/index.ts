@@ -123,12 +123,26 @@ export function getScenario(): ScenarioState {
   return state
 }
 
+const listeners = new Set<() => void>()
+
+/**
+ * Avisa quando os cenários ativos mudam, venham do painel, da URL ou da rota
+ * `PUT /__mocks/scenario` (o MSW roda na própria página, então é o mesmo
+ * módulo). O painel usa para o contador do botão. Devolve a função que
+ * cancela a inscrição.
+ */
+export function onScenarioChange(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
 export function setScenario(names: ScenarioName[], options: ScenarioOptions = {}): ScenarioState {
   state = { names: Array.from(new Set(names)), options, consumed: [] }
   jitterRandom = createRandom(options.seed ?? 7)
   defaultRandom = createRandom(DEFAULT_LATENCY_SEED)
   flakyCalls.clear()
   save()
+  for (const listener of listeners) listener()
   return state
 }
 

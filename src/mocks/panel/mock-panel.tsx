@@ -1,5 +1,5 @@
 import { FlaskConicalIcon } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useId, useState, useSyncExternalStore } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -20,6 +20,7 @@ import {
   BUSINESS_SCENARIOS,
   getScenario,
   NETWORK_SCENARIOS,
+  onScenarioChange,
   resetScenario,
   SCENARIO_DESCRIPTIONS,
   updateScenarioNames,
@@ -36,6 +37,9 @@ export default function MockPanel() {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<ScenarioName[]>(() => getScenario().names)
   const baseId = useId()
+  // Cenários em vigor, atualizados sem recarregar (inclusive quando mudam pela
+  // rota `/__mocks/scenario`): o contador do botão acompanha.
+  const active = useSyncExternalStore(onScenarioChange, () => getScenario().names)
 
   if (typeof navigator !== 'undefined' && navigator.webdriver) return null
 
@@ -91,10 +95,18 @@ export default function MockPanel() {
     </fieldset>
   )
 
-  const activeCount = getScenario().names.length
+  const activeCount = active.length
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        // Ao abrir, as caixas mostram o que está em vigor agora (pode ter mudado
+        // fora do painel desde a última vez).
+        if (next) setSelected(getScenario().names)
+        setOpen(next)
+      }}
+    >
       {/*
         Com um diálogo aberto (a revisão da compra, por exemplo), o Radix marca o
         resto da página com aria-hidden e desliga os cliques fora dele. O

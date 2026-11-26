@@ -3,6 +3,7 @@ import { Link, useCanGoBack, useNavigate, useRouter } from '@tanstack/react-rout
 import { useState } from 'react'
 
 import { NFT_CATEGORY_LABELS, RARITY_LABELS, type NftEdition } from '@/api/contracts'
+import { LoadingRegion } from '@/components/feedback/loading-region'
 import { ArrowLeftIcon, ShopIcon } from '@/components/icons/figma-icons'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -282,13 +283,10 @@ export function NftDetailPage({
 /** Mesmo esqueleto da página, para o carregamento não deslocar o layout. */
 export function NftDetailSkeleton() {
   return (
-    <div
+    <LoadingRegion
+      label="Carregando NFT…"
       className="mx-auto flex max-w-content flex-col gap-6 px-4 pt-4 md:gap-8 md:px-6 md:pt-[60px] lg:flex-row xl:px-0"
-      aria-busy="true"
     >
-      <span className="sr-only" role="status">
-        Carregando NFT…
-      </span>
       <div className="flex gap-7">
         <div className="hidden flex-col gap-4 md:flex">
           {Array.from({ length: 4 }, (_, i) => (
@@ -304,6 +302,6 @@ export function NftDetailSkeleton() {
         <Skeleton className="h-7 w-1/2" />
         <Skeleton className="h-12 w-3/4" />
       </div>
-    </div>
+    </LoadingRegion>
   )
 }

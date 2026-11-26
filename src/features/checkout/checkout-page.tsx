@@ -16,6 +16,7 @@ import {
 } from '@/api/contracts'
 import { errorMessage, normalizeError } from '@/api/errors'
 import { ArrowLeftIcon } from '@/components/icons/figma-icons'
+import { LoadingRegion } from '@/components/feedback/loading-region'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -119,7 +120,11 @@ function CheckoutHeader() {
 
 function CheckoutSkeleton() {
   return (
-    <div aria-hidden="true" data-checkout-skeleton="" className="flex flex-col gap-8 md:flex-row">
+    <LoadingRegion
+      label="Carregando o pagamento…"
+      data-checkout-skeleton=""
+      className="flex flex-col gap-8 md:flex-row"
+    >
       <div className="flex flex-1 flex-col gap-6">
         <Skeleton className="h-4 w-48" />
         <div className="grid gap-6 md:grid-cols-2">
@@ -133,7 +138,7 @@ function CheckoutSkeleton() {
         <Skeleton className="h-[70px]" />
         <Skeleton className="h-[180px]" />
       </div>
-    </div>
+    </LoadingRegion>
   )
 }
 
