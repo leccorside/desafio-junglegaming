@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { clearSessionEndReason, onSessionEnd, setupSession } from '@/features/auth/session'
 import { getSession } from '@/features/auth/session-store'
 import { mergeGuestCart } from '@/features/cart/merge'
+import { clearCheckoutDraft } from '@/features/checkout/storage'
 import { clearPendingFavorite } from '@/features/favorites/pending-favorite'
 import { queryClient } from '@/lib/query-client'
 
@@ -71,6 +72,11 @@ router.subscribe('onResolved', ({ toLocation }) => {
 
 // Fim de sessão: nenhuma intenção pendente passa para a próxima conta.
 onSessionEnd(() => clearPendingFavorite())
+// Rascunho e tentativa de compra: ficam na expiração (a pessoa volta do login
+// com o que preencheu); somem no logout e na troca de conta.
+onSessionEnd((reason) => {
+  if (reason !== 'expired') clearCheckoutDraft()
+})
 
 declare module '@tanstack/react-router' {
   interface Register {

@@ -24,6 +24,7 @@ cartKeys.current(owner)       // ['cart', owner]  (owner = userId ou guestCartId
 quoteKeys.current(owner, net) // ['quote', owner, net]
 favoriteKeys.all(userId)      // ['favorites', userId]
 orderKeys.detail(userId, id)  // ['orders', userId, id]
+orderKeys.list(userId, status) // ['orders', userId, 'list', status]
 profileKeys.me(userId)        // ['profile', userId]
 walletKeys.all(userId)        // ['wallets', userId]
 ```
@@ -59,7 +60,7 @@ Implementados em `shouldRetry` e `retryDelay` (`src/lib/query-client.ts`):
 - Queries: até 2 novas tentativas (`MAX_QUERY_RETRIES`), só quando o `ApiError` tem `retryable: true`. Isso vale para rede (`NETWORK_ERROR`), 5xx e 503 (`SERVICE_UNAVAILABLE`). Nunca para 4xx.
 - Timeout (`TIMEOUT`, 15 s no Axios): só 1 nova tentativa (`MAX_TIMEOUT_RETRIES`). Cada tentativa já custa os 15 s inteiros; com 2 repetições, o erro levava cerca de 47 s para aparecer, e agora leva cerca de 31 s. Enquanto a nova tentativa roda, o catálogo troca "Carregando NFTs…" por "O servidor está demorando para responder. Ainda estamos tentando…" (`isTimeoutError(query.failureReason)`, que o TanStack Query zera a cada busca nova).
 - Backoff exponencial: 0,5 s, 1 s, 2 s, com teto de 4 s.
-- Mutations: sem retry automático (`retry: false`). A criação de pedido repete por conta própria, com a mesma `Idempotency-Key` (Passo 10).
+- Mutations: sem retry automático (`retry: false`). A criação de pedido (`usePlaceOrder`) repete por conta própria até 2 vezes, com a mesma `Idempotency-Key`, em `TIMEOUT`, `NETWORK_ERROR` ou `SERVICE_UNAVAILABLE`; se o pedido já tinha sido criado, a API devolve o mesmo (200).
 - `SESSION_EXPIRED` e `UNAUTHENTICATED` não se repetem: disparam o fluxo de expiração de sessão ([SECURITY.md](SECURITY.md)).
 
 ## Erros
@@ -78,7 +79,7 @@ Todo erro de requisição vira `ApiError` (`src/api/errors.ts`), com `code`, `st
 | Favoritar / desfavoritar | `favorites` (otimista) |
 | Adicionar, alterar, remover item | `cart`, `quote` |
 | Aplicar / remover cupom | `cart`, `quote` |
-| Criar pedido | `orders`; o carrinho só depois da confirmação |
+| Criar pedido | o pedido devolvido vai para `['orders', userId, id]`; o carrinho só muda no estado terminal (`order.updated` ou consulta) |
 | Atualizar perfil / avatar | `profile` (resposta gravada no cache) e o usuário da sessão: `updateSessionUser` no store (header na hora) e no cache `['session', token]`, senão a próxima conferência da raiz gravaria o nome antigo de volta |
 | Trocar senha | nada (a sessão continua válida) |
 | Cadastrar / editar carteira | `wallets` (resposta gravada no cache, sem nova busca) |

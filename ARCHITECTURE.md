@@ -132,6 +132,9 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Perfil e carteiras no mobile | Sem frame no Figma. Voltar e título no topo (como o carrinho), as seções disponíveis da conta em abas roláveis (Dados do perfil, Carteiras, Lista de interesse) e os campos em uma coluna, com os botões na largura toda. "Sair" e as áreas fora do escopo ficam no menu lateral, para a tela começar no formulário. |
 | Um "Salvar" no perfil | Como no Figma. Grava em sequência o que mudou (dados, avatar, senha), cada parte com seu aviso; se uma falha, o erro vai para o campo dela e as já salvas não voltam atrás. O avatar escolhido só é enviado no "Salvar" (prévia antes). |
 | Selects nativos nas carteiras | Rede e tipo usam `<select>` com a seta do Figma: teclado, leitor de tela e celular funcionam sem código extra. |
+| Revisão antes de pagar | O Figma só tem "Confirmar compra". O botão valida, conecta a carteira, revalida a cotação e abre um diálogo "Revise sua compra"; o pedido só sai pelo "Confirmar e pagar" dele. Mudança de valores (revalidação, evento em tempo real ou `QUOTE_OUTDATED`) aparece em lista no diálogo e troca o botão por "Confirmar com os novos valores". |
+| Pedido pendente | Tela própria (`/orders/$orderId`) com "Aguardando a confirmação do pagamento", que muda sozinha pelo `order.updated` (com consulta a cada 5 s como reserva). Pode-se sair dela: um toast avisa o resultado em qualquer tela, e o pagamento mostra "Acompanhar pedido" enquanto houver pendente. |
+| Envio sem duplicar | Uma `Idempotency-Key` por tentativa, gravada no `sessionStorage` antes do envio. Clique repetido devolve a mesma promessa e, depois do sucesso, o mesmo pedido. Timeout reenvia sozinho com a mesma chave; refresh no meio oferece "Verificar compra". |
 | Favoritos | Ganham a rota `/favorites`, com o nome "Lista de interesse" do Figma (menu do perfil e footer). O coração da barra inferior leva a ela. |
 | Catálogo carregando | Skeleton com shimmer nas proporções do card (9 itens), sem deslocar o layout. A contagem "Carregando NFTs…" fica numa região `aria-live`. |
 | Troca de filtro com resultado na tela | A página anterior continua visível com 60% de opacidade, `aria-busy` e "Atualizando…" até a resposta nova (`placeholderData`). |
@@ -184,6 +187,10 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Asterisco só nos campos obrigatórios | O Figma põe asterisco em todos, inclusive no nome ENS, que é opcional. |
 | Caixa ".eth" sem seta | No Figma ela parece um seletor, mas só existe ".eth": vira um sufixo fixo, para não parecer que abre opções. |
 | Campos de senha em branco no perfil | O Figma desenha os três campos sem dizer quando são obrigatórios. Em branco, a senha não muda; preenchido um, os três são pedidos. |
+| Pagamento sem "Nome de usuário", "Rede", "Endereço da carteira", "Tipo de carteira", "Nome do perfil", "Código de indicação", "ENS ou carteira secundária" e "Nome ENS" | O contrato do pedido só leva nome de exibição, e-mail e observação do colecionador, mais a carteira e a rede. Os dados da carteira vêm da carteira cadastrada, escolhida em "Carteira e rede"; editar fica em `/wallets` ("Trocar carteira", "Usar outra carteira?"). |
+| "Carteira e rede" lista as carteiras cadastradas | No Figma, as opções são marcas (MetaMask, Coinbase Wallet). Aqui cada opção é uma carteira da conta (apelido, tipo, rede, endereço), e a rede vem dela. |
+| Pagamento mobile com os dados do colecionador | O frame mobile só tem carteiras e total. Os campos do colecionador (obrigatórios no contrato) entram entre as carteiras e o resumo. |
+| Cupom no pagamento | "Tem um código promocional? Aplique aqui" leva ao carrinho, onde o cupom é aplicado. |
 | Carteira secundária com resumo, "Editar" e "Cancelar" | O Figma só desenha o estado vazio ("Você ainda não adicionou..."). "Igual à carteira principal" vira uma caixa de seleção que abre o formulário já preenchido. |
 
 Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens vêm do arquivo do Figma (ver [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)).

@@ -37,7 +37,7 @@ Toda a autenticação é simulada pelo MSW. O objetivo é reproduzir o comportam
 - **Destino público:** a pessoa fica onde está, sem sessão, e recebe um aviso (toast).
 - O destino é decidido pela localização mais recente (`router.latestLocation`), e não pelas rotas já resolvidas, que durante a navegação ainda são as da tela de origem.
 - O motivo "expirou" vale até uma navegação terminar fora das telas de entrada (`router.subscribe("onResolved")`). Quem fecha o aviso e segue como visitante não o vê de novo na próxima rota privada.
-- **Durante o checkout:** o `redirect` devolve à tela de pagamento. Guardar o rascunho do formulário e a chave de idempotência em `sessionStorage` entra com o checkout, no Passo 10.
+- **Durante o checkout:** o `redirect` devolve à tela de pagamento. O rascunho (dados do colecionador, carteira escolhida) e a tentativa de compra (`Idempotency-Key` e corpo) ficam em `sessionStorage`, por usuário (`kurio:checkout:<userId>`): voltam depois do login e somem ao fechar a aba. No logout e na troca de conta são apagados; na expiração, ficam.
 
 ## Rotas protegidas
 

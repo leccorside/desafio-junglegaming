@@ -59,12 +59,23 @@ export function useCartCount(): number {
   return cart.data?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0
 }
 
-export function useQuote(cart: Cart | undefined) {
+/** Cotação do carrinho atual: Ethereum no carrinho, a rede da carteira no pagamento. */
+export const quoteQuery = (owner: string, network: Network, cartVersion: number) =>
+  queryOptions({
+    queryKey: quoteKeys.current(owner, network, cartVersion),
+    queryFn: ({ signal }) => cartApi.quote(network, signal),
+    staleTime: 0,
+  })
+
+export function useQuote(
+  cart: Cart | undefined,
+  network: Network = CART_QUOTE_NETWORK,
+  enabled = true,
+) {
   const owner = useCartOwner()
   return useQuery({
-    queryKey: quoteKeys.current(owner, CART_QUOTE_NETWORK, cart?.version ?? -1),
-    queryFn: ({ signal }) => cartApi.quote(CART_QUOTE_NETWORK, signal),
-    enabled: Boolean(cart?.items.length),
+    ...quoteQuery(owner, network, cart?.version ?? -1),
+    enabled: enabled && Boolean(cart?.items.length),
     staleTime: 0,
     // Durante a troca (quantidade, cupom) o resumo anterior fica, com indicador.
     placeholderData: keepPreviousData,

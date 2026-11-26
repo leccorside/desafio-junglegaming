@@ -6,6 +6,11 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Pagamento (`/checkout`) do Figma: dados do colecionador, "Seus NFTs" com a cotação na rede da carteira, "Carteira e rede" com as carteiras cadastradas e conexão simulada (conectada, recusada, desconectada), e revisão "Revise sua compra" antes de pagar, com a cotação revalidada e as mudanças listadas para nova confirmação.
+- Envio do pedido sem duplicar: `Idempotency-Key` por tentativa guardada no `sessionStorage`, botão travado, reenvio automático com a mesma chave em timeout e "Verificar compra" depois de um refresh no meio do envio.
+- Tela do pedido (`/orders/$orderId`): pendente, confirmado (transação simulada) e recusado (motivo, carrinho intacto, "Tentar de novo"), atualizada pelo `order.updated` e por consulta a cada 5 s; estados terminais não voltam a pendente. Toast do resultado em qualquer tela.
+- Rascunho do pagamento preservado quando a sessão expira no meio (volta do login com os dados).
+- Testes: 6 unitários das regras do pedido e 11 cenários E2E de pagamento em desktop e mobile (itens 7, 9 e 10 do enunciado).
 - Perfil do colecionador (`/profile`) do Figma: nome de exibição, nome de usuário, e-mail só para leitura, nome ENS, avatar com prévia e conferência de tipo e tamanho, e troca de senha, num único "Salvar" que grava em sequência o que mudou e põe cada erro no campo certo. Nome e avatar mudam no header na hora.
 - Carteiras (`/wallets`) do Figma: carteira principal sempre aberta (cria ou edita) e secundária com "Adicionar"/"Editar", "Igual à carteira principal", resumo e "Cancelar". Endereço conferido pela rede escolhida.
 - Menu "Meu perfil" do Figma no desktop (com as áreas fora do escopo como indisponíveis e "Sair") e, no mobile, voltar, título e abas das seções em uma coluna.

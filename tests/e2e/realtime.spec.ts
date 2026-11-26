@@ -375,7 +375,10 @@ test.describe('tempo real: correções do review', () => {
         }, order.id),
       )
       .toBe('confirmed')
-    expect(calls).toEqual([])
+    // Nenhuma requisição decidiu o pagamento. A única permitida é a reação ao
+    // próprio `order.updated` (Passo 10): o carrinho buscado de novo, sem os
+    // itens comprados, o que só acontece depois da decisão.
+    expect(calls.filter((url) => !/\/api\/(cart|quotes)$/.test(new URL(url).pathname))).toEqual([])
 
     const sent = (await sentLog(page)).filter((e) => e.type === 'order.updated')
     expect(sent.at(-1)?.recipients).toEqual(['user-ana'])

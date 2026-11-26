@@ -96,6 +96,15 @@ Detalhes implementados no Passo 7:
 8. Recusado: mensagem com motivo, carrinho intacto, opção de tentar de novo.
 9. Confirmado: segue para o recibo.
 
+Como ficou (Passo 10):
+
+- `/checkout`: "Perfil do colecionador" (nome de exibição e e-mail, preenchidos com o perfil, e "Observação do colecionador (opcional)"), "Seus NFTs" com os totais da cotação na rede da carteira, e "Carteira e rede" com as carteiras cadastradas (a rede é a da carteira). Sem carteira, o atalho "Cadastrar carteira" leva a `/wallets`.
+- "Confirmar compra" valida os dados, conecta a carteira (simulado: conectada, recusada com "Tentar conectar de novo"), busca a cotação de novo e abre a revisão "Revise sua compra" (itens, totais, carteira, rede e colecionador). Se algo mudou desde a tela anterior, a revisão lista o que mudou e o botão vira "Confirmar com os novos valores".
+- "Confirmar e pagar" envia com `Idempotency-Key`. O botão trava durante o envio; timeout reenvia sozinho com a mesma chave. `QUOTE_OUTDATED` mostra as mudanças da API e pede nova confirmação; `WALLET_DISCONNECTED` pede "Reconectar carteira".
+- `/orders/$orderId`: "Aguardando a confirmação do pagamento" (atualiza pelo `order.updated` e por consulta a cada 5 s), "Pagamento confirmado" (transação simulada e link do explorador) ou "Pagamento recusado" (motivo, carrinho intacto e "Tentar de novo"). O recibo no layout do Figma vem no Passo 11.
+- Pedido pendente aparece no pagamento ("Acompanhar pedido"). Refresh no meio do envio: "Verificar compra" recupera o mesmo pedido.
+- Sessão expirada no meio: login com volta ao pagamento e os dados preenchidos.
+
 ## 5. Confirmação e recibo
 
 1. Mostra o resultado, a referência da transação simulada com link de explorador simulado, itens, taxas e total.
@@ -111,7 +120,7 @@ Implementado no Passo 4.
 3. **Login:** valida os campos e mostra "E-mail ou senha incorretos." sem dizer qual campo está errado.
 4. **Depois de entrar:** a pessoa volta à rota de origem (`redirect`), ou ao início, e recebe uma mensagem de boas-vindas.
 5. **Refresh:** a sessão sobrevive a ele.
-6. **Sessão expirada:** em rota privada, leva ao login com o aviso "Sua sessão expirou..." e depois volta. Em rota pública, mostra só um aviso. Preservar os dados do checkout entra no Passo 10.
+6. **Sessão expirada:** em rota privada, leva ao login com o aviso "Sua sessão expirou..." e depois volta. Em rota pública, mostra só um aviso. Os dados do checkout ficam preservados (Passo 10).
 7. **Logout:** fica no menu da conta (header) ou no menu lateral (mobile) e limpa todos os dados em cache. Outro usuário que entrar em seguida não vê nada do anterior.
 8. **Fora do escopo:** "Esqueceu a senha?" e "Continuar com Google/Facebook" mostram um aviso de indisponível.
 9. **Já com sessão:** abrir `/login` ou `/register` leva ao destino ou ao início.

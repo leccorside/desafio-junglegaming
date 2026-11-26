@@ -63,6 +63,9 @@ Regras aplicadas pela API simulada e respeitadas pela interface. A fonte da verd
 ## Pedidos
 
 - O pedido é criado com `Idempotency-Key`. A mesma chave com o mesmo conteúdo devolve o mesmo pedido; a mesma chave com conteúdo diferente devolve `409 IDEMPOTENCY_CONFLICT`.
+- Uma chave por tentativa: o cliente reaproveita a chave enquanto o corpo for o mesmo (timeout, refresh, "Tentar de novo") e gera outra quando a cotação, a carteira ou os dados mudam. A chave é guardada antes do envio.
+- A rede do pedido é a da carteira escolhida; a cotação do pagamento é calculada nessa rede (a taxa muda com ela).
+- Antes de enviar, a cotação é buscada de novo e comparada com a que estava na tela; qualquer diferença em preço, quantidade, itens, cupom, desconto, taxa ou total pede nova confirmação. Itens esgotados ou acima do estoque bloqueiam o pagamento até o carrinho ser ajustado.
 - Estados: `pending`, `confirmed` e `rejected`. `confirmed` e `rejected` são terminais.
 - O pedido guarda um snapshot de itens, preços, cupom, taxas e total no momento da criação. O recibo usa só esse snapshot.
 - A disponibilidade é reservada quando o pedido é criado e liberada se ele for recusado.

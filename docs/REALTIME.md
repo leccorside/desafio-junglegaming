@@ -91,7 +91,7 @@ Efeito no cliente (`applyNftUpdated`):
 - Atualiza o NFT no cache do detalhe, das páginas do catálogo, dos destaques e da lista de interesse, só onde a cópia tem `version` menor que a do evento.
 - Se algum carrinho em cache tem o NFT numa versão mais antiga que a do evento (`nftVersion`), invalida carrinho e cotação. Evento atrasado em relação ao carrinho não avisa nem invalida nada. A invalidação cancela antes a primeira busca em andamento: sem isso o TanStack reaproveitava essa busca, calculada antes da mudança, e o resumo ficava com a cotação antiga.
 - O aviso diz o que mudou no carrinho da sessão atual (não soma o do visitante durante o merge do login): "Violet Nomad #314 (edição aberta): o preço mudou de 1.39 ETH para 1.59 ETH. O resumo do carrinho foi atualizado.", "… esgotou.", "… ficou indisponível." ou "… só N disponíveis.". Com a página do carrinho aberta, ele aparece no fluxo, acima da lista, numa região `role="status"` com o botão "Fechar aviso" (um toast no topo cobria o nome do primeiro item no mobile). Em outras telas, vira toast do Sonner. O carrinho buscado de novo traz `previousUnitPrice`, e a linha do item mostra a mudança. Item esgotado não mostra total na linha, porque fica fora da cotação.
-- No checkout (Passo 9), invalida a cotação atual. A confirmação fica bloqueada até o usuário revisar a nova cotação.
+- No pagamento, a cotação da rede da carteira é da mesma família (`quote`) e é buscada de novo. Com a revisão aberta, uma cotação nova que muda o que se paga entra na revisão como lista do que mudou, e o botão passa a "Confirmar com os novos valores": a compra não sai com os valores antigos.
 
 ### `order.updated`
 
@@ -106,9 +106,9 @@ type OrderUpdatedData = {
 
 Efeito no cliente:
 
-- Atualiza o pedido no cache.
-- `confirmed`: remove do carrinho os itens comprados (invalidando o carrinho) e mostra o recibo.
-- `rejected`: mostra a recusa com o motivo e mantém o carrinho.
+- `useOrderEvents` (no `RootLayout`) aplica o evento no pedido em cache (`applyOrderEvent`): só versão mais nova, e nunca saindo de `confirmed` ou `rejected`. Uma resposta REST atrasada com `pending` também não desfaz um estado terminal (`keepTerminal`).
+- Num estado terminal, carrinho e cotação são buscados de novo: confirmado tira os itens comprados; recusado mantém o carrinho (o estoque reservado volta).
+- A tela do pedido muda na hora. Fora dela, um toast avisa o resultado, com "Ver pedido".
 
 ## Ordenação e duplicados
 
@@ -129,12 +129,12 @@ Efeito no cliente:
 Ao reconectar, pelo `realtime.sync` da nova conexão:
 
 1. Buscar de novo o que tem versão diferente da do servidor: NFTs, lista de interesse, carrinho e cotação. Pedidos são sempre marcados como velhos.
-2. Buscar os pedidos pendentes do usuário (`GET /orders?status=pending`) e atualizar o cache (Passo 10, junto com o fluxo de pedido).
+2. Os pedidos (`['orders']`) são marcados como velhos, e os que estão na tela são buscados de novo: o pedido aberto (`GET /orders/:id`) e a lista de pendentes do pagamento (`GET /orders?status=pending`). O pedido pendente também é consultado a cada 5 s, como reserva.
 3. A versão vinda da API passa a ser a referência para os próximos eventos.
 
 O evento perdido durante a queda não é reenviado; quem traz o dado novo é a API.
 
-Ao recarregar a página com pedido pendente, a tela de pagamento ou de pedido consulta o pedido pela chave de idempotência guardada, sem criar outro.
+Ao recarregar com pedido pendente, a tela do pedido o consulta de novo. Se o refresh foi no meio do envio, a tela de pagamento mostra "Sua última tentativa de compra não terminou" e "Verificar compra", que reenvia com a mesma `Idempotency-Key` guardada: o pedido que já existe volta, sem criar outro.
 
 ## Cenário obrigatório
 

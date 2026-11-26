@@ -1,10 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { PagePlaceholder } from '@/components/feedback/page-placeholder'
+import { CheckoutPage } from '@/features/checkout/checkout-page'
 
-// Rota privada: Passo 10.
 export const Route = createFileRoute('/_authenticated/checkout')({
-  component: function CheckoutPage() {
-    return <PagePlaceholder title="Pagamento" />
-  },
+  component: CheckoutPage,
 })
