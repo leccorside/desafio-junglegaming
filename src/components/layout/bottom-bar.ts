@@ -1,5 +1,7 @@
 import { useMatches, useMatchRoute } from '@tanstack/react-router'
 
+import { useCartCount } from '@/features/cart/queries'
+
 /**
  * Barra fixa na base da tela abaixo de 768 px, conforme a tela (Figma mobile):
  * - `tabs`: barra de navegação (126 px);
@@ -21,8 +23,11 @@ export function useBottomBar(): BottomBar {
     select: (matches) =>
       matches.some((match) => match.routeId === '/nft/$nftId' && match.status === 'success'),
   })
+  // Só com itens: carrinho vazio, carregando ou com erro não tem resumo, e a
+  // navegação (abas e menu) precisa continuar na tela.
+  const cartCount = useCartCount()
   if (matchRoute({ to: '/login' }) || matchRoute({ to: '/register' })) return 'none'
   if (detailLoaded) return 'buy'
-  if (matchRoute({ to: '/cart' })) return 'cart'
+  if (matchRoute({ to: '/cart' }) && cartCount > 0) return 'cart'
   return 'tabs'
 }

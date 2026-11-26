@@ -55,7 +55,7 @@ function AlsoViewed({ exclude }: { exclude: string[] }) {
 
 function CartSkeleton() {
   return (
-    <ul aria-hidden="true" className="flex flex-col gap-5 md:gap-3">
+    <ul aria-hidden="true" data-cart-skeleton="" className="flex flex-col gap-5 md:gap-3">
       {Array.from({ length: 3 }, (_, i) => (
         <li key={i}>
           <Skeleton className="h-[100px] rounded-[14px] md:h-[70px] md:rounded-none" />

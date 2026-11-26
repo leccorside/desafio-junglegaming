@@ -34,9 +34,11 @@ interface SessionRuntime {
   onExpired: () => void
   /**
    * Chamado em todo login ou cadastro, já com a sessão nova e antes de o cache
-   * ser reiniciado (ex.: juntar o carrinho do visitante ao da conta).
+   * ser reiniciado (ex.: juntar o carrinho do visitante ao da conta). Pode
+   * devolver o que fazer depois do reinício (ex.: gravar o carrinho juntado,
+   * que o reinício apagaria).
    */
-  onStart?: (session: Session) => Promise<void>
+  onStart?: (session: Session) => Promise<(() => void) | undefined>
 }
 
 let runtime: SessionRuntime | null = null
@@ -100,8 +102,9 @@ export async function startSession(session: Session) {
   lastEndReason = null
   setSession(session)
   // Antes do reinício: as buscas refeitas já veem o resultado (carrinho juntado).
-  await runtime?.onStart?.(session)
+  const afterReset = await runtime?.onStart?.(session)
   await resetCache()
+  afterReset?.()
   // Depois do reinício: a sessão recém-recebida já vale como validada, sem
   // outra ida à API na próxima navegação.
   runtime?.queryClient.setQueryData(sessionKeys.current(session.token), session)

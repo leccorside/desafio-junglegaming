@@ -56,6 +56,17 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Carrinho (achados do code review do Passo 7):
+  - resposta mais antiga de uma mudança não sobrescreve mais a mais nova no cache (`writeCart` compara a `version`);
+  - o "Desfazer" da remoção avisa se o item voltou ou se não dá para devolver (antes rodava num componente já desmontado e não mostrava nada);
+  - o campo de quantidade não envia um valor digitado enquanto a mudança anterior está pendente;
+  - as cotações antigas são marcadas como velhas sem nova busca (a da versão nova vem pela chave);
+  - o carrinho juntado no login é gravado depois do reinício do cache, sem voltar ao skeleton;
+  - "Conectar e finalizar" espera as mudanças pendentes terminarem;
+  - no mobile, o carrinho vazio, carregando ou com erro mantém a barra de navegação;
+  - o aviso de máximo da quantidade quebra linha na largura dos botões, sem cortar o nome do NFT;
+  - os avisos do carrinho no mobile aparecem abaixo do título e do voltar.
+- Testes: o helper `trackApi` remove os listeners depois do login e não depende de `new URL`.
 - Testes: `loginViaUi` esperava `networkidle`, que num app de página única retorna na hora depois do login. Uma busca autenticada ainda em andamento era pega pelo cenário `session-expired` ativado em seguida, e o teste de expiração durante a navegação falhava de vez em quando sob carga. Agora o helper espera as requisições `/api` terminarem de fato.
 - Favorito pendente do visitante (achados do code review):
   - a busca do NFT para rolar até ele continuava por até 6 s depois de a pessoa mudar de tela e podia rolar e tirar o foco na tela nova; agora qualquer navegação cancela, e nada acontece se a pessoa já saiu da tela de destino;

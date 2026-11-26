@@ -7,7 +7,7 @@ import { isTimeoutError } from '@/lib/query-client'
 import { formatEth, isEthZero } from '@/lib/eth'
 import { cn } from '@/lib/utils'
 
-import { useQuote } from '../queries'
+import { useCartMutating, useQuote } from '../queries'
 import { CouponForm } from './coupon-form'
 
 function Row({
@@ -54,8 +54,11 @@ export function CartSummary({ cart }: { cart: Cart }) {
   const blocked = cart.items.filter(
     (item) => item.status === 'sold_out' || item.status === 'insufficient',
   )
+  // Uma mudança ainda sem resposta (quantidade, remoção, cupom) também segura:
+  // o resumo na tela ainda é o de antes dela.
+  const mutating = useCartMutating()
   const canCheckout =
-    Boolean(data) && !updating && blocked.length === 0 && (data?.lines.length ?? 0) > 0
+    Boolean(data) && !updating && !mutating && blocked.length === 0 && (data?.lines.length ?? 0) > 0
 
   const value = (amount: string | undefined, prefix = '') =>
     amount === undefined ? (

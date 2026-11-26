@@ -1,6 +1,7 @@
 import {
   keepPreviousData,
   queryOptions,
+  useIsMutating,
   useMutation,
   useQuery,
   useQueryClient,
@@ -10,24 +11,17 @@ import type { AddCartItemRequest, Cart, Network } from '@/api/contracts'
 import { useSession } from '@/features/auth/session-store'
 
 import { cartApi } from './api'
+import { cartKeys, quoteKeys, writeCart } from './cart-cache'
 import { getGuestCartId } from './guest-cart-id'
 
 /**
- * Chaves do carrinho e da cotação: o dono é o usuário logado (`user:<id>`) ou
- * o carrinho do visitante (`guest:<X-Cart-Id>`), para os dois nunca dividirem
- * cache. A cotação inclui a versão do carrinho: qualquer mudança (quantidade,
- * item, cupom) gera outra chave e uma cotação nova da API.
+ * Chaves do carrinho e da cotação (em `cart-cache.ts`): o dono é o usuário
+ * logado (`user:<id>`) ou o carrinho do visitante (`guest:<X-Cart-Id>`), para
+ * os dois nunca dividirem cache. A cotação inclui a versão do carrinho:
+ * qualquer mudança (quantidade, item, cupom) gera outra chave e uma cotação
+ * nova da API.
  */
-export const cartKeys = {
-  all: ['cart'] as const,
-  current: (owner: string) => ['cart', owner] as const,
-}
-
-export const quoteKeys = {
-  all: ['quote'] as const,
-  current: (owner: string, network: Network, cartVersion: number) =>
-    ['quote', owner, network, cartVersion] as const,
-}
+export { cartKeys, quoteKeys }
 
 /**
  * O carrinho não escolhe rede: a rede é do pagamento. O resumo usa a taxa
@@ -70,18 +64,25 @@ export function useQuote(cart: Cart | undefined) {
   })
 }
 
-/** Toda mutation do carrinho devolve o carrinho inteiro: vai direto ao cache. */
+/**
+ * Toda mutation do carrinho devolve o carrinho inteiro: vai ao cache por
+ * `writeCart`, que recusa uma resposta mais antiga que a já gravada.
+ */
 function useCartMutation<TVariables>(mutationFn: (variables: TVariables) => Promise<Cart>) {
   const queryClient = useQueryClient()
   const owner = useCartOwner()
   return useMutation({
+    mutationKey: cartKeys.mutation,
     mutationFn,
     onSuccess: (cart) => {
-      queryClient.setQueryData(cartKeys.current(owner), cart)
-      // A cotação nova sai pela chave com a versão nova; as antigas saem do cache.
-      void queryClient.invalidateQueries({ queryKey: quoteKeys.all })
+      writeCart(queryClient, owner, cart)
     },
   })
+}
+
+/** Alguma mudança do carrinho ainda esperando a API? (bloqueia "Conectar e finalizar") */
+export function useCartMutating(): boolean {
+  return useIsMutating({ mutationKey: cartKeys.mutation }) > 0
 }
 
 export const useAddToCart = () =>

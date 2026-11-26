@@ -19,6 +19,7 @@ export function QuantityStepper({
   hideLabel = size === 'lg',
   subject,
   busy = false,
+  compactHint = false,
 }: {
   value: number
   max: number
@@ -30,6 +31,11 @@ export function QuantityStepper({
   subject?: string
   /** Enquanto a API confirma a mudança anterior: botões desabilitados, sem perder o foco. */
   busy?: boolean
+  /**
+   * Aviso de limite que quebra linha na largura do seletor, sem alargar a
+   * coluna (linhas do carrinho no mobile, onde o nome dividiria o espaço).
+   */
+  compactHint?: boolean
 }) {
   const inputId = useId()
   const hintId = useId()
@@ -40,6 +46,9 @@ export function QuantityStepper({
 
   const commit = (raw: string) => {
     setDraft(null)
+    // Com a mudança anterior pendente, o digitado é descartado: duas mudanças em
+    // paralelo poderiam voltar fora de ordem.
+    if (busy) return
     const next = clampQuantity(Number(raw), max)
     if (next !== value) onChange(next)
   }
@@ -114,6 +123,8 @@ export function QuantityStepper({
         className={cn(
           'min-h-4 text-muted-foreground',
           size === 'lg' ? 'text-caption' : 'text-caption-sm whitespace-nowrap',
+          // `w-0 min-w-full`: o aviso acompanha a largura dos botões e quebra linha.
+          compactHint && 'w-0 min-w-full text-center whitespace-normal',
         )}
       >
         {disabled

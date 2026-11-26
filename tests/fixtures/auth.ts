@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test'
+import { expect, type Page, type Request } from '@playwright/test'
 
 export const PASSWORD = 'Senha@123'
 
@@ -16,15 +16,22 @@ export async function submitLogin(page: Page, email: string, password = PASSWORD
  * carregamento do documento, e o login não recarrega a página).
  */
 export function trackApi(page: Page) {
-  const pending = new Set<unknown>()
-  const isApi = (url: string) => new URL(url).pathname.startsWith('/api/')
-  page.on('request', (r) => {
-    if (isApi(r.url())) pending.add(r)
-  })
-  const done = (r: { url: () => string }) => pending.delete(r)
-  page.on('requestfinished', done)
-  page.on('requestfailed', done)
+  const pending = new Set<Request>()
+  // Sem `new URL`: um endereço que o construtor não aceita derrubaria o listener.
+  const onRequest = (request: Request) => {
+    if (request.url().includes('/api/')) pending.add(request)
+  }
+  const onDone = (request: Request) => void pending.delete(request)
+  page.on('request', onRequest)
+  page.on('requestfinished', onDone)
+  page.on('requestfailed', onDone)
   return {
+    /** Tira os listeners da página (cada login não pode somar mais três). */
+    dispose() {
+      page.off('request', onRequest)
+      page.off('requestfinished', onDone)
+      page.off('requestfailed', onDone)
+    },
     async idle(quietMs = 400, timeoutMs = 10_000) {
       const start = Date.now()
       let quietSince = Date.now()
@@ -47,9 +54,13 @@ export function trackApi(page: Page) {
 export async function loginViaUi(page: Page, email: string) {
   await page.goto('/login')
   const api = trackApi(page)
-  await submitLogin(page, email)
-  await expect(page).not.toHaveURL(/\/login/)
-  await api.idle()
+  try {
+    await submitLogin(page, email)
+    await expect(page).not.toHaveURL(/\/login/)
+    await api.idle()
+  } finally {
+    api.dispose()
+  }
 }
 
 /** Sessão salva no navegador (o que a aplicação usa para o token). */

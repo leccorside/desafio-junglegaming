@@ -11,6 +11,9 @@ import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query'
  */
 export const MOBILE_TOAST_BOTTOM = 'calc(142px + env(safe-area-inset-bottom))'
 
+/** Topo dos avisos no carrinho mobile: abaixo do título e do voltar (que terminam em 76 px). */
+export const CART_TOAST_TOP = 'calc(88px + env(safe-area-inset-top))'
+
 /** No detalhe do NFT, a barra de compra (164 px) toma o lugar da de navegação. */
 export const BUY_BAR_TOAST_BOTTOM = `calc(${BUY_BAR_HEIGHT + 16}px + env(safe-area-inset-bottom))`
 
@@ -26,18 +29,23 @@ function Toaster(props: ToasterProps) {
   const bottomBar = useBottomBar()
   const mobile = !useMediaQuery(DESKTOP_QUERY)
   // Carrinho no mobile: o resumo preso na base é alto (cerca de 300 px), então
-  // os avisos vão para o topo, sem cobrir o "Conectar e finalizar".
+  // os avisos vão para o topo, abaixo do título com o botão de voltar
+  // (frame "Screen Header": 32 + 44 px), sem cobrir nenhum dos dois.
   const onTop = mobile && bottomBar === 'cart'
   const hasBottomBar = mobile && (bottomBar === 'tabs' || bottomBar === 'buy')
   const bottom = bottomBar === 'buy' ? BUY_BAR_TOAST_BOTTOM : MOBILE_TOAST_BOTTOM
-  const offset = onTop ? 16 : hasBottomBar ? { bottom, right: 16, left: 16 } : 24
+  const offset = onTop
+    ? { top: CART_TOAST_TOP, right: 16, left: 16 }
+    : hasBottomBar
+      ? { bottom, right: 16, left: 16 }
+      : 24
 
   return (
     <Sonner
       theme="dark"
       position={onTop ? 'top-center' : 'bottom-right'}
       offset={offset}
-      mobileOffset={hasBottomBar && !onTop ? offset : 16}
+      mobileOffset={hasBottomBar || onTop ? offset : 16}
       className="toaster group"
       containerAriaLabel="Notificações"
       toastOptions={{

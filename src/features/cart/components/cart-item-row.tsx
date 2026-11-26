@@ -1,3 +1,4 @@
+import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
@@ -9,9 +10,31 @@ import { ethMul, formatEth } from '@/lib/eth'
 import { nftImageSources } from '@/lib/images'
 import { cn } from '@/lib/utils'
 
-import { useAddToCart, useRemoveCartItem, useUpdateCartItem } from '../queries'
+import { cartApi } from '../api'
+import { writeCart } from '../cart-cache'
+import { useCartOwner, useRemoveCartItem, useUpdateCartItem } from '../queries'
 
 const editionLabel = (name: string) => (name === 'Aberta' ? 'aberta' : name)
+
+/** "Desfazer" da remoção: devolve a mesma edição e quantidade e avisa o resultado. */
+async function restoreRemoved(
+  queryClient: QueryClient,
+  owner: string,
+  item: CartItem,
+  title: string,
+) {
+  try {
+    const cart = await cartApi.addItem({
+      nftId: item.nftId,
+      editionId: item.editionId,
+      quantity: item.quantity,
+    })
+    writeCart(queryClient, owner, cart)
+    toast.success(`${title} voltou ao carrinho.`)
+  } catch (error) {
+    toast.error(`Não foi possível devolver ${title} ao carrinho. ${errorMessage(error)}`)
+  }
+}
 
 /** Aviso do item frente ao catálogo atual (preço mudou, estoque menor, esgotado). */
 function ItemNotice({ item }: { item: CartItem }) {
@@ -50,7 +73,8 @@ export function CartItemRow({
 }) {
   const update = useUpdateCartItem()
   const remove = useRemoveCartItem()
-  const restore = useAddToCart()
+  const queryClient = useQueryClient()
+  const owner = useCartOwner()
   const busy = update.isPending || remove.isPending
   const lineTotal = quotedTotal ?? ethMul(item.unitPrice, item.quantity)
   const title = `${item.name} (edição ${editionLabel(item.editionName)})`
@@ -70,15 +94,9 @@ export function CartItemRow({
         toast.success(`${title} saiu do carrinho.`, {
           action: {
             label: 'Desfazer',
-            onClick: () =>
-              restore.mutate(
-                { nftId: item.nftId, editionId: item.editionId, quantity: item.quantity },
-                {
-                  onSuccess: () => toast.success(`${title} voltou ao carrinho.`),
-                  onError: (error) =>
-                    toast.error(`Não foi possível devolver o item. ${errorMessage(error)}`),
-                },
-              ),
+            // A linha já saiu da tela: o desfazer não pode depender dela (os
+            // callbacks de um `mutate` de componente desmontado não rodam).
+            onClick: () => void restoreRemoved(queryClient, owner, item, title),
           },
         }),
       onError: (error) => toast.error(`Não foi possível remover o item. ${errorMessage(error)}`),
@@ -148,6 +166,7 @@ export function CartItemRow({
           hideLabel
           subject={item.name}
           busy={busy}
+          compactHint
         />
       </div>
 
