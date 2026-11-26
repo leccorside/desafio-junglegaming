@@ -193,7 +193,19 @@ test.describe('perfil e carteiras', () => {
     const next = field(page, /^Nova senha/)
     const confirm = field(page, /^Confirmar nova senha/)
 
+    // Nova senha fraca: todas as regras que faltam de uma vez, no campo.
     await current.fill(PASSWORD)
+    await next.fill('curta')
+    await confirm.fill('curta')
+    await save(page)
+    await expect(next).toHaveAccessibleDescription(
+      'A senha precisa de: pelo menos 8 caracteres, uma letra maiúscula, um número e um símbolo.',
+    )
+    await expect(next).toBeFocused()
+    await next.fill('Curta123')
+    await save(page)
+    await expect(next).toHaveAccessibleDescription('A senha precisa de: um símbolo.')
+
     await next.fill('Nova@Senha1')
     await confirm.fill('Outra@Senha1')
     await save(page)

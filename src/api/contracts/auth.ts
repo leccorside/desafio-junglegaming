@@ -2,15 +2,44 @@ import { z } from 'zod'
 
 import { idSchema, isoDateTimeSchema } from './common'
 
-/** Regras de senha de docs/BUSINESS_RULES.md. Reaproveitadas no cadastro e na troca de senha. */
-export const passwordSchema = z
-  .string()
-  .min(8, 'A senha precisa ter pelo menos 8 caracteres.')
-  .max(72, 'A senha pode ter no máximo 72 caracteres.')
-  .regex(/[a-z]/, 'Inclua uma letra minúscula.')
-  .regex(/[A-Z]/, 'Inclua uma letra maiúscula.')
-  .regex(/\d/, 'Inclua um número.')
-  .regex(/[^A-Za-z0-9]/, 'Inclua um símbolo.')
+/** "a, b e c", como se escreve em português. */
+const listPt = (items: string[]) =>
+  new Intl.ListFormat('pt-BR', { style: 'long', type: 'conjunction' }).format(items)
+
+export const PASSWORD_MAX = 72
+
+/** Regras de senha de docs/BUSINESS_RULES.md, na ordem em que aparecem na mensagem. */
+const PASSWORD_RULES: readonly [string, (value: string) => boolean][] = [
+  ['pelo menos 8 caracteres', (v) => v.length >= 8],
+  ['uma letra minúscula', (v) => /[a-z]/.test(v)],
+  ['uma letra maiúscula', (v) => /[A-Z]/.test(v)],
+  ['um número', (v) => /\d/.test(v)],
+  ['um símbolo', (v) => /[^A-Za-z0-9]/.test(v)],
+]
+
+/** Regras de senha que o valor ainda não cumpre. */
+export function missingPasswordRules(value: string): string[] {
+  return PASSWORD_RULES.filter(([, ok]) => !ok(value)).map(([rule]) => rule)
+}
+
+/**
+ * Senha (cadastro e troca de senha). Uma mensagem só, com todas as regras que
+ * faltam ("A senha precisa de: uma letra maiúscula, um número e um símbolo."),
+ * em vez de uma regra por vez a cada tentativa.
+ */
+export const passwordSchema = z.string().superRefine((value, ctx) => {
+  if (value.length > PASSWORD_MAX) {
+    ctx.addIssue({
+      code: 'custom',
+      message: `A senha pode ter no máximo ${PASSWORD_MAX} caracteres.`,
+    })
+    return
+  }
+  const missing = missingPasswordRules(value)
+  if (missing.length) {
+    ctx.addIssue({ code: 'custom', message: `A senha precisa de: ${listPt(missing)}.` })
+  }
+})
 
 export const emailSchema = z
   .string()
@@ -18,13 +47,33 @@ export const emailSchema = z
   .toLowerCase()
   .pipe(z.email('Informe um e-mail válido.'))
 
-/** Nome de usuário: letras, números, ponto, hífen e sublinhado. */
+/**
+ * O que está errado no nome de usuário, tudo de uma vez: tamanho (3 a 30) e
+ * caracteres (letras, números, ponto, hífen e sublinhado), citando os que não
+ * valem.
+ */
+export function usernameProblems(value: string): string[] {
+  const problems: string[] = []
+  if (value.length < 3) problems.push('pelo menos 3 caracteres')
+  if (value.length > 30) problems.push('no máximo 30 caracteres')
+  const invalid = [...new Set(value.replace(/[a-zA-Z0-9._-]/g, ''))]
+  if (invalid.length) {
+    const shown = invalid.map((c) => (c === ' ' ? 'espaço' : `"${c}"`))
+    problems.push(
+      `só letras, números, ponto, hífen e sublinhado (${listPt(shown)} não ${invalid.length === 1 ? 'vale' : 'valem'})`,
+    )
+  }
+  return problems
+}
+
+/** Nome de usuário: letras, números, ponto, hífen e sublinhado; 3 a 30 caracteres. */
 export const usernameSchema = z
   .string()
   .trim()
-  .min(3, 'Use pelo menos 3 caracteres.')
-  .max(30, 'Use no máximo 30 caracteres.')
-  .regex(/^[a-zA-Z0-9._-]+$/, 'Use só letras, números, ponto, hífen e sublinhado.')
+  .superRefine((value, ctx) => {
+    const problems = usernameProblems(value)
+    if (problems.length) ctx.addIssue({ code: 'custom', message: `Use ${listPt(problems)}.` })
+  })
 
 export const userSchema = z.object({
   id: idSchema,

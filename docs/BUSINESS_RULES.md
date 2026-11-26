@@ -78,6 +78,7 @@ Regras aplicadas pela API simulada e respeitadas pela interface. A fonte da verd
 - O cadastro pede nome de usuário, e-mail, senha e confirmação, como no Figma. O nome de exibição começa igual ao nome de usuário e pode ser alterado no perfil.
 - Nome de usuário: 3 a 30 caracteres, com letras, números, ponto, hífen e sublinhado.
 - Senha com 8 a 72 caracteres, uma letra maiúscula, uma minúscula, um número e um símbolo.
+- O erro de cada um desses campos lista de uma vez tudo o que falta, numa mensagem só: "A senha precisa de: uma letra maiúscula, um número e um símbolo." e "Use pelo menos 3 caracteres e só letras, números, ponto, hífen e sublinhado ("!" não vale).". Vale no cadastro, na troca de senha e na validação da API simulada (o contrato é o mesmo).
 - Troca de senha exige a senha atual, e a nova precisa ser diferente dela.
 - O e-mail não é editável no perfil.
 - Nome de exibição: 2 a 50 caracteres. Nome ENS do perfil: opcional, mesma regra das carteiras.

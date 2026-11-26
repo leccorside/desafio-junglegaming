@@ -62,7 +62,45 @@ test.describe('cadastro', () => {
 
     await expect(page.getByText('Use pelo menos 3 caracteres.')).toBeVisible()
     await expect(page.getByText('Informe um e-mail válido.')).toBeVisible()
-    await expect(page.getByText('A senha precisa ter pelo menos 8 caracteres.')).toBeVisible()
+    await expect(
+      page.getByText(
+        'A senha precisa de: pelo menos 8 caracteres, uma letra maiúscula, um número e um símbolo.',
+      ),
+    ).toBeVisible()
+    await expect(page).toHaveURL(/\/register/)
+  })
+
+  test('mostra de uma vez todas as regras que faltam na senha e no nome de usuário', async ({
+    page,
+  }) => {
+    await page.goto('/register')
+    const user = page.getByLabel('Nome de usuário')
+    const password = page.getByLabel('Senha', { exact: true })
+    await user.fill('a!')
+    await page.getByLabel('E-mail', { exact: true }).fill('nova@example.com')
+    await password.fill('abc')
+    await page.getByLabel('Confirmar senha').fill('abc')
+    await page.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
+
+    // Uma mensagem por campo, com tudo o que falta, ligada ao campo.
+    await expect(user).toHaveAccessibleDescription(
+      'Use pelo menos 3 caracteres e só letras, números, ponto, hífen e sublinhado ("!" não vale).',
+    )
+    await expect(password).toHaveAccessibleDescription(
+      'A senha precisa de: pelo menos 8 caracteres, uma letra maiúscula, um número e um símbolo.',
+    )
+    await expect(user).toBeFocused()
+
+    // Corrigindo parte, a lista encolhe para o que ainda falta.
+    await user.fill('ana maria')
+    await password.fill('abcdefgh1')
+    await page.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
+    await expect(user).toHaveAccessibleDescription(
+      'Use só letras, números, ponto, hífen e sublinhado (espaço não vale).',
+    )
+    await expect(password).toHaveAccessibleDescription(
+      'A senha precisa de: uma letra maiúscula e um símbolo.',
+    )
     await expect(page).toHaveURL(/\/register/)
   })
 })

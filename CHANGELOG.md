@@ -85,6 +85,8 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Senha e nome de usuário mostravam uma regra por vez a cada tentativa. Agora o erro lista de uma vez tudo o que falta ("A senha precisa de: uma letra maiúscula e um símbolo.", "Use pelo menos 3 caracteres e só letras, números, ponto, hífen e sublinhado ("!" não vale).") no cadastro, na troca de senha e na API simulada.
+
 - Cadastro e login pelo teclado (demonstração no desktop):
   - depois de "Sair", o foco caía no início da página e eram 65 Shift+Tab até o "Entrar" (agora o foco vai ao "Entrar" do header; no mobile, ao título da tela);
   - os itens do menu da conta quase não mostravam o foco (agora têm fundo de destaque e anel).

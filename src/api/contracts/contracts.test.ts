@@ -9,11 +9,15 @@ import {
   createWalletRequestSchema,
   ethAmountSchema,
   isTerminalOrderStatus,
+  missingPasswordRules,
   nftListParamsSchema,
   parseNftListQuery,
+  passwordSchema,
   realtimeEventSchema,
   registerFormSchema,
   toNftListQuery,
+  usernameProblems,
+  usernameSchema,
 } from './index'
 
 describe('ethAmountSchema', () => {
@@ -50,6 +54,39 @@ describe('erros', () => {
       },
     }
     expect(apiErrorBodySchema.parse(body).error.fields?.email).toBe('E-mail inválido.')
+  })
+})
+
+describe('regras de senha e de nome de usuário, todas de uma vez', () => {
+  const messageOf = (
+    schema: { safeParse: (v: string) => { error?: { issues: { message: string }[] } } },
+    value: string,
+  ) => schema.safeParse(value).error?.issues.map((i) => i.message)
+
+  it('senha: lista as regras que faltam numa mensagem só', () => {
+    expect(messageOf(passwordSchema, 'abc')).toEqual([
+      'A senha precisa de: pelo menos 8 caracteres, uma letra maiúscula, um número e um símbolo.',
+    ])
+    expect(messageOf(passwordSchema, '')).toEqual([
+      'A senha precisa de: pelo menos 8 caracteres, uma letra minúscula, uma letra maiúscula, um número e um símbolo.',
+    ])
+    expect(messageOf(passwordSchema, 'Senha123')).toEqual(['A senha precisa de: um símbolo.'])
+    expect(missingPasswordRules('senha@123')).toEqual(['uma letra maiúscula'])
+    expect(passwordSchema.safeParse('Senha@123').success).toBe(true)
+    expect(messageOf(passwordSchema, `Aa1@${'x'.repeat(69)}`)).toEqual([
+      'A senha pode ter no máximo 72 caracteres.',
+    ])
+  })
+
+  it('nome de usuário: tamanho e caracteres juntos, citando os que não valem', () => {
+    expect(messageOf(usernameSchema, 'a!')).toEqual([
+      'Use pelo menos 3 caracteres e só letras, números, ponto, hífen e sublinhado ("!" não vale).',
+    ])
+    expect(messageOf(usernameSchema, 'ana maria#')).toEqual([
+      'Use só letras, números, ponto, hífen e sublinhado (espaço e "#" não valem).',
+    ])
+    expect(messageOf(usernameSchema, 'x'.repeat(31))).toEqual(['Use no máximo 30 caracteres.'])
+    expect(usernameProblems('ana.ribeiro')).toEqual([])
   })
 })
 

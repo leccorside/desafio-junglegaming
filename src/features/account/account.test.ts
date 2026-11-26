@@ -50,7 +50,9 @@ describe('formulário do perfil', () => {
     const base = profileDefaults(ana)
     expect(messages(profileFormSchema.safeParse({ ...base, newPassword: 'curta' }))).toMatchObject({
       currentPassword: 'Informe a senha atual.',
-      newPassword: 'A senha precisa ter pelo menos 8 caracteres.',
+      // Todas as regras que faltam de uma vez ("curta" só tem minúsculas).
+      newPassword:
+        'A senha precisa de: pelo menos 8 caracteres, uma letra maiúscula, um número e um símbolo.',
     })
     expect(
       messages(
