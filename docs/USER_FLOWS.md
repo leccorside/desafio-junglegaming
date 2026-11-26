@@ -101,7 +101,7 @@ Como ficou (Passo 10):
 - `/checkout`: "Perfil do colecionador" (nome de exibição e e-mail, preenchidos com o perfil, e "Observação do colecionador (opcional)"), "Seus NFTs" com os totais da cotação na rede da carteira, e "Carteira e rede" com as carteiras cadastradas (a rede é a da carteira). Sem carteira, o atalho "Cadastrar carteira" leva a `/wallets`.
 - "Confirmar compra" valida os dados, conecta a carteira (simulado: conectada, recusada com "Tentar conectar de novo"), busca a cotação de novo e abre a revisão "Revise sua compra" (itens, totais, carteira, rede e colecionador). Se algo mudou desde a tela anterior, a revisão lista o que mudou e o botão vira "Confirmar com os novos valores".
 - "Confirmar e pagar" envia com `Idempotency-Key`. O botão trava durante o envio; sem resposta em 5 s, a revisão avisa "Ainda enviando…"; timeout (15 s) reenvia sozinho com a mesma chave. `QUOTE_OUTDATED` mostra as mudanças da API e pede nova confirmação; `WALLET_DISCONNECTED` pede "Reconectar carteira".
-- `/orders/$orderId`: "Aguardando a confirmação do pagamento" (atualiza pelo `order.updated` e por consulta a cada 5 s), "Pagamento confirmado" (transação simulada e link do explorador) ou "Pagamento recusado" (motivo, carrinho intacto e "Tentar de novo"). A linha da carteira diz "Pago com" só no confirmado; no pendente e no recusado, "Carteira usada:". O recibo no layout do Figma vem no Passo 11.
+- `/orders/$orderId`: "Aguardando a confirmação do pagamento" (atualiza pelo `order.updated` e por consulta a cada 5 s), "Pagamento confirmado" (transação simulada e link do explorador) ou "Pagamento recusado" (motivo, carrinho intacto e "Tentar de novo"). No pendente e no recusado, a linha da carteira diz "Carteira usada:". Confirmado vira o recibo (fluxo 5).
 - Pedido pendente aparece no pagamento ("Acompanhar pedido"). Refresh no meio do envio: "Verificar compra" recupera o mesmo pedido.
 - Sessão expirada no meio: login com volta ao pagamento e os dados preenchidos.
 
@@ -110,6 +110,14 @@ Como ficou (Passo 10):
 1. Mostra o resultado, a referência da transação simulada com link de explorador simulado, itens, taxas e total.
 2. Os valores vêm do snapshot do pedido.
 3. O carrinho mantém o que não foi comprado.
+
+Como ficou (Passo 11):
+
+- `/orders/$orderId` confirmado mostra o recibo do Figma num cartão: ícone de agradecimento, "Pagamento confirmado", "Seus NFTs agora estão na sua carteira" e o número do pedido; a faixa com ID da transação (abreviado, `0xA91F…E82C`, inteiro no `title`), data, total e tipo de carteira; "Detalhes da transação" com cada item (imagem, nome, ID do token e edição, quantidade, subtotal), desconto quando houve cupom, taxa de rede e total; a nota "Transação confirmada na Ethereum (simulada)…" (com a rede do pedido) e "Ver no Etherscan" (Polygonscan ou Solscan, conforme a rede), em nova aba.
+- Tudo vem do `Order.snapshot`. Preço ou nome mudados depois no catálogo, pelo tempo real ou com refresh, não mexem no recibo.
+- Pendente e recusado não têm recibo nem transação. Pedido de outra conta volta 404 da API e aparece como "Pedido não encontrado."; visitante vai para o login.
+- Abaixo do cartão, "Ver carrinho" (com o que sobrou) e "Continuar explorando". O X do cartão volta ao início.
+- Mobile: cartão na largura da tela, faixa da transação em 2 × 2, quantidade e subtotal abaixo do nome.
 
 ## 6. Cadastro e login
 

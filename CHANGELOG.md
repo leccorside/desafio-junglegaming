@@ -6,6 +6,10 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Recibo do pedido confirmado (`/orders/$orderId`) no layout do Figma: ícone de agradecimento, faixa com ID da transação, data, total e carteira, itens com ID do token e edição, desconto (se houve cupom), taxa de rede e total, nota da transação simulada e "Ver no Etherscan" (Polygonscan ou Solscan, conforme a rede). Tudo vem do snapshot do pedido; layout próprio no mobile.
+- Pendente e recusado não mostram recibo nem transação; pedido de outra conta aparece como "Pedido não encontrado.".
+- Ícone "thank-you" exportado do Figma pela geometria (`scripts/export-figma-assets.mjs`).
+- Testes: 3 unitários do formato do recibo e 6 cenários E2E de compra completa e recibo em desktop e mobile (item 6 do enunciado).
 - Pagamento: "Ainda enviando…" na revisão quando o pedido fica 5 s sem resposta, antes da nova tentativa automática dos 15 s.
 - Pagamento (`/checkout`) do Figma: dados do colecionador, "Seus NFTs" com a cotação na rede da carteira, "Carteira e rede" com as carteiras cadastradas e conexão simulada (conectada, recusada, desconectada), e revisão "Revise sua compra" antes de pagar, com a cotação revalidada e as mudanças listadas para nova confirmação.
 - Envio do pedido sem duplicar: `Idempotency-Key` por tentativa guardada no `sessionStorage`, botão travado, reenvio automático com a mesma chave em timeout e "Verificar compra" depois de um refresh no meio do envio.

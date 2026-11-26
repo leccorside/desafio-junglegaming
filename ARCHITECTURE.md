@@ -192,6 +192,10 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Itens do pagamento no mobile | No mobile, quantidade e preço ficam na linha de baixo do nome, para o nome caber inteiro; no desktop, tudo numa linha, como no Figma. |
 | Pagamento mobile com os dados do colecionador | O frame mobile só tem carteiras e total. Os campos do colecionador (obrigatórios no contrato) entram entre as carteiras e o resumo. |
 | Cupom no pagamento | "Tem um código promocional? Aplique aqui" leva ao carrinho, onde o cupom é aplicado. |
+| Recibo como página, não como modal | No Figma, "Order Confirmation Modal" abre sobre o pagamento. Aqui é o conteúdo de `/orders/$orderId` com o mesmo cartão (578 px, faixa de transação, tabela, totais, nota e "Ver no Etherscan"): tem endereço próprio, sobrevive a refresh e não deixa atrás um pagamento cujo carrinho já foi esvaziado. O X do Figma volta ao início; abaixo do cartão ficam "Ver carrinho" e "Continuar explorando". |
+| Título "Pagamento confirmado" e número do pedido no recibo | O Figma só tem "Seus NFTs agora estão na sua carteira". O título diz o resultado (exigido pelo enunciado) e é o mesmo nome das outras situações do pedido ("Aguardando…", "Pagamento recusado"). |
+| Recibo: edição ao lado do ID do token, desconto e explorador por rede | Duas edições do mesmo NFT seriam linhas iguais sem a edição. O desconto aparece só quando houve cupom (o Figma mostra só taxa e total). O botão segue a rede do pedido (Etherscan, Polygonscan ou Solscan), e a nota diz que a transação é simulada. |
+| Recibo no mobile | Não há frame. O cartão ocupa a largura, a faixa da transação vira 2 × 2 e quantidade e subtotal descem para a linha de baixo do nome, como no pagamento. A coluna "Edições" do cabeçalho some. |
 | Carteira secundária com resumo, "Editar" e "Cancelar" | O Figma só desenha o estado vazio ("Você ainda não adicionou..."). "Igual à carteira principal" vira uma caixa de seleção que abre o formulário já preenchido. |
 
 Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens vêm do arquivo do Figma (ver [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)).

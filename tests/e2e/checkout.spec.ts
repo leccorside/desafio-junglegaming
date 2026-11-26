@@ -88,8 +88,10 @@ test.describe('pagamento e pedido', () => {
     const wallet = page.locator('[data-order-wallet]')
     await expect(wallet).toHaveText('Carteira usada: Carteira principal · Rede Ethereum')
     await expect(page.getByRole('heading', { name: 'Pagamento confirmado' })).toBeVisible()
-    await expect(page.getByText('Transação (simulada)')).toBeVisible()
-    await expect(wallet).toHaveText('Pago com Carteira principal · Rede Ethereum')
+    // Confirmado vira o recibo (detalhado em purchase.spec.ts).
+    await expect(page.locator('[data-order-receipt]')).toBeVisible()
+    await expect(page.getByText('ID da transação')).toBeVisible()
+    await expect(page.getByText(/conectada \(Carteira principal\)/)).toBeVisible()
     expect((await orders(page)).length).toBe(before + 1)
     const cart = (await apiFetch(page, 'GET', '/cart', { token: await token(page) })).json as {
       items: unknown[]
@@ -113,6 +115,9 @@ test.describe('pagamento e pedido', () => {
       'Carteira usada: Carteira principal · Rede Ethereum',
     )
     expect(await page.getByText(/Pago com/).count()).toBe(0)
+    // Recusado não tem recibo nem transação.
+    expect(await page.locator('[data-order-receipt]').count()).toBe(0)
+    expect(await page.getByText(/ID da transação|Ver no Etherscan/).count()).toBe(0)
     const cart = (await apiFetch(page, 'GET', '/cart', { token: await token(page) })).json as {
       items: { quantity: number }[]
     }

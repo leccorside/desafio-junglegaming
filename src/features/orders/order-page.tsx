@@ -9,12 +9,14 @@ import { formatEth } from '@/lib/eth'
 import { nftImageSources } from '@/lib/images'
 import { cn } from '@/lib/utils'
 
+import { OrderReceipt } from './components/order-receipt'
 import { useOrder } from './queries'
 
 /**
  * Situação do pedido depois do envio. Pendente: aguarda o `order.updated` (e
  * consulta a API a cada 5 s, como reserva). Confirmado e recusado são
- * terminais. O recibo completo, no layout do Figma, entra no Passo 11.
+ * terminais; o confirmado mostra o recibo do snapshot. Pedido de outra conta
+ * volta 404 da API e aparece como "Pedido não encontrado.".
  */
 export function OrderPage({ orderId }: { orderId: string }) {
   const order = useOrder(orderId)
@@ -56,6 +58,25 @@ export function OrderPage({ orderId }: { orderId: string }) {
       </Shell>
     )
   }
+  // O recibo só existe para pedido confirmado pela simulação; pendente e
+  // recusado mostram a situação, sem transação nem "Pago com".
+  if (order.data.status === 'confirmed') {
+    return (
+      <div className="flex flex-col gap-6 px-4 pt-6 pb-12 md:px-6 md:pt-12">
+        <OrderReceipt order={order.data} />
+        <div className="mx-auto flex w-full max-w-[578px] flex-col gap-3 md:flex-row md:justify-center">
+          <Button asChild variant="secondary" className="h-10">
+            <Link to="/cart">Ver carrinho</Link>
+          </Button>
+          <Button asChild variant="ghost" className="h-10">
+            <Link to="/" hash="catalogo">
+              Continuar explorando
+            </Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
   return (
     <Shell>
       <OrderStatus order={order.data} />
@@ -71,14 +92,11 @@ function Shell({ children }: { children: React.ReactNode }) {
   )
 }
 
+/** Pedido pendente ou recusado (o confirmado vira o recibo). */
 function OrderStatus({ order }: { order: Order }) {
   const { snapshot } = order
   const heading =
-    order.status === 'pending'
-      ? 'Aguardando a confirmação do pagamento'
-      : order.status === 'confirmed'
-        ? 'Pagamento confirmado'
-        : 'Pagamento recusado'
+    order.status === 'pending' ? 'Aguardando a confirmação do pagamento' : 'Pagamento recusado'
 
   return (
     <section
@@ -92,9 +110,7 @@ function OrderStatus({ order }: { order: Order }) {
           id="order-title"
           className={cn(
             'text-h2 font-bold',
-            order.status === 'confirmed' && 'text-success',
-            order.status === 'rejected' && 'text-destructive-foreground',
-            order.status === 'pending' && 'text-foreground',
+            order.status === 'rejected' ? 'text-destructive-foreground' : 'text-foreground',
           )}
         >
           {heading}
@@ -103,9 +119,7 @@ function OrderStatus({ order }: { order: Order }) {
         <p role="status" className="text-body-sm text-foreground">
           {order.status === 'pending'
             ? 'Estamos esperando a carteira confirmar. Pode sair desta tela: avisamos quando o pagamento for decidido.'
-            : order.status === 'confirmed'
-              ? 'Tudo certo. Os NFTs comprados saíram do seu carrinho.'
-              : `${order.rejectionReason ?? 'O pagamento não foi aprovado.'} Seu carrinho continua com os itens.`}
+            : `${order.rejectionReason ?? 'O pagamento não foi aprovado.'} Seu carrinho continua com os itens.`}
         </p>
       </div>
 
@@ -117,23 +131,6 @@ function OrderStatus({ order }: { order: Order }) {
           />
           Processando o pagamento…
         </div>
-      ) : null}
-
-      {order.status === 'confirmed' && order.transaction ? (
-        <dl className="flex flex-col gap-1 rounded-md border border-border bg-card p-4 text-body-sm">
-          <dt className="text-muted-foreground">Transação (simulada)</dt>
-          <dd className="font-mono break-all text-foreground">{order.transaction.hash}</dd>
-          <dd>
-            <a
-              href={order.transaction.explorerUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="font-bold text-accent-foreground hover:underline"
-            >
-              Ver no explorador (abre em nova aba)
-            </a>
-          </dd>
-        </dl>
       ) : null}
 
       <ul aria-label="Itens do pedido" className="flex flex-col gap-3">
@@ -179,10 +176,9 @@ function OrderStatus({ order }: { order: Order }) {
           expiresAt: order.updatedAt,
         }}
       />
-      {/* "Pago com" só quando houve pagamento: pendente e recusado não cobraram nada. */}
+      {/* Sem "Pago com": pendente e recusado não cobraram nada. */}
       <p data-order-wallet="" className="text-body-sm text-muted-foreground">
-        {order.status === 'confirmed' ? 'Pago com' : 'Carteira usada:'} {snapshot.wallet.label} ·
-        Rede {NETWORK_LABELS[snapshot.network]}
+        Carteira usada: {snapshot.wallet.label} · Rede {NETWORK_LABELS[snapshot.network]}
       </p>
 
       <div className="flex flex-col gap-3 md:flex-row">

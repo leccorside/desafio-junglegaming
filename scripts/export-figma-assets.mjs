@@ -58,6 +58,8 @@ const SHAPES = {
 const GEOMETRY_SHAPES = {
   'google-logo': 'I70484:260;70483:242',
   'facebook-logo': 'I70484:240;70483:259',
+  // Ícone "thank-you" do cabeçalho do recibo (Confirmação de Pedido).
+  'thank-you': '11:5150',
 }
 
 /** Formas que esticam na horizontal (as outras mantêm a proporção). */
