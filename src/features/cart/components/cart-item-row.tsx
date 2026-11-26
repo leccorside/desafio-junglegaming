@@ -132,8 +132,19 @@ export function CartItemRow({
           >
             {item.name}
           </Link>
-          <span className="text-body-sm leading-4 text-secondary">
-            ID do token: #{item.tokenId} · Edição {editionLabel(item.editionName)}
+          {/* Token e edição em linhas próprias: na coluna estreita, o "·" ia
+              para o começo da segunda linha. */}
+          <span
+            data-item-meta=""
+            className="flex flex-col gap-1 text-body-sm leading-4 text-secondary"
+          >
+            <span data-item-token="" className="whitespace-nowrap">
+              ID do token: #{item.tokenId}
+            </span>
+            <span className="sr-only">, </span>
+            <span data-item-edition="" className="whitespace-nowrap">
+              Edição {editionLabel(item.editionName)}
+            </span>
           </span>
         </div>
       </div>

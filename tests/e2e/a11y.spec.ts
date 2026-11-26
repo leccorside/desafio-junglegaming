@@ -274,17 +274,99 @@ test.describe('acessibilidade: teclado e foco', () => {
     expect(await focusedInside(page, 'main#conteudo')).toBe(true)
   })
 
+  /** Percorre a tela com Tab até o fim do conteúdo (ou `max` passos) e lista quem ficou sem anel. */
+  async function missingRings(page: Page, max: number) {
+    const missing: string[] = []
+    for (let i = 0; i < max; i += 1) {
+      await page.keyboard.press('Tab')
+      const focus = await focusIndicator(page)
+      if (focus && !focus.visible) missing.push(focus.name)
+      // Chegou ao rodapé: o conteúdo da tela já foi todo percorrido.
+      if (await focusedInside(page, 'footer')) break
+    }
+    return missing
+  }
+
   test('todo elemento alcançado pelo Tab mostra o foco', async ({ page }) => {
     for (const path of ['/', '/nft/nft-042', '/login']) {
       await page.goto(path)
       await settled(page)
-      const missing: string[] = []
-      for (let i = 0; i < 40; i += 1) {
-        await page.keyboard.press('Tab')
-        const focus = await focusIndicator(page)
-        if (focus && !focus.visible) missing.push(focus.name)
-      }
-      expect(missing, path).toEqual([])
+      expect(await missingRings(page, 40), path).toEqual([])
+    }
+  })
+
+  test('todo elemento alcançado pelo Tab mostra o foco: carrinho, pagamento, perfil e carteiras', async ({
+    page,
+  }) => {
+    await loginViaUi(page, 'ana@example.com')
+    await anaCart(page)
+    for (const path of ['/cart', '/checkout', '/profile', '/wallets']) {
+      await page.goto(path)
+      await settled(page)
+      expect(await missingRings(page, 80), path).toEqual([])
+    }
+  })
+
+  test('cupom: anel na caixa, foco no "Remover cupom" ao aplicar e de volta no campo ao remover', async ({
+    page,
+  }) => {
+    await loginViaUi(page, 'ana@example.com')
+    await anaCart(page)
+    await page.goto('/cart')
+    await settled(page)
+    const summary = page.getByRole('region', { name: /Resumo/ }).filter({ visible: true })
+    const field = summary.getByRole('textbox', { name: 'Código promocional' })
+    await tabTo(page, field)
+    // O anel fica na caixa em volta do campo (o campo não tem contorno próprio).
+    const box = await field.evaluate((el) => {
+      const cs = getComputedStyle(el.parentElement!)
+      return { style: cs.outlineStyle, width: parseFloat(cs.outlineWidth) }
+    })
+    expect(box).toEqual({ style: 'solid', width: 2 })
+
+    // Código inválido: o foco fica no campo, com o erro ligado.
+    await page.keyboard.type('nada')
+    await page.keyboard.press('Enter')
+    await expect(field).toHaveAttribute('aria-invalid', 'true')
+    await expect(field).toBeFocused()
+
+    await field.fill('')
+    await page.keyboard.type('bemvindo10')
+    await page.keyboard.press('Enter')
+    const remove = summary.getByRole('button', { name: 'Remover cupom' })
+    await expect(remove).toBeFocused()
+    await expect(page.getByText('Cupom BEMVINDO10 aplicado.')).toBeVisible()
+
+    await page.keyboard.press('Enter')
+    await expect(field).toBeFocused()
+    await expect(field).toHaveValue('')
+    await expect(page.getByText('Cupom BEMVINDO10 removido.')).toBeVisible()
+
+    // Carregar o carrinho já com cupom não mexe no foco.
+    await page.keyboard.type('bemvindo10')
+    await page.keyboard.press('Enter')
+    await expect(remove).toBeFocused()
+    await page.reload()
+    await settled(page)
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true)
+  })
+
+  test('carrinho: token e edição em linhas próprias, sem corte', async ({ page }) => {
+    test.skip(isMobileViewport(page), 'No mobile a linha do item tem outro layout')
+    await loginViaUi(page, 'ana@example.com')
+    await anaCart(page)
+    await page.goto('/cart')
+    await settled(page)
+    const metas = page.getByRole('list', { name: 'Itens do carrinho' }).locator('[data-item-meta]')
+    await expect(metas).toHaveCount(2)
+    for (const meta of await metas.all()) {
+      const token = (await meta.locator('[data-item-token]').boundingBox())!
+      const edition = (await meta.locator('[data-item-edition]').boundingBox())!
+      expect(edition.y).toBeGreaterThanOrEqual(token.y + token.height)
+      expect(Math.abs(edition.x - token.x)).toBeLessThan(1)
+      expect(token.height).toBeLessThan(20)
+      expect(edition.height).toBeLessThan(20)
+      await expect(meta).toHaveText(/^ID do token: #\d+, Edição aberta$/)
     }
   })
 

@@ -59,7 +59,7 @@ export function NativeSelect({
     <div className="relative">
       <select
         className={cn(
-          'h-10 w-full cursor-pointer appearance-none border border-input bg-background pr-10 pl-[13px] text-body-sm text-foreground focus-visible:border-primary focus-visible:outline-none aria-invalid:border-destructive',
+          'h-10 w-full cursor-pointer appearance-none border border-input bg-background pr-10 pl-[13px] text-body-sm text-foreground focus-visible:border-primary aria-invalid:border-destructive',
           accountFieldClass,
           className,
         )}

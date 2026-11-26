@@ -85,6 +85,12 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Cupom pelo teclado (demonstração no desktop):
+  - o campo do cupom não mostrava foco;
+  - ao aplicar, o foco caía no topo da página (agora vai para "Remover cupom", e ao remover volta ao campo);
+  - no carrinho, o "·" da edição começava a segunda linha (agora token e edição ficam em linhas próprias).
+- O teste de anel de foco passou a cobrir carrinho, pagamento, perfil e carteiras e achou mais dois casos sem anel: "Observação do colecionador" e os seletores de rede e tipo das carteiras.
+
 - Compra pelo teclado (demonstração no mobile):
   - o foco caía no topo depois de "Adicionar ao carrinho" (o botão agora fica com `aria-disabled` durante o envio);
   - o "Ver carrinho" do toast não mostrava foco;

@@ -503,7 +503,7 @@ function CheckoutForm({
                     rows={6}
                     maxLength={280}
                     className={cn(
-                      'min-h-[152px] w-full resize-y border border-input bg-transparent p-3 text-body-sm text-foreground focus-visible:border-primary focus-visible:outline-none aria-invalid:border-destructive',
+                      'min-h-[152px] w-full resize-y border border-input bg-transparent p-3 text-body-sm text-foreground focus-visible:border-primary aria-invalid:border-destructive',
                       accountFieldClass,
                     )}
                     {...field}

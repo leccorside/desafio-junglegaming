@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 
 import { couponCodeSchema } from '@/api/contracts'
@@ -19,6 +19,18 @@ export function CouponForm({ appliedCode }: { appliedCode: string | null }) {
   const [error, setError] = useState<string | null>(null)
   const apply = useApplyCoupon()
   const remove = useRemoveCoupon()
+  // Aplicar troca o campo por "Remover cupom" (e remover faz o contrário): o
+  // elemento focado some. O foco vai para o que entrou no lugar, mas só depois
+  // de uma ação da própria pessoa (não quando o carrinho chega com cupom).
+  const inputRef = useRef<HTMLInputElement>(null)
+  const removeRef = useRef<HTMLButtonElement>(null)
+  const focusNext = useRef<'remove' | 'input' | null>(null)
+  useEffect(() => {
+    const target = appliedCode ? 'remove' : 'input'
+    if (focusNext.current !== target) return
+    focusNext.current = null
+    ;(target === 'remove' ? removeRef.current : inputRef.current)?.focus()
+  }, [appliedCode])
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -28,14 +40,17 @@ export function CouponForm({ appliedCode }: { appliedCode: string | null }) {
       return
     }
     setError(null)
+    focusNext.current = 'remove'
     apply.mutate(parsed.data, {
       onSuccess: () => {
         setCode('')
         toast.success(`Cupom ${parsed.data} aplicado.`)
       },
       // A API explica o motivo (inválido, expirado, valor mínimo) no campo ou na mensagem.
-      onError: (failure) =>
-        setError((isApiError(failure) && failure.fields?.code) || errorMessage(failure)),
+      onError: (failure) => {
+        focusNext.current = null
+        setError((isApiError(failure) && failure.fields?.code) || errorMessage(failure))
+      },
     })
   }
 
@@ -46,16 +61,23 @@ export function CouponForm({ appliedCode }: { appliedCode: string | null }) {
           Cupom <strong className="text-accent-foreground">{appliedCode}</strong> aplicado
         </p>
         <button
+          ref={removeRef}
           type="button"
-          onClick={() =>
+          onClick={() => {
+            if (remove.isPending) return
+            focusNext.current = 'input'
             remove.mutate(undefined, {
               onSuccess: () => toast.success(`Cupom ${appliedCode} removido.`),
-              onError: (failure) =>
-                toast.error(`Não foi possível remover o cupom. ${errorMessage(failure)}`),
+              onError: (failure) => {
+                focusNext.current = null
+                toast.error(`Não foi possível remover o cupom. ${errorMessage(failure)}`)
+              },
             })
-          }
-          disabled={remove.isPending}
-          className="cursor-pointer text-body-sm text-accent-foreground underline-offset-2 hover:underline disabled:cursor-wait disabled:opacity-60"
+          }}
+          // `aria-disabled` (não `disabled`) durante a remoção: o foco fica no botão.
+          aria-disabled={remove.isPending || undefined}
+          aria-busy={remove.isPending || undefined}
+          className="cursor-pointer text-body-sm text-accent-foreground underline-offset-2 hover:underline aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
           {remove.isPending ? 'Removendo…' : 'Remover cupom'}
         </button>
@@ -72,9 +94,12 @@ export function CouponForm({ appliedCode }: { appliedCode: string | null }) {
         className={cn(
           'flex h-[50px] overflow-hidden rounded-full border bg-card md:h-10 md:rounded-sm',
           error ? 'border-destructive' : 'border-border md:border-primary',
+          // O campo não tem contorno próprio: o anel de foco fica na caixa.
+          'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-ring',
         )}
       >
         <input
+          ref={inputRef}
           id={inputId}
           value={code}
           onChange={(event) => {
