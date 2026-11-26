@@ -107,8 +107,38 @@ export function applyNftUpdated(
  * antes da mudança, chega e apaga a marca de "velho" (o resumo ficava com a
  * cotação antiga). Cancelar antes faz a busca começar de novo.
  */
-export function refreshQueries(queryClient: QueryClient, queryKey: readonly unknown[]) {
-  void queryClient
+export function refreshQueries(
+  queryClient: QueryClient,
+  queryKey: readonly unknown[],
+): Promise<void> {
+  return queryClient
     .cancelQueries({ queryKey, predicate: (query) => query.state.data === undefined })
     .then(() => queryClient.invalidateQueries({ queryKey }))
+}
+
+/**
+ * O que mudou entre duas versões do mesmo carrinho (antes e depois de buscar
+ * de novo na reconexão), em frases para o aviso. Mudanças perdidas enquanto a
+ * conexão estava fora não chegam por evento: sem isso, linha e resumo mudariam
+ * sem nenhum aviso.
+ */
+export function describeCartDiff(before: Cart, after: Cart): string[] {
+  const messages: string[] = []
+  for (const old of before.items) {
+    const item = after.items.find((i) => i.id === old.id)
+    if (!item) continue
+    const what = `${item.name} (${editionLabel(item.editionName)})`
+    if (item.status === 'sold_out' && old.status !== 'sold_out') {
+      messages.push(`${what} esgotou.`)
+    } else if (item.status === 'insufficient' && item.available !== old.available) {
+      messages.push(
+        `${what}: só ${item.available} ${item.available === 1 ? 'disponível' : 'disponíveis'}.`,
+      )
+    } else if (item.unitPrice !== old.unitPrice) {
+      messages.push(
+        `${what}: o preço mudou de ${formatEth(old.unitPrice)} para ${formatEth(item.unitPrice)}.`,
+      )
+    }
+  }
+  return messages
 }

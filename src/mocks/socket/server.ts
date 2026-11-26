@@ -142,9 +142,10 @@ export function broadcast(event: RealtimeEvent) {
   sentLog = [...sentLog, { type: event.type, eventId: event.eventId, recipients }].slice(-LOG_SIZE)
 }
 
-function syncPayload(userId: string | null): RealtimeSync {
+function syncPayload(userId: string | null, reason: RealtimeSync['reason']): RealtimeSync {
   const state = getDb()
   return {
+    reason,
     nfts: Object.fromEntries(state.nfts.map((n) => [n.id, n.version])),
     orders: Object.fromEntries(
       state.orders.filter((o) => userId && o.userId === userId).map((o) => [o.id, o.version]),
@@ -152,8 +153,8 @@ function syncPayload(userId: string | null): RealtimeSync {
   }
 }
 
-function sendSync(peer: Peer) {
-  peer.io.client.emit(REALTIME_EVENTS.sync, syncPayload(peer.userId))
+function sendSync(peer: Peer, reason: RealtimeSync['reason'] = 'connect') {
+  peer.io.client.emit(REALTIME_EVENTS.sync, syncPayload(peer.userId, reason))
 }
 
 function snapshot(state: DbState) {
@@ -172,7 +173,7 @@ onDbReset((state) => {
   sentLog = []
   authDelayMs = 0
   snapshot(state)
-  for (const peer of peers) sendSync(peer)
+  for (const peer of peers) sendSync(peer, 'reset')
 })
 
 /** A cada mudança no banco: emite o que subiu de versão. */

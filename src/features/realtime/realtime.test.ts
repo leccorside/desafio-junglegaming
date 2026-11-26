@@ -15,7 +15,7 @@ import { mutate, resetDb } from '@/mocks/db/store'
 import { createNftFixtures } from '@/mocks/fixtures/nfts'
 import { nftEvent, sessionUserId } from '@/mocks/socket/server'
 
-import { applyNftUpdated } from './apply-nft-updated'
+import { applyNftUpdated, describeCartDiff } from './apply-nft-updated'
 import { createEventGate } from './event-gate'
 import { reconcileWithServer } from './reconcile'
 import { createEventHandler, onOrderUpdated } from './socket'
@@ -119,14 +119,14 @@ describe('porteiro dos eventos', () => {
   it('as versões do sync viram referência, inclusive quando voltam para trás (reset)', () => {
     const gate = createEventGate('user-ana')
     // Conexão nova: nunca viu evento do NFT, mas o servidor está na v3.
-    gate.sync({ nfts: { 'nft-042': 3 }, orders: { 'ord-1': 2 } })
+    gate.sync({ reason: 'connect', nfts: { 'nft-042': 3 }, orders: { 'ord-1': 2 } })
     expect(gate.check(updated(emerald, { version: 3 }))).toBe('stale')
     expect(gate.check(orderEvent('user-ana', 2))).toBe('stale')
     expect(gate.check(updated(emerald, { version: 4 }))).toBe('apply')
     gate.record(updated(emerald, { version: 4 }))
 
     // Reset dos mocks: v1 no servidor; a v2 seguinte precisa passar.
-    gate.sync({ nfts: { 'nft-042': 1 }, orders: {} })
+    gate.sync({ reason: 'connect', nfts: { 'nft-042': 1 }, orders: {} })
     expect(gate.check(updated(emerald, { version: 2 }))).toBe('apply')
   })
 
@@ -302,13 +302,21 @@ describe('reconciliação pelo sync', () => {
 
     // Nada mudou: nada é buscado (abrir a página não duplica requisições).
     expect(
-      reconcileWithServer(client, { nfts: { 'nft-042': emerald.version }, orders: {} }),
+      reconcileWithServer(client, {
+        reason: 'connect',
+        nfts: { 'nft-042': emerald.version },
+        orders: {},
+      }),
     ).toEqual([])
     expect(isInvalidated(client, nftKeys.detail(emerald.id))).toBe(false)
 
     // Mudou com a conexão fora: detalhe, lista de interesse e carrinho.
     expect(
-      reconcileWithServer(client, { nfts: { 'nft-042': emerald.version + 1 }, orders: {} }),
+      reconcileWithServer(client, {
+        reason: 'connect',
+        nfts: { 'nft-042': emerald.version + 1 },
+        orders: {},
+      }),
     ).toEqual(['nfts', 'favorites', 'cart'])
     expect(isInvalidated(client, ['favorites', 'user-ana'])).toBe(true)
   })
@@ -316,7 +324,69 @@ describe('reconciliação pelo sync', () => {
   it('reset dos mocks (versão menor no servidor) também conta como diferente', () => {
     const client = new QueryClient()
     client.setQueryData(nftKeys.detail(emerald.id), { ...emerald, version: 5 })
-    expect(reconcileWithServer(client, { nfts: { 'nft-042': 1 }, orders: {} })).toEqual(['nfts'])
+    expect(
+      reconcileWithServer(client, { reason: 'connect', nfts: { 'nft-042': 1 }, orders: {} }),
+    ).toEqual(['nfts'])
+  })
+})
+
+describe('aviso das mudanças perdidas durante a queda', () => {
+  const item = (patch: Partial<Cart['items'][number]>) => ({
+    ...cartWith(1).items[0]!,
+    ...patch,
+  })
+  const cart = (items: Cart['items']): Cart => ({ ...cartWith(1), items })
+
+  it('compara o carrinho antes e depois da busca: preço, esgotado e estoque menor', () => {
+    expect(
+      describeCartDiff(cart([item({ unitPrice: '1.59' })]), cart([item({ unitPrice: '1.79' })])),
+    ).toEqual(['Emerald Ape #042 (edição aberta): o preço mudou de 1.59 ETH para 1.79 ETH.'])
+    expect(
+      describeCartDiff(cart([item({})]), cart([item({ status: 'sold_out', available: 0 })])),
+    ).toEqual(['Emerald Ape #042 (edição aberta) esgotou.'])
+    expect(
+      describeCartDiff(cart([item({})]), cart([item({ status: 'insufficient', available: 1 })])),
+    ).toEqual(['Emerald Ape #042 (edição aberta): só 1 disponível.'])
+    // Nada mudou, ou o item saiu: sem aviso.
+    expect(describeCartDiff(cart([item({})]), cart([item({})]))).toEqual([])
+    expect(describeCartDiff(cart([item({})]), cart([]))).toEqual([])
+  })
+
+  async function reconcileCart(reason: 'connect' | 'reset') {
+    const client = new QueryClient()
+    client.setQueryData(cartKeys.current(OWNER), cartWith(1))
+    const fresh = cart([item({ unitPrice: '1.79', nftVersion: 2 })])
+    const observer = new QueryObserver(client, {
+      queryKey: cartKeys.current(OWNER),
+      queryFn: () => Promise.resolve(fresh),
+      staleTime: Infinity,
+    })
+    const stop = observer.subscribe(() => {})
+    const onCartChanges = vi.fn()
+    try {
+      reconcileWithServer(
+        client,
+        { reason, nfts: { 'nft-042': 2 }, orders: {} },
+        { cartOwner: OWNER, onCartChanges },
+      )
+      await vi.waitFor(() => expect(client.getQueryData(cartKeys.current(OWNER))).toEqual(fresh))
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    } finally {
+      stop()
+    }
+    return onCartChanges
+  }
+
+  it('na reconexão, avisa o que mudou depois de buscar o carrinho', async () => {
+    const onCartChanges = await reconcileCart('connect')
+    expect(onCartChanges).toHaveBeenCalledWith([
+      'Emerald Ape #042 (edição aberta): o preço mudou de 1.19 ETH para 1.79 ETH.',
+    ])
+  })
+
+  it('no reset dos dados de demonstração, não compara o carrinho', async () => {
+    const onCartChanges = await reconcileCart('reset')
+    expect(onCartChanges).not.toHaveBeenCalled()
   })
 })
 

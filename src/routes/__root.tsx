@@ -11,6 +11,7 @@ import { SkipLink } from '@/components/layout/skip-link'
 import { Toaster } from '@/components/ui/sonner'
 import { ensureSession } from '@/features/auth/session'
 import { PendingFavoriteRunner } from '@/features/favorites/components/pending-favorite-runner'
+import { RealtimeStatusBanner } from '@/features/realtime/components/realtime-status-banner'
 import { useRealtime } from '@/features/realtime/use-realtime'
 import { env } from '@/lib/env'
 
@@ -57,6 +58,7 @@ function RootLayout() {
     <div className="flex min-h-dvh flex-col overflow-x-clip">
       <SkipLink />
       <SiteHeader />
+      <RealtimeStatusBanner />
       <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">
         <Outlet />
       </main>

@@ -29,6 +29,7 @@ Encontradas ao integrar o binding (versões `msw` 2.15 e `@mswjs/socket.io-bindi
 - Cada conexão tem o próprio registro de eventos (`createEventGate`), então nada da sessão anterior passa para a seguinte.
 - O visitante recebe só eventos públicos (`nft.updated`).
 - Reconexão automática do Socket.IO com espera de 500 ms a 3 s.
+- Aviso de queda (`RealtimeStatusBanner`, no `RootLayout`, acima do conteúdo): estado `idle` (conectando, sem aviso), `online` (recebeu o `realtime.sync`) ou `offline` (`disconnect` que não foi pedido pelo cliente, ou `connect_error`). Fora do ar, mostra "Atualizações em tempo real pausadas. Reconectando…" numa região `role="status"`; na volta, o texto some e o leitor de tela ouve "Atualizações em tempo real retomadas.". Só a conexão mais recente mexe no estado, então logout e troca de sessão não contam como queda.
 
 ## Sincronização (`realtime.sync`)
 
@@ -36,6 +37,7 @@ Mensagem de controle, fora do envelope dos eventos (schema `realtimeSyncSchema`)
 
 ```ts
 type RealtimeSync = {
+  reason: 'connect' | 'reset'     // conexão nova ou reconexão; reset dos dados de demonstração
   nfts: Record<string, number>    // versão atual de cada NFT
   orders: Record<string, number>  // versão atual dos pedidos do usuário da conexão
 }
@@ -46,6 +48,8 @@ O servidor manda a cada conexão (a primeira, a de uma sessão nova, cada recone
 1. Passa a usar essas versões como referência do porteiro (`gate.sync`): evento com versão menor ou igual é antigo, mesmo que esta conexão nunca o tenha visto. As versões são substituídas, não somadas, porque no reset elas voltam para trás.
 2. Compara com as cópias em cache (`reconcileWithServer`): detalhe, catálogo, destaques, lista de interesse e itens do carrinho (`nftVersion`). Busca de novo só o que tem versão diferente. Sem diferença, nada é buscado, e abrir a página não duplica requisições.
 3. Marca `['orders']` como velho (os pedidos ganham tela no Passo 10).
+4. Com `reason: 'connect'`, compara o carrinho da sessão antes e depois da busca (`describeCartDiff`) e mostra o que mudou no mesmo aviso dos eventos ("… o preço mudou de 1.59 ETH para 1.79 ETH. O resumo do carrinho foi atualizado."). Sem isso, uma mudança perdida durante a queda mudava linha e resumo calada.
+5. Com `reason: 'reset'` (só nos mocks), busca de novo tudo (NFTs, lista de interesse, carrinho, cotação e pedidos), porque carrinho e favoritos voltam às fixtures sem mudar a versão dos NFTs, e mostra "Os dados de demonstração foram restaurados.". Não compara o carrinho: o do visitante some com os dados iniciais.
 
 Assim volta pela API o que mudou antes de a conexão abrir (página carregando, troca de sessão, handshake lento) ou durante uma queda.
 

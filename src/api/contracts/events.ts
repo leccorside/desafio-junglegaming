@@ -18,6 +18,12 @@ export const REALTIME_EVENTS = {
  * a usar essas versões como referência para descartar eventos antigos.
  */
 export const realtimeSyncSchema = z.object({
+  /**
+   * `connect`: conexão nova ou reconexão. `reset`: os dados de demonstração
+   * voltaram às fixtures (só nos mocks); o cliente avisa e não compara o
+   * carrinho, que pode ter sumido.
+   */
+  reason: z.enum(['connect', 'reset']),
   nfts: z.record(idSchema, versionSchema),
   orders: z.record(idSchema, versionSchema),
 })

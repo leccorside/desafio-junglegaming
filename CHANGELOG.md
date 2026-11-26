@@ -6,6 +6,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Aviso de queda do tempo real acima do conteúdo ("Atualizações em tempo real pausadas. Reconectando…"), com anúncio para leitor de tela quando a conexão volta.
+- Na reconexão, o aviso do carrinho mostra o que mudou durante a queda (preço, esgotado, estoque menor).
+- Reset dos dados de demonstração sem recarregar: aviso "Os dados de demonstração foram restaurados." e a tela busca tudo de novo (o carrinho do visitante volta vazio).
 - Painel de cenários: campo "Novo preço (ETH)" com "Alterar preço" na seção "Estoque".
 - Sincronização a cada conexão (`realtime.sync`): o servidor manda as versões atuais e o cliente busca de novo só o que está diferente no cache. Cobre página carregando, troca de sessão, reconexão e reset dos mocks.
 - Rotas de teste `/__mocks/realtime/auth-delay` (handshake lento) e `/__mocks/realtime/log` (envios recentes).

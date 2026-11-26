@@ -13,6 +13,7 @@ import { currentCartOwner } from '@/features/cart/queries'
 import { env } from '@/lib/env'
 
 import { applyNftUpdated } from './apply-nft-updated'
+import { setRealtimeStatus, type RealtimeStatus } from './connection-status'
 import { createEventGate, type EventGate } from './event-gate'
 import { reconcileWithServer } from './reconcile'
 
@@ -51,6 +52,12 @@ export function connectRealtime({
 }): Connection {
   let closed = false
   let socket: Socket | null = null
+  // Só a conexão mais recente mexe no aviso de queda (trocar de sessão não é queda).
+  const generation = ++connectionGeneration
+  const setStatus = (next: RealtimeStatus) => {
+    if (!closed && generation === connectionGeneration) setRealtimeStatus(next)
+  }
+  setStatus('idle')
 
   // O `engine.io-client` guarda o `WebSocket` global quando o módulo carrega.
   // Carregado sob demanda (depois de o MSW iniciar e interceptar o
@@ -65,7 +72,7 @@ export function connectRealtime({
       reconnectionDelay: 500,
       reconnectionDelayMax: 3000,
     })
-    listen(socket, createEventGate(userId), queryClient)
+    listen(socket, createEventGate(userId), queryClient, setStatus)
   })
 
   return {
@@ -81,11 +88,15 @@ export function connectRealtime({
   }
 }
 
+let connectionGeneration = 0
+
+export const DEMO_RESET_MESSAGE = 'Os dados de demonstração foram restaurados.'
+
 /** Mostra o aviso de mudança no carrinho: na página do carrinho, se aberta; senão, toast. */
-function notifyCartChange(message: string, eventId: string) {
+function notifyCartChange(message: string, id: string, kind: 'warning' | 'info' = 'warning') {
   if (publishCartChange(message)) return
-  // O Sonner anuncia em região aria-live; o id evita dois avisos do mesmo evento.
-  toast.warning(message, { id: `cart-change-${eventId}` })
+  // O Sonner anuncia em região aria-live; o id evita dois avisos da mesma mudança.
+  toast[kind](message, { id: `cart-change-${id}` })
 }
 
 /**
@@ -128,10 +139,22 @@ export function createEventHandler(gate: EventGate, queryClient: QueryClient) {
   }
 }
 
-function listen(socket: Socket, gate: EventGate, queryClient: QueryClient) {
+function listen(
+  socket: Socket,
+  gate: EventGate,
+  queryClient: QueryClient,
+  setStatus: (status: RealtimeStatus) => void,
+) {
   const handle = createEventHandler(gate, queryClient)
   socket.on(REALTIME_EVENTS.nftUpdated, handle)
   socket.on(REALTIME_EVENTS.orderUpdated, handle)
+
+  // Queda: preço e estoque na tela podem ficar velhos até a volta. Fechar a
+  // conexão de propósito (logout, troca de sessão) não é queda.
+  socket.on('disconnect', (reason) => {
+    if (reason !== 'io client disconnect') setStatus('offline')
+  })
+  socket.on('connect_error', () => setStatus('offline'))
 
   // A cada conexão (a primeira, a de uma sessão nova, cada reconexão) e no
   // reset dos mocks, o servidor manda as versões atuais: elas viram a
@@ -140,7 +163,17 @@ function listen(socket: Socket, gate: EventGate, queryClient: QueryClient) {
   socket.on(REALTIME_EVENTS.sync, (raw: unknown) => {
     const parsed = realtimeSyncSchema.safeParse(raw)
     if (!parsed.success) return
-    gate.sync(parsed.data)
-    reconcileWithServer(queryClient, parsed.data)
+    const sync = parsed.data
+    setStatus('online')
+    gate.sync(sync)
+    reconcileWithServer(queryClient, sync, {
+      cartOwner: currentCartOwner(),
+      onCartChanges: (messages) =>
+        notifyCartChange(
+          `${messages.join(' ')} O resumo do carrinho foi atualizado.`,
+          `sync-${Date.now()}`,
+        ),
+    })
+    if (sync.reason === 'reset') notifyCartChange(DEMO_RESET_MESSAGE, 'reset', 'info')
   })
 }

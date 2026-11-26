@@ -463,3 +463,101 @@ test.describe('tempo real: correções do review', () => {
     await expect(summary.getByRole('definition').nth(3)).toHaveText('0.00 ETH')
   })
 })
+
+/** Marca a página para provar depois que ela não recarregou. */
+const markNoReload = (page: Page) =>
+  page.evaluate(() => ((window as unknown as { __semReload: boolean }).__semReload = true))
+const stillSamePage = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __semReload?: boolean }).__semReload === true)
+
+test.describe('tempo real: avisos de queda, reconexão e reset', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await waitForApp(page)
+    await resetMocks(page)
+  })
+
+  test('queda: aviso visível enquanto a conexão está fora, anúncio da volta e nada na troca de sessão', async ({
+    page,
+  }) => {
+    await page.goto('/nft/nft-042')
+    await waitForApp(page)
+    await connected(page)
+    const banner = page.getByText('Atualizações em tempo real pausadas. Reconectando…')
+    expect(await banner.count()).toBe(0)
+
+    await apiFetch(page, 'POST', '/__mocks/realtime/disconnect', { body: { downMs: 2000 } })
+    await expect(banner).toBeVisible()
+    // Fica numa região role="status", acima do conteúdo da página.
+    const region = page.locator('[data-realtime-status]')
+    await expect(region).toHaveAttribute('role', 'status')
+    const [bannerBox, mainBox] = [
+      await banner.boundingBox(),
+      await page.locator('main#conteudo').boundingBox(),
+    ]
+    expect(bannerBox!.y + bannerBox!.height).toBeLessThanOrEqual(mainBox!.y)
+
+    await connected(page)
+    await expect(banner).toBeHidden()
+    await expect(region).toHaveText('Atualizações em tempo real retomadas.')
+
+    // Login troca a conexão, mas não é queda.
+    await page.goto('/login')
+    await submitLogin(page, 'ana@example.com')
+    await expect(page).not.toHaveURL(/\/login/)
+    await connected(page, 'user-ana')
+    await expect(region).toHaveAttribute('data-realtime-status', 'online')
+    expect(await banner.count()).toBe(0)
+  })
+
+  test('reconexão: o que mudou durante a queda aparece no aviso do carrinho', async ({ page }) => {
+    await guestCartWithVioletNomad(page)
+    await page.goto('/cart')
+    await waitForApp(page)
+    await expect(page.getByRole('list', { name: 'Itens do carrinho' })).toBeVisible()
+    await connected(page)
+
+    await apiFetch(page, 'POST', '/__mocks/realtime/disconnect', { body: { downMs: 2000 } })
+    await expect.poll(async () => (await peers(page)).length).toBe(0)
+    await updateNft(page, 'nft-314', { price: '1.79' })
+    const notice = page.getByRole('status').filter({ hasText: 'o preço mudou' })
+    expect(await notice.count()).toBe(0)
+
+    await connected(page)
+    await expect(notice).toHaveText(
+      'Violet Nomad #314 (edição aberta): o preço mudou de 1.39 ETH para 1.79 ETH. O resumo do carrinho foi atualizado.',
+    )
+    const summary = page.getByRole('region', { name: /Resumo/ }).filter({ visible: true })
+    await expect(summary.getByRole('definition').nth(3)).toHaveText('3.596 ETH')
+    expect(await page.locator('[data-sonner-toast]').count()).toBe(0)
+  })
+
+  test('reset sem recarregar: aviso no carrinho, que volta vazio, e toast nas outras telas', async ({
+    page,
+  }) => {
+    await guestCartWithVioletNomad(page)
+    await page.goto('/cart')
+    await waitForApp(page)
+    await expect(page.getByRole('list', { name: 'Itens do carrinho' })).toBeVisible()
+    await connected(page)
+    await markNoReload(page)
+
+    await resetMocks(page)
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Os dados de demonstração foram restaurados.' }),
+    ).toBeVisible()
+    await expect(page.getByText('Seu carrinho está vazio.')).toBeVisible()
+    expect(await stillSamePage(page)).toBe(true)
+
+    // Fora do carrinho, o mesmo aviso vem por toast.
+    await page.goto('/nft/nft-042')
+    await waitForApp(page)
+    await connected(page)
+    await resetMocks(page)
+    await expect(
+      page
+        .locator('[data-sonner-toast]')
+        .filter({ hasText: 'Os dados de demonstração foram restaurados.' }),
+    ).toBeVisible()
+  })
+})

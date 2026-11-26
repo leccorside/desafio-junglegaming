@@ -161,6 +161,9 @@ export function CartPage() {
           {cart.data ? `${units} ${units === 1 ? 'unidade' : 'unidades'} no carrinho` : ''}
         </p>
 
+        {/* Fora dos ramos abaixo: o aviso continua quando o carrinho esvazia (reset dos dados). */}
+        <CartChangeNotice />
+
         {cart.isPending ? (
           <div className="flex flex-col gap-8 md:flex-row md:justify-between">
             <div className="md:w-[782px]">
@@ -194,7 +197,6 @@ export function CartPage() {
         ) : (
           <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between md:gap-10">
             <div className="flex min-w-0 flex-col gap-3 md:max-w-[782px] md:flex-1">
-              <CartChangeNotice />
               <div
                 aria-hidden="true"
                 className="hidden grid-cols-[250px_1fr_1fr_1fr_24px] gap-x-6 border-b border-primary/30 pr-6 pb-3 text-body-lg leading-4 text-foreground md:grid"
