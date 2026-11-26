@@ -6,13 +6,13 @@ import {
 } from '@/api/contracts'
 import { ethPercent, ethRound } from '@/lib/eth'
 
-import { EXPLORERS, PAYMENT_SETTLE_MS } from '../config'
+import { PAYMENT_SETTLE_MS } from '../config'
 import { getDb, mutate, nextId } from '../db/store'
 import type { DbOrder, DbState } from '../db/state'
 import { computePriceFrom } from '../fixtures/nfts'
-import { createRandom } from '../random'
 import { fail } from '../errors'
 import { consumeOnce, getScenario, isActive } from '../scenarios'
+import { simulatedTransaction } from '../transaction'
 import { ensureCart, findEdition, removePurchased } from './cart'
 import { computeQuote, describeChanges, fingerprint, storeQuote, toQuote } from './quotes'
 
@@ -191,34 +191,13 @@ export function createOrder(
   })
 }
 
-/**
- * Semente do hash simulado: número do pedido, itens (NFT, edição, quantidade,
- * preço) e total. O hash continua previsível (mesmo pedido, mesmo hash), mas
- * compras diferentes com o mesmo número depois de um reset ganham IDs
- * diferentes. Hash de 32 bits (FNV-1a) para não perder precisão.
- */
-export function transactionSeed(order: Pick<DbOrder, 'id' | 'snapshot'>): number {
-  const items = order.snapshot.items
-    .map((item) => `${item.nftId}/${item.editionId}/${item.quantity}/${item.unitPrice}`)
-    .join(',')
-  const source = `${order.id}|${items}|${order.snapshot.total}`
-  let hash = 0x811c9dc5
-  for (let i = 0; i < source.length; i += 1) {
-    hash ^= source.charCodeAt(i)
-    hash = Math.imul(hash, 0x01000193)
-  }
-  return hash >>> 0
-}
-
 function settle(state: DbState, order: DbOrder) {
   order.status = order.outcome
   order.version += 1
   order.updatedAt = new Date().toISOString()
 
   if (order.outcome === 'confirmed') {
-    const random = createRandom(transactionSeed(order))
-    const hash = order.snapshot.network === 'solana' ? random.hex(64) : `0x${random.hex(64)}`
-    order.transaction = { hash, explorerUrl: `${EXPLORERS[order.snapshot.network]}${hash}` }
+    order.transaction = simulatedTransaction(order)
     removePurchased(state, order.cartOwnerKey, order.snapshot.items)
   } else {
     order.rejectionReason = 'O pagamento foi recusado pela carteira. Nenhum valor foi cobrado.'

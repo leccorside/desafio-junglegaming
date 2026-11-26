@@ -94,6 +94,8 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Os pedidos de exemplo (`ord-0001` e `ord-0002`) tinham um hash de transação que não era hexadecimal (`0xORD0…AAAA`), e o link do explorador apontava para um hash inválido. Agora usam o mesmo gerador das compras feitas na demo (`src/mocks/transaction.ts`); o `schemaVersion` do banco simulado subiu para 3, então quem já tinha o banco salvo volta às fixtures.
+
 - Perfil, carteiras, carrinho, pagamento e pedido não avisavam o leitor de tela enquanto carregavam (skeleton escondido, sem `aria-busy` nem texto). Agora usam `LoadingRegion`, com `aria-busy` na área e "Carregando…" só para leitor de tela; no detalhe e na lista de interesse o aviso saiu de dentro da área ocupada.
 - O contador do botão do painel de cenários só mudava ao recarregar; agora acompanha o cenário trocado pela rota de teste.
 

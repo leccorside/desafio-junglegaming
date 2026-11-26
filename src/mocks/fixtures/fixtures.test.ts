@@ -56,4 +56,15 @@ describe('fixtures', () => {
     for (const wallet of seed.wallets) walletSchema.parse(wallet)
     for (const order of seed.orders) orderSchema.parse(toOrder(order))
   })
+
+  it('dão aos pedidos de exemplo um hash hexadecimal válido, diferente em cada pedido', () => {
+    const hashes = seed.orders.map((order) => {
+      const { hash, explorerUrl } = order.transaction!
+      const pattern = order.snapshot.network === 'solana' ? /^[0-9a-f]{64}$/ : /^0x[0-9a-f]{64}$/
+      expect(hash).toMatch(pattern)
+      expect(explorerUrl.endsWith(hash)).toBe(true)
+      return hash
+    })
+    expect(new Set(hashes).size).toBe(seed.orders.length)
+  })
 })

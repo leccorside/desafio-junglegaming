@@ -1,15 +1,17 @@
 import type { Nft } from '@/api/contracts'
 import { ethAdd, ethMul } from '@/lib/eth'
 
-import { EXPLORERS, FIXTURE_NOW, NETWORK_FEES } from '../config'
+import { FIXTURE_NOW, NETWORK_FEES } from '../config'
 import type { DbOrder, DbState, DbWallet } from '../db/state'
+import { simulatedTransaction } from '../transaction'
 import { createNftFixtures } from './nfts'
 
 export { SPECIAL_NFTS } from './nfts'
 
 /** Versão do formato do banco. Incrementar quando `DbState` ou as fixtures mudarem. */
 // 2: DbOrder ganhou `soldOutByReservation`.
-export const SCHEMA_VERSION = 2
+// 3: hash da transação dos pedidos de exemplo passou a ser hexadecimal válido.
+export const SCHEMA_VERSION = 3
 
 /**
  * Credenciais fictícias. A senha dos dois é `Senha@123`; só o hash
@@ -90,10 +92,9 @@ function createPastOrder(
   const lineTotal = ethMul(edition.price, quantity)
   const networkFee = NETWORK_FEES[wallet.network]
   const createdAt = iso(-daysAgo * DAY)
-  const hash = `0x${id.replace(/\W/g, '').padEnd(64, 'a').slice(0, 64)}`
   const user = Object.values(FIXTURE_USERS).find((u) => u.id === userId)!
 
-  return {
+  const order: DbOrder = {
     id,
     userId,
     cartOwnerKey: `user:${userId}`,
@@ -102,7 +103,7 @@ function createPastOrder(
     settleAt: createdAt,
     soldOutByReservation: [],
     rejectionReason: null,
-    transaction: { hash, explorerUrl: `${EXPLORERS[wallet.network]}${hash}` },
+    transaction: null,
     snapshot: {
       items: [
         {
@@ -130,6 +131,9 @@ function createPastOrder(
     createdAt,
     updatedAt: createdAt,
   }
+  // Mesmo gerador das compras feitas na demo: hexadecimal válido e link do explorador.
+  order.transaction = simulatedTransaction(order)
+  return order
 }
 
 /** Estado inicial completo da API simulada. Sempre o mesmo: base do reset. */

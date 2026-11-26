@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { DbOrder } from '../db/state'
-import { transactionSeed } from './orders'
+import { transactionSeed } from '../transaction'
 
 type Item = { nftId: string; editionId: string; quantity: number; unitPrice: string }
 

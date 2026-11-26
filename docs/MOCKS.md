@@ -31,7 +31,7 @@ Os handlers só traduzem HTTP: leem o corpo com o schema Zod do contrato (`readB
 ## Banco dos mocks
 
 - Estado único (`DbState`) com usuários, sessões, NFTs, favoritos, carrinhos, cupons, cotações, pedidos, chaves de idempotência e carteiras. REST e Socket.IO leem e escrevem no mesmo estado, e `onDbChange` avisa o socket a cada mudança.
-- Persistido no `localStorage` em `kurio:mocks:db`, com `schemaVersion` (hoje 2). Versão diferente ou JSON corrompido fazem o banco voltar às fixtures.
+- Persistido no `localStorage` em `kurio:mocks:db`, com `schemaVersion` (hoje 3). Versão diferente ou JSON corrompido fazem o banco voltar às fixtures.
 - `mutate` persiste e avisa os interessados mesmo quando a regra termina em erro. Algumas regras alteram o banco de propósito antes de recusar (o cenário de preço alterado sobe o preço e guarda a cotação nova, e só então devolve `QUOTE_OUTDATED`). Regra que não deve deixar rastro valida antes de alterar.
 - Sem `localStorage` (Node, navegação privada bloqueada), fica só em memória.
 - IDs de pedido, cotação e carteira são sequenciais (`ord-0003`), então os testes são previsíveis.
@@ -46,7 +46,7 @@ Os handlers só traduzem HTTP: leem o corpo com o schema Zod do contrato (`readB
 | Usuários | `ana@example.com` e `bruno@example.com`, senha `Senha@123`. Só o hash fica guardado (SHA-256 de `salt:senha`, via Web Crypto). |
 | Favoritos | Ana: `nft-042` e `nft-118`. Bruno: `nft-207`. |
 | Carteiras | Ana: principal Ethereum (MetaMask, ENS `ana-coleciona`) e secundária Polygon (Coinbase). Bruno: só a principal, Solana (WalletConnect). |
-| Pedidos | Um pedido confirmado anterior para cada um (`ord-0001` da Ana, `ord-0002` do Bruno). |
+| Pedidos | Um pedido confirmado anterior para cada um (`ord-0001` da Ana, `ord-0002` do Bruno), com hash de transação hexadecimal gerado como nas compras da demo (`0x` + 64 dígitos na Ethereum, 64 dígitos sem prefixo na Solana). |
 | Cupons | `BEMVINDO10` (10% do subtotal), `FIXO005` (0.05 ETH, a partir de 0.5 ETH) e `EXPIRADO` (vencido). Qualquer outro código é inválido. O código é normalizado para maiúsculas. |
 | Imagens | As 4 imagens do Figma em `public/images/nfts`, reaproveitadas pelo catálogo. |
 
@@ -152,7 +152,7 @@ As telas chegam a partir do Passo 4. Até lá, os cenários podem ser conferidos
 ## Testes
 
 - `src/mocks/api.test.ts`: 43 testes de integração que fazem `fetch` real contra os handlers via `msw/node` e validam cada resposta com o schema do contrato.
-- `src/mocks/fixtures/fixtures.test.ts`: determinismo, conformidade com os contratos, NFTs do Figma, casos fixos e hash das senhas.
+- `src/mocks/fixtures/fixtures.test.ts`: determinismo, conformidade com os contratos, NFTs do Figma, casos fixos, hash das senhas e hash hexadecimal dos pedidos de exemplo.
 - `src/mocks/db/store.test.ts`: persistência entre carregamentos, persistência quando a regra termina em erro, fallback para as fixtures e reset.
 - `src/mocks/scenarios/scenarios.test.ts`: leitura da URL, opções mantidas pelo painel, sequência reproduzível do `jitter`, plano de cada cenário de rede e valor corrompido no storage.
 - `tests/e2e/mocks.spec.ts`: service worker no navegador, persistência no refresh, reset, cenário pela URL, latência fora de ordem, painel escondido em navegador automatizado e, com o painel visível, controle de estoque (esgota a 1/50 do Emerald Ape sem recarregar, e o "Desfazer" do carrinho recebe o erro de estoque), plural do contador e posição no mobile (na margem da barra, sem cobrir nada clicável em nenhuma rolagem, com o "Tentar de novo" na tela).

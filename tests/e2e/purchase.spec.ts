@@ -402,6 +402,47 @@ test.describe('compra completa e recibo', () => {
     expect(again.transaction!.hash).toBe(first.transaction!.hash)
   })
 
+  test('pedidos de exemplo: hash hexadecimal válido no recibo e no link do explorador', async ({
+    page,
+  }) => {
+    const cases = [
+      {
+        email: 'ana@example.com',
+        id: 'ord-0001',
+        pattern: /^0x[0-9a-f]{64}$/,
+        explorer: 'Etherscan',
+        base: 'https://etherscan.io/tx/',
+      },
+      {
+        email: 'bruno@example.com',
+        id: 'ord-0002',
+        pattern: /^[0-9a-f]{64}$/,
+        explorer: 'Solscan',
+        base: 'https://solscan.io/tx/',
+      },
+    ]
+    const hashes: string[] = []
+    for (const item of cases) {
+      await page.evaluate(() => localStorage.removeItem('kurio:session'))
+      await loginViaUi(page, item.email)
+      const order = await orderById(page, item.id)
+      const hash = order.transaction!.hash
+      expect(hash).toMatch(item.pattern)
+      hashes.push(hash)
+
+      await page.goto(`/orders/${item.id}`)
+      await expect(receipt(page)).toBeVisible()
+      const shown = await meta(page, 'ID da transação').innerText()
+      expect(shown).toBe(shortHash(hash))
+      // Abreviado continua hexadecimal: só 0-9 e A-F (o antigo mostrava "0xORD0…AAAA").
+      expect(shown).toMatch(/^(0x)?[0-9A-F]{4}…[0-9A-F]{4}$/)
+      await expect(
+        receipt(page).getByRole('link', { name: `Ver no ${item.explorer} (abre em nova aba)` }),
+      ).toHaveAttribute('href', `${item.base}${hash}`)
+    }
+    expect(hashes[0]).not.toBe(hashes[1])
+  })
+
   test('visitante que abre o recibo vai para o login', async ({ page }) => {
     await page.goto('/orders/ord-0001')
     await expect(page).toHaveURL(/\/login\?redirect=%2Forders%2Ford-0001/)
