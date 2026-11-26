@@ -67,7 +67,7 @@ export function SiteHeader() {
                 asChild
                 className="hidden h-[35px] gap-1 rounded-md px-[9px] font-medium lg:inline-flex"
               >
-                <Link to="/login" search={{ redirect: location.href }}>
+                <Link to="/login" search={{ redirect: location.href }} data-login-link="">
                   <LogoutIcon size={20} />
                   Entrar
                 </Link>

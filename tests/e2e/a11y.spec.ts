@@ -307,6 +307,95 @@ test.describe('acessibilidade: teclado e foco', () => {
     }
   })
 
+  test('menu da conta aberto: cada item focado pelas setas tem anel próprio e fundo de destaque', async ({
+    page,
+  }) => {
+    test.skip(isMobileViewport(page), 'O menu da conta é do header do desktop')
+    await loginViaUi(page, 'ana@example.com')
+    await page.goto('/')
+    await settled(page)
+    await page.getByRole('button', { name: /^Conta de/ }).focus()
+    await page.keyboard.press('Enter')
+    const menu = page.getByRole('menu')
+    await expect(menu).toBeVisible()
+    const items = await menu.getByRole('menuitem').count()
+    expect(items).toBeGreaterThan(2)
+    const seen = new Set<string>()
+    for (let i = 0; i < items; i += 1) {
+      const state = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement
+        const cs = getComputedStyle(el)
+        const menuBg = getComputedStyle(el.closest('[role="menu"]')!).backgroundColor
+        return {
+          role: el.getAttribute('role'),
+          name: el.textContent?.trim() ?? '',
+          // O anel tem de estar no próprio item (o contorno do menu não conta).
+          ring: cs.outlineStyle === 'solid' && parseFloat(cs.outlineWidth) >= 2,
+          highlighted: cs.backgroundColor !== menuBg && cs.backgroundColor !== 'rgba(0, 0, 0, 0)',
+        }
+      })
+      expect(state.role, state.name).toBe('menuitem')
+      expect(state.ring, state.name).toBe(true)
+      expect(state.highlighted, state.name).toBe(true)
+      seen.add(state.name)
+      await page.keyboard.press('ArrowDown')
+    }
+    expect(seen.has('Sair')).toBe(true)
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('button', { name: /^Conta de/ })).toBeFocused()
+  })
+
+  test('sair da conta: foco no "Entrar" do header (desktop) ou no título da tela (mobile)', async ({
+    page,
+  }) => {
+    const signOut = async () => {
+      if (isMobileViewport(page)) {
+        await page
+          .getByRole('navigation', { name: 'Navegação inferior' })
+          .getByRole('button', { name: 'Abrir menu' })
+          .focus()
+        await page.keyboard.press('Enter')
+        await tabTo(page, page.getByRole('dialog').getByRole('button', { name: 'Sair' }), 30)
+        await page.keyboard.press('Enter')
+      } else {
+        await page.getByRole('button', { name: /^Conta de/ }).focus()
+        await page.keyboard.press('Enter')
+        const out = page.getByRole('menuitem', { name: 'Sair' })
+        for (let i = 0; i < 10; i += 1) {
+          if (await out.evaluate((el) => el === document.activeElement)) break
+          await page.keyboard.press('ArrowDown')
+        }
+        await page.keyboard.press('Enter')
+      }
+      await expect(page.getByText('Você saiu da sua conta.')).toBeVisible()
+    }
+    const expected = () =>
+      isMobileViewport(page)
+        ? page.locator('main#conteudo h1').filter({ visible: true })
+        : page.locator('[data-login-link]')
+
+    // Tela pública: a página fica e o foco vai ao "Entrar" (ou ao título).
+    // (A tela inicial: no detalhe, o mobile troca a barra de navegação pela de compra.)
+    await loginViaUi(page, 'ana@example.com')
+    await page.goto('/')
+    await settled(page)
+    await signOut()
+    await expect(expected()).toBeFocused()
+    // O foco continua lá depois de o menu e o toast se acomodarem.
+    await page.waitForTimeout(1200)
+    await expect(expected()).toBeFocused()
+
+    // Tela privada: volta ao início com o mesmo destino do foco.
+    await loginViaUi(page, 'ana@example.com')
+    await page.goto('/profile')
+    await settled(page)
+    await signOut()
+    await expect(page).toHaveURL(/\/$/)
+    await expect(expected()).toBeFocused()
+    await page.waitForTimeout(1200)
+    await expect(expected()).toBeFocused()
+  })
+
   test('cupom: anel na caixa, foco no "Remover cupom" ao aplicar e de volta no campo ao remover', async ({
     page,
   }) => {

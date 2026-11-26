@@ -85,6 +85,10 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Cadastro e login pelo teclado (demonstração no desktop):
+  - depois de "Sair", o foco caía no início da página e eram 65 Shift+Tab até o "Entrar" (agora o foco vai ao "Entrar" do header; no mobile, ao título da tela);
+  - os itens do menu da conta quase não mostravam o foco (agora têm fundo de destaque e anel).
+
 - Carteiras pelo teclado (demonstração no mobile):
   - o foco caía no topo depois de salvar a principal (o formulário era remontado e o botão ficava `disabled`);
   - depois de salvar a secundária, o foco se perdia e a tela ficava no rodapé (agora vai ao "Editar carteira secundária", também ao cancelar);

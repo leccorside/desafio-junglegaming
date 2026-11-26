@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { MenuIcon } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 
 import { LogoutIcon } from '@/components/icons/figma-icons'
 import { Button } from '@/components/ui/button'
@@ -35,6 +35,9 @@ export function MobileMenu({ trigger }: MobileMenuProps) {
   const location = useLocation()
   const { signOut, pending } = useSignOut()
   const close = () => setOpen(false)
+  // Ao sair, o foco vai para o título da tela (useSignOut); o menu não pode
+  // devolvê-lo ao botão que o abriu quando termina de fechar.
+  const signingOut = useRef(false)
   const linkClass = 'rounded-md px-3 py-3 text-body-lg hover:bg-accent'
 
   return (
@@ -46,7 +49,15 @@ export function MobileMenu({ trigger }: MobileMenuProps) {
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent side="left" className="w-72 border-border bg-card p-0">
+      <SheetContent
+        side="left"
+        className="w-72 border-border bg-card p-0"
+        onCloseAutoFocus={(event) => {
+          if (!signingOut.current) return
+          signingOut.current = false
+          event.preventDefault()
+        }}
+      >
         <SheetHeader className="border-b border-border p-6">
           <SheetTitle asChild>
             <div onClick={close}>
@@ -95,6 +106,7 @@ export function MobileMenu({ trigger }: MobileMenuProps) {
               className="w-full"
               disabled={pending}
               onClick={() => {
+                signingOut.current = true
                 close()
                 void signOut()
               }}

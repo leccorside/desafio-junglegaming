@@ -1,6 +1,7 @@
 import { useRouterState } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
 
+import { takeNextFocusTarget } from '@/lib/next-focus'
 import { DEFAULT_TITLE, pageTitle } from '@/lib/page-title'
 
 const HEADING_WAIT_MS = 4000
@@ -39,6 +40,9 @@ function guardFocus(heading: HTMLElement): () => void {
   const onUser = () => {
     userActed = true
   }
+  // Alvo fora do conteúdo (o "Entrar" do header depois de sair): só volta se
+  // o foco cair no `body`.
+  const targetInMain = Boolean(heading.closest('main#conteudo'))
   const restore = () => {
     if (userActed || !heading.isConnected) return
     const active = document.activeElement
@@ -46,7 +50,9 @@ function guardFocus(heading: HTMLElement): () => void {
     // Foco levado para dentro do conteúdo é intencional (ex.: o coração do
     // favorito concluído depois do login); só volta se caiu no `body` ou foi
     // parar fora do conteúdo (rodapé, header).
-    if (active && active !== document.body && active.closest('main#conteudo')) return
+    if (active && active !== document.body) {
+      if (!targetInMain || active.closest('main#conteudo')) return
+    }
     if (focusIsBusy()) return
     heading.focus({ preventScroll: true })
   }
@@ -84,6 +90,8 @@ export function RouteFocus() {
     if (pathname === undefined) return
     const initial = first.current
     first.current = false
+    // Alvo pedido por quem navegou (ex.: sair da conta → "Entrar" do header).
+    const requested = takeNextFocusTarget()
     let done = false
     const started = Date.now()
 
@@ -100,9 +108,12 @@ export function RouteFocus() {
         pathname === '/' && !inDialog ? DEFAULT_TITLE : pageTitle(heading?.textContent)
       if (initial || hash || !heading || focusIsBusy()) return
       if (heading.closest('[role="dialog"]')) return
-      if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1')
-      heading.focus({ preventScroll: true })
-      stopGuard = guardFocus(heading)
+      const target = requested?.() ?? heading
+      if (!target.matches('a, button, input, select, textarea, [tabindex]')) {
+        target.setAttribute('tabindex', '-1')
+      }
+      target.focus({ preventScroll: true })
+      stopGuard = guardFocus(target)
     }
     let stopGuard = () => {}
 
