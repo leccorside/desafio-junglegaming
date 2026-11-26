@@ -6,7 +6,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
-- Aviso de queda do tempo real acima do conteúdo ("Atualizações em tempo real pausadas. Reconectando…"), com anúncio para leitor de tela quando a conexão volta.
+- Aviso de queda do tempo real ("Atualizações em tempo real pausadas. Reconectando… Os preços podem ter mudado.") por cima do topo da página, sem empurrar o conteúdo e à vista com a página rolada, com anúncio para leitor de tela quando a conexão volta.
 - Na reconexão, o aviso do carrinho mostra o que mudou durante a queda (preço, esgotado, estoque menor).
 - Reset dos dados de demonstração sem recarregar: aviso "Os dados de demonstração foram restaurados." e a tela busca tudo de novo (o carrinho do visitante volta vazio).
 - Painel de cenários: campo "Novo preço (ETH)" com "Alterar preço" na seção "Estoque".

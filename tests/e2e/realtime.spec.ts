@@ -483,23 +483,36 @@ test.describe('tempo real: avisos de queda, reconexão e reset', () => {
     await page.goto('/nft/nft-042')
     await waitForApp(page)
     await connected(page)
-    const banner = page.getByText('Atualizações em tempo real pausadas. Reconectando…')
+    const banner = page.getByText(
+      'Atualizações em tempo real pausadas. Reconectando… Os preços podem ter mudado.',
+      { exact: true },
+    )
     expect(await banner.count()).toBe(0)
+    const title = page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })
+    const titleY = async () => (await title.boundingBox())!.y
+    const before = await titleY()
 
-    await apiFetch(page, 'POST', '/__mocks/realtime/disconnect', { body: { downMs: 2000 } })
+    await apiFetch(page, 'POST', '/__mocks/realtime/disconnect', { body: { downMs: 3000 } })
     await expect(banner).toBeVisible()
-    // Fica numa região role="status", acima do conteúdo da página.
     const region = page.locator('[data-realtime-status]')
     await expect(region).toHaveAttribute('role', 'status')
-    const [bannerBox, mainBox] = [
-      await banner.boundingBox(),
-      await page.locator('main#conteudo').boundingBox(),
-    ]
-    expect(bannerBox!.y + bannerBox!.height).toBeLessThanOrEqual(mainBox!.y)
+    // Por cima do topo da página: o conteúdo não se mexe (sem pulo de layout).
+    expect(await titleY()).toBe(before)
+    const main = (await page.locator('main#conteudo').boundingBox())!
+    const box = (await banner.boundingBox())!
+    expect(box.y).toBeGreaterThanOrEqual(main.y)
+    expect(box.y).toBeLessThan(main.y + 40)
+    // Não trava cliques no que está embaixo.
+    await expect(region.locator('..')).toHaveCSS('pointer-events', 'none')
+    // Com a página rolada, continua à vista no topo.
+    await page.mouse.wheel(0, 800)
+    await expect.poll(async () => (await banner.boundingBox())!.y).toBeLessThan(40)
+    await page.mouse.wheel(0, -800)
 
     await connected(page)
     await expect(banner).toBeHidden()
     await expect(region).toHaveText('Atualizações em tempo real retomadas.')
+    await expect.poll(titleY).toBe(before)
 
     // Login troca a conexão, mas não é queda.
     await page.goto('/login')
