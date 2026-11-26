@@ -5,6 +5,7 @@ import { useRealtimeStatus } from '../connection-status'
 
 const RESUMED_MS = 4000
 
+const OFFLINE_MESSAGE_SHORT = 'Reconectando… Os preços podem ter mudado.'
 const OFFLINE_MESSAGE =
   'Atualizações em tempo real pausadas. Reconectando… Os preços podem ter mudado.'
 
@@ -49,9 +50,15 @@ export function RealtimeStatusBanner() {
         }
       >
         {offline ? (
-          <p className="flex items-center gap-2 rounded-md border border-warning/50 bg-card px-3 py-2 text-body-sm text-foreground shadow-lg">
+          // Mobile: uma linha, com o texto curto (sem header, o aviso cobria o
+          // título da página). Desktop: o texto inteiro.
+          <p
+            data-offline-banner=""
+            className="flex items-center gap-2 rounded-md border border-warning/50 bg-card px-3 py-1.5 text-caption-sm whitespace-nowrap text-foreground shadow-lg md:py-2 md:text-body-sm md:whitespace-normal"
+          >
             <WifiOffIcon aria-hidden="true" className="size-4 shrink-0 text-warning" />
-            {OFFLINE_MESSAGE}
+            <span className="truncate md:hidden">{OFFLINE_MESSAGE_SHORT}</span>
+            <span className="hidden md:inline">{OFFLINE_MESSAGE}</span>
           </p>
         ) : resumed ? (
           'Atualizações em tempo real retomadas.'

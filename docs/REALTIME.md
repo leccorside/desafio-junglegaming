@@ -29,7 +29,7 @@ Encontradas ao integrar o binding (versões `msw` 2.15 e `@mswjs/socket.io-bindi
 - Cada conexão tem o próprio registro de eventos (`createEventGate`), então nada da sessão anterior passa para a seguinte.
 - O visitante recebe só eventos públicos (`nft.updated`).
 - Reconexão automática do Socket.IO com espera de 500 ms a 3 s.
-- Aviso de queda (`RealtimeStatusBanner`, no `RootLayout`, num contêiner de altura zero fixo no topo: fica por cima do começo da página, a trilha no desktop, sem empurrar o conteúdo e sem receber cliques, e continua à vista com a página rolada): estado `idle` (conectando, sem aviso), `online` (recebeu o `realtime.sync`) ou `offline` (`disconnect` que não foi pedido pelo cliente, ou `connect_error`). Fora do ar, mostra "Atualizações em tempo real pausadas. Reconectando… Os preços podem ter mudado." numa região `role="status"`; na volta, o texto some e o leitor de tela ouve "Atualizações em tempo real retomadas.". Só a conexão mais recente mexe no estado, então logout e troca de sessão não contam como queda.
+- Aviso de queda (`RealtimeStatusBanner`, no `RootLayout`, num contêiner de altura zero fixo no topo: fica por cima do começo da página, a trilha no desktop, sem empurrar o conteúdo e sem receber cliques, e continua à vista com a página rolada): estado `idle` (conectando, sem aviso), `online` (recebeu o `realtime.sync`) ou `offline` (`disconnect` que não foi pedido pelo cliente, ou `connect_error`). Fora do ar, mostra "Atualizações em tempo real pausadas. Reconectando… Os preços podem ter mudado." (no mobile, numa linha só: "Reconectando… Os preços podem ter mudado.", para não cobrir o título) numa região `role="status"`; na volta, o texto some e o leitor de tela ouve "Atualizações em tempo real retomadas.". Só a conexão mais recente mexe no estado, então logout e troca de sessão não contam como queda.
 
 ## Sincronização (`realtime.sync`)
 
@@ -107,7 +107,7 @@ type OrderUpdatedData = {
 Efeito no cliente:
 
 - `useOrderEvents` (no `RootLayout`) aplica o evento no pedido em cache (`applyOrderEvent`): só versão mais nova, e nunca saindo de `confirmed` ou `rejected`. Uma resposta REST atrasada com `pending` também não desfaz um estado terminal (`keepTerminal`).
-- Num estado terminal, carrinho e cotação são buscados de novo: confirmado tira os itens comprados; recusado mantém o carrinho (o estoque reservado volta).
+- Num estado terminal, carrinho e cotação são buscados de novo (`refreshAfterSettle`), venha a decisão pelo evento ou pela consulta à API (evento perdido numa queda): confirmado tira os itens comprados; recusado mantém o carrinho (o estoque reservado volta).
 - A tela do pedido muda na hora. Fora dela, um toast avisa o resultado, com "Ver pedido".
 
 ## Ordenação e duplicados

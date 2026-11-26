@@ -79,7 +79,7 @@ Todo erro de requisição vira `ApiError` (`src/api/errors.ts`), com `code`, `st
 | Favoritar / desfavoritar | `favorites` (otimista) |
 | Adicionar, alterar, remover item | `cart`, `quote` |
 | Aplicar / remover cupom | `cart`, `quote` |
-| Criar pedido | o pedido devolvido vai para `['orders', userId, id]`; o carrinho só muda no estado terminal (`order.updated` ou consulta) |
+| Criar pedido | o pedido devolvido vai para `['orders', userId, id]`; o carrinho e a cotação são buscados de novo quando o pedido chega a um estado terminal, pelo `order.updated` ou pela consulta (`refreshAfterSettle`) |
 | Atualizar perfil / avatar | `profile` (resposta gravada no cache) e o usuário da sessão: `updateSessionUser` no store (header na hora) e no cache `['session', token]`, senão a próxima conferência da raiz gravaria o nome antigo de volta |
 | Trocar senha | nada (a sessão continua válida) |
 | Cadastrar / editar carteira | `wallets` (resposta gravada no cache, sem nova busca) |

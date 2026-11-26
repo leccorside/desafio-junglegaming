@@ -26,8 +26,16 @@ export function useOrder(orderId: string) {
   const key = orderKeys.detail(userId, orderId)
   return useQuery({
     queryKey: key,
-    queryFn: async ({ signal }) =>
-      keepTerminal(queryClient.getQueryData<Order>(key), await ordersApi.get(orderId, signal)),
+    queryFn: async ({ signal }) => {
+      const cached = queryClient.getQueryData<Order>(key)
+      const order = keepTerminal(cached, await ordersApi.get(orderId, signal))
+      // Decidido pela consulta (o evento se perdeu numa queda, por exemplo): o
+      // carrinho muda como no order.updated e precisa ser buscado de novo.
+      if (cached && !isTerminalOrderStatus(cached.status) && isTerminalOrderStatus(order.status)) {
+        refreshAfterSettle(queryClient, userId)
+      }
+      return order
+    },
     staleTime: 0,
     refetchInterval: (query) => (query.state.data?.status === 'pending' ? PENDING_POLL_MS : false),
     retry: (failureCount, error) =>
@@ -75,13 +83,20 @@ export function applyOrderEvent(
   } else {
     changed = true
   }
-  if (isTerminalOrderStatus(event.data.status)) {
-    void queryClient.invalidateQueries({ queryKey: cartKeys.all })
-    void queryClient.invalidateQueries({ queryKey: quoteKeys.all })
-    void queryClient.invalidateQueries({
-      queryKey: orderKeys.user(userId),
-      predicate: (query) => query.queryKey[2] === 'list',
-    })
-  }
+  if (isTerminalOrderStatus(event.data.status)) refreshAfterSettle(queryClient, userId)
   return changed
+}
+
+/**
+ * Pedido decidido (pelo evento ou pela consulta): carrinho, cotação e listas
+ * de pedidos são buscados de novo. Confirmado tira os itens comprados do
+ * carrinho; recusado devolve o estoque reservado.
+ */
+export function refreshAfterSettle(queryClient: QueryClient, userId: string) {
+  void queryClient.invalidateQueries({ queryKey: cartKeys.all })
+  void queryClient.invalidateQueries({ queryKey: quoteKeys.all })
+  void queryClient.invalidateQueries({
+    queryKey: orderKeys.user(userId),
+    predicate: (query) => query.queryKey[2] === 'list',
+  })
 }

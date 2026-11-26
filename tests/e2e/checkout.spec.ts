@@ -431,3 +431,40 @@ test.describe('pagamento: envio demorado', () => {
     expect(await page.getByText('Ainda enviando…').count()).toBe(0)
   })
 })
+
+test.describe('pedido decidido sem o evento', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await waitForApp(page)
+    await resetMocks(page)
+  })
+
+  test('confirmado pela consulta à API (evento perdido na queda): o contador do carrinho zera', async ({
+    page,
+  }) => {
+    await openCheckout(page)
+    await setScenario(page, ['payment-confirmed'], { settleMs: 1500 })
+    await openReview(page)
+    await reviewDialog(page).getByRole('button', { name: 'Confirmar e pagar' }).click()
+    await expect(
+      page.getByRole('heading', { name: 'Aguardando a confirmação do pagamento' }),
+    ).toBeVisible()
+    const cart = page
+      .getByRole('link', { name: /^Carrinho,/ })
+      .filter({ visible: true })
+      .first()
+    await expect(cart).toHaveAttribute('aria-label', 'Carrinho, 3 unidades')
+
+    // Conexão fora por mais tempo que a decisão: o `order.updated` não chega a
+    // ninguém, e a confirmação vem pela consulta de reserva (a cada 5 s).
+    await apiFetch(page, 'POST', '/__mocks/realtime/disconnect', { body: { downMs: 30_000 } })
+    await expect(page.getByRole('heading', { name: 'Pagamento confirmado' })).toBeVisible({
+      timeout: 15_000,
+    })
+    const log = (await apiFetch(page, 'GET', '/__mocks/realtime/log')).json as {
+      events: { type: string; recipients: unknown[] }[]
+    }
+    expect(log.events.filter((e) => e.type === 'order.updated').at(-1)?.recipients).toEqual([])
+    await expect(cart).toHaveAttribute('aria-label', 'Carrinho, vazio')
+  })
+})

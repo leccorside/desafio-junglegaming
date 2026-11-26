@@ -486,10 +486,8 @@ test.describe('tempo real: avisos de queda, reconexão e reset', () => {
     await page.goto('/nft/nft-042')
     await waitForApp(page)
     await connected(page)
-    const banner = page.getByText(
-      'Atualizações em tempo real pausadas. Reconectando… Os preços podem ter mudado.',
-      { exact: true },
-    )
+    const banner = page.locator('[data-offline-banner]')
+
     expect(await banner.count()).toBe(0)
     const title = page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })
     const titleY = async () => (await title.boundingBox())!.y
@@ -497,6 +495,18 @@ test.describe('tempo real: avisos de queda, reconexão e reset', () => {
 
     await apiFetch(page, 'POST', '/__mocks/realtime/disconnect', { body: { downMs: 3000 } })
     await expect(banner).toBeVisible()
+    if ((page.viewportSize()?.width ?? 0) < 768) {
+      // Mobile: texto curto numa linha só.
+      await expect(banner).toHaveText('Reconectando… Os preços podem ter mudado.', {
+        useInnerText: true,
+      })
+      expect((await banner.boundingBox())!.height).toBeLessThan(34)
+    } else {
+      await expect(banner).toHaveText(
+        'Atualizações em tempo real pausadas. Reconectando… Os preços podem ter mudado.',
+        { useInnerText: true },
+      )
+    }
     const region = page.locator('[data-realtime-status]')
     await expect(region).toHaveAttribute('role', 'status')
     // Por cima do topo da página: o conteúdo não se mexe (sem pulo de layout).
