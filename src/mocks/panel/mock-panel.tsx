@@ -95,29 +95,46 @@ export default function MockPanel() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label={`Cenários de teste${activeCount ? ` (${activeCount} ${activeCount === 1 ? 'ativo' : 'ativos'})` : ''}`}
-          className={cn(
-            // Mobile: aba estreita colada à esquerda, na margem vazia da barra
-            // inferior (antes do ícone Início). Ali não cobre conteúdo da página
-            // em nenhuma posição de rolagem; z acima da barra (z-40) e abaixo
-            // das camadas de diálogo (z-50).
-            'fixed bottom-[calc(14px+env(safe-area-inset-bottom))] left-0 z-[45] flex h-10 w-6 items-center justify-center rounded-r-lg border border-l-0 border-border-soft bg-card text-muted-foreground opacity-90 shadow-md transition-opacity hover:opacity-100',
-            // Tablet e desktop: sem barra inferior, botão redondo no canto.
-            'md:bottom-4 md:left-3 md:size-10 md:rounded-full md:border-l md:opacity-80',
-          )}
-        >
-          <FlaskConicalIcon className="size-4 md:size-5" />
-          {activeCount ? (
-            <span className="pointer-events-none absolute -top-2 right-[5px] flex size-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground md:-top-1 md:-right-1 md:size-4 md:text-tiny">
-              {activeCount}
-            </span>
-          ) : null}
-        </button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-80 overflow-y-auto border-border bg-card">
+      {/*
+        Com um diálogo aberto (a revisão da compra, por exemplo), o Radix marca o
+        resto da página com aria-hidden e desliga os cliques fora dele. O
+        aria-live="off" faz o botão escapar do aria-hidden (a biblioteca preserva
+        regiões aria-live), e o data-dev-overlay impede que o clique feche o
+        diálogo (ver DialogContent). O painel abre por cima e o diálogo continua.
+      */}
+      <div data-dev-overlay="" aria-live="off" className="contents">
+        <SheetTrigger asChild>
+          <button
+            type="button"
+            data-mock-panel-trigger=""
+            aria-label={`Cenários de teste${activeCount ? ` (${activeCount} ${activeCount === 1 ? 'ativo' : 'ativos'})` : ''}`}
+            className={cn(
+              // Mobile: aba estreita colada à esquerda, na margem vazia da barra
+              // inferior (antes do ícone Início). Ali não cobre conteúdo da página
+              // em nenhuma posição de rolagem; z acima da barra (z-40) e abaixo
+              // das camadas de diálogo (z-50), menus laterais inclusive.
+              'pointer-events-auto fixed bottom-[calc(14px+env(safe-area-inset-bottom))] left-0 z-[45] flex h-10 w-6 items-center justify-center rounded-r-lg border border-l-0 border-border-soft bg-card text-muted-foreground opacity-90 shadow-md transition-opacity hover:opacity-100',
+              // Com um diálogo central aberto (não os menus laterais), sobe acima do
+              // véu escuro para continuar clicável. Fechado o painel, volta a z-45.
+              !open && '[body:has([data-slot=dialog-content][data-state=open])_&]:z-[60]',
+              // Tablet e desktop: sem barra inferior, botão redondo no canto.
+              'md:bottom-4 md:left-3 md:size-10 md:rounded-full md:border-l md:opacity-80',
+            )}
+          >
+            <FlaskConicalIcon className="size-4 md:size-5" />
+            {activeCount ? (
+              <span className="pointer-events-none absolute -top-2 right-[5px] flex size-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground md:-top-1 md:-right-1 md:size-4 md:text-tiny">
+                {activeCount}
+              </span>
+            ) : null}
+          </button>
+        </SheetTrigger>
+      </div>
+      <SheetContent
+        side="left"
+        data-dev-overlay=""
+        className="w-80 overflow-y-auto border-border bg-card"
+      >
         <SheetHeader>
           <SheetTitle>Cenários de teste</SheetTitle>
           <SheetDescription>

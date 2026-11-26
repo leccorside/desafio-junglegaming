@@ -78,6 +78,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Painel de cenários com a revisão da compra (ou outro diálogo) aberta: o botão ficava sob o véu do modal e não abria. Agora abre por cima, o "Alterar preço" funciona e fechar o painel não fecha a revisão.
 - Pedido: a linha da carteira dizia "Pago com" também no pendente e no recusado; agora é "Carteira usada:" nesses dois e "Pago com" só no confirmado.
 - Pedido confirmado pela consulta à API (evento perdido numa queda): o contador do carrinho ficava com os itens comprados; agora carrinho e cotação são buscados de novo.
 - Aviso de queda em uma linha no mobile ("Reconectando… Os preços podem ter mudado."), sem cobrir o título da página.

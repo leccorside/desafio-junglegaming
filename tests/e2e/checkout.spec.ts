@@ -354,6 +354,66 @@ test.describe('pagamento: ajustes da demonstração', () => {
     expect(await page.locator('[data-sonner-toast]').count()).toBe(0)
   })
 
+  test('painel de cenários com a revisão aberta: "Alterar preço" sem fechar a revisão', async ({
+    page,
+  }) => {
+    // O painel só aparece fora do navegador automatizado.
+    await page.addInitScript(() =>
+      Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }),
+    )
+    await openCheckout(page)
+    await openReview(page)
+    const dialog = reviewDialog(page)
+    await expect(dialog.getByRole('button', { name: 'Confirmar e pagar' })).toBeVisible()
+
+    // O botão do painel fica acima do véu do modal e continua acessível.
+    await page.getByRole('button', { name: /^Cenários de teste/ }).click({ timeout: 3000 })
+    const panel = page.getByRole('dialog', { name: 'Cenários de teste' })
+    await expect(panel).toBeVisible()
+    await panel.getByLabel('NFT', { exact: true }).selectOption('nft-042')
+    await panel.getByLabel('Edição', { exact: true }).selectOption('nft-042-open')
+    await panel.getByLabel('Novo preço (ETH)').fill('1.55')
+    await panel.getByRole('button', { name: 'Alterar preço' }).click()
+    await expect(
+      panel.getByText('Preço da edição aberta de Emerald Ape #042 alterado para 1.55 ETH.'),
+    ).toBeVisible()
+
+    // Fechar o painel (Esc) não fecha a revisão, que mostra a diferença.
+    await page.keyboard.press('Escape')
+    await expect(panel).toBeHidden()
+    await expect(dialog).toBeVisible()
+    const alert = dialog.getByRole('alert').filter({ hasText: 'Os valores mudaram' })
+    await expect(alert).toContainText('Emerald Ape #042: o preço mudou de 1.19 ETH para 1.55 ETH.')
+    await expect(alert).toContainText('Total: de 3.786 ETH para 4.506 ETH.')
+    await expect(dialog.locator('[data-item-total]')).toHaveText([
+      'Total do item: 3.10 ETH',
+      'Total do item: 1.39 ETH',
+    ])
+
+    await dialog.getByRole('button', { name: 'Confirmar com os novos valores' }).click()
+    await expect(page).toHaveURL(/\/orders\/ord-/)
+    expect((await orders(page))[0]!.snapshot.total).toBe('4.506')
+  })
+
+  test('com a revisão fechada, o botão do painel continua abaixo das camadas de diálogo', async ({
+    page,
+  }) => {
+    await page.addInitScript(() =>
+      Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }),
+    )
+    await openCheckout(page)
+    const zIndex = () =>
+      page
+        .locator('[data-mock-panel-trigger]')
+        .evaluate((el) => Number(getComputedStyle(el).zIndex))
+    expect(await zIndex()).toBe(45)
+    await openReview(page)
+    expect(await zIndex()).toBe(60)
+    await page.keyboard.press('Escape')
+    await expect(reviewDialog(page)).toBeHidden()
+    expect(await zIndex()).toBe(45)
+  })
+
   test('preço alterado com a revisão fechada: aviso no fluxo do pagamento, sem toast', async ({
     page,
   }) => {
