@@ -19,6 +19,8 @@ export function FavoritesPage() {
   return (
     <section
       aria-labelledby="favorites-title"
+      // Carregando: `aria-busy` no contêiner, como nas outras telas.
+      aria-busy={favorites.isPending || undefined}
       className="mx-auto flex max-w-content flex-col gap-6 px-4 pt-6 md:gap-8 md:px-6 md:pt-10 xl:px-0"
     >
       <div className="flex flex-col gap-2 border-b border-primary/30 pb-3">
@@ -35,7 +37,7 @@ export function FavoritesPage() {
       </div>
 
       {favorites.isPending ? (
-        <ul className={grid} aria-hidden="true">
+        <ul className={grid} aria-hidden="true" data-favorites-skeleton="">
           {Array.from({ length: 4 }, (_, i) => (
             <li key={i}>
               <NftCardSkeleton />

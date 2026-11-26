@@ -42,6 +42,8 @@ interface Peer {
   token: string | null
   /** Usuário do token; `null` para visitante. */
   userId: string | null
+  /** Endereço aberto pelo cliente (`.../socket/?EIO=4&transport=websocket`), para os testes. */
+  url: string
   timer: ReturnType<typeof setInterval>
 }
 
@@ -224,6 +226,7 @@ export const socketHandlers = [
       close: () => connection.client.close(),
       token: null,
       userId: null,
+      url: connection.client.url.href,
       timer: setInterval(() => connection.client.send('2'), PING_INTERVAL_MS),
     }
     let closed = false
@@ -300,7 +303,7 @@ export function setAuthDelay(ms: number) {
 
 /** Conexões que já passaram do CONNECT (as que recebem eventos). */
 export function connectedPeers() {
-  return [...peers].map((peer) => ({ userId: peer.userId }))
+  return [...peers].map((peer) => ({ userId: peer.userId, url: peer.url }))
 }
 
 /** Últimos envios, do mais antigo ao mais novo. Zerado no reset. */

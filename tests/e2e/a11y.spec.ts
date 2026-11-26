@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 import { isMobileViewport, loginViaUi } from '../fixtures/auth'
 import { apiFetch, resetMocks, setScenario, waitForApp } from '../fixtures/mocks'
+import { animationsDone } from '../fixtures/wait'
 
 /**
  * Acessibilidade (item 11 do enunciado e Passo 12): auditoria com axe em todas
@@ -42,7 +43,7 @@ async function seriousViolations(page: Page, include?: string) {
 async function settled(page: Page) {
   await waitForApp(page)
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })
-  await page.waitForTimeout(300)
+  await animationsDone(page)
 }
 
 async function guestCart(page: Page) {
@@ -149,7 +150,7 @@ test.describe('acessibilidade: auditoria com axe', () => {
     await settled(page)
     await page.getByRole('button', { name: 'Confirmar compra' }).click()
     await expect(page.getByRole('dialog', { name: 'Revise sua compra' })).toBeVisible()
-    await page.waitForTimeout(300)
+    await animationsDone(page)
     v = await seriousViolations(page)
     if (v.length) found.revisao = v
 

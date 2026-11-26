@@ -58,17 +58,19 @@ O `webServer` do Playwright gera o build com `--mode mocks` e serve com `vite pr
 - `tests/e2e/realtime.spec.ts` (parte dos itens 9 e 10): preço novo no detalhe e no card do catálogo sem nenhuma requisição REST do NFT, NFT no carrinho com o toast do que mudou, a linha do item marcada e o resumo igual ao `POST /quotes`, evento duplicado (`/__mocks/realtime/replay`) e antigo (`/__mocks/realtime/stale`) sem efeito na tela nem nova busca do carrinho, queda (`/__mocks/realtime/disconnect`) com a mudança feita durante ela trazida pela API depois da reconexão, e uma conexão só por sessão (visitante, Ana depois do login e visitante de novo no logout, conferido em `/__mocks/realtime/peers`). A parte do checkout e do pedido pendente entra nos Passos 9 e 10. O bloco "correções do review" tem um teste por achado: reset dos mocks sem recarregar (a tela volta ao inicial e segue recebendo eventos), reset sem reenvio nem emissão (`/__mocks/realtime/log`), evento atrasado numa conexão nova sem aviso falso nem busca do carrinho, lista de interesse reconciliada depois da queda, pagamento vencido decidido e anunciado sem nenhuma requisição REST (status lido do `localStorage` do banco), troca de sessão com handshake lento (`/__mocks/realtime/auth-delay`: nada entregue antes da autenticação e o que mudou buscado pelo sync), "Novo preço" do painel e item esgotado sem total na linha. O teste do carrinho confere que o aviso fica no fluxo, acima da lista, sem toast. O bloco "avisos de queda, reconexão e reset" confere o aviso de queda por cima do topo da página sem mover o título (antes descia 52 px no desktop e 96 px no mobile), à vista com a página rolada e sem travar cliques, o anúncio da volta (e nenhum aviso no login), o aviso do que mudou durante a queda (1.39 → 1.79, resumo 3.596 ETH) e o reset sem recarregar (aviso no carrinho, que volta vazio, e toast em outra tela).
 - `src/features/realtime/realtime.test.ts` (unitário): porteiro (duplicado, antigo, outro usuário, versões do sync inclusive depois do reset, `eventId` com época), aplicação no cache (guarda de versão, aviso só do carrinho atual, evento atrasado em relação ao carrinho, edição indisponível, cotação ainda na primeira busca refeita), tratamento do evento (registro depois de aplicar, listener de pedido isolado), reconciliação pelo sync e sessão do socket (token vencido ou revogado vale como visitante).
 - `tests/fixtures/mocks.ts` tem os helpers prontos: `apiFetch` (chamada à API de dentro da página, passando pelo service worker, o que o `page.request` não faz), `resetMocks`, `setScenario` e `waitForApp`. A spec `tests/e2e/mocks.spec.ts` usa esses helpers para conferir a API simulada no navegador.
-- Cada teste começa com o reset do banco dos mocks, `localStorage` e `sessionStorage` limpos e o cenário escolhido.
-- Os eventos de tempo real saem do servidor simulado, disparados pelas rotas `/__mocks` com `apiFetch` (mudar um NFT, reenviar, mandar evento antigo, derrubar a conexão). O WebSocket é simulado dentro da página e o Playwright não vê os quadros.
-- Relógio controlado com `page.clock` nos cenários de expiração, timeout e pedido pendente.
-- Latência e disparo de eventos controlados pelos cenários, nunca por espera fixa.
+- Cada teste começa com o reset do banco dos mocks, `localStorage` e `sessionStorage` limpos e o cenário escolhido. O Playwright abre um contexto de navegador novo por teste (storage vazio, service worker novo), e o banco dos mocks vive no `localStorage` desse contexto: nenhum estado passa de um teste para outro, nem entre os testes em paralelo. Além disso, quase todas as specs chamam `resetMocks` no `beforeEach`; `layout.spec.ts` e `smoke.spec.ts` não mexem em dados e confiam só no contexto novo.
+- Os eventos de tempo real saem do servidor simulado, disparados pelas rotas `/__mocks` com `apiFetch` (mudar um NFT, reenviar, mandar evento antigo, derrubar a conexão). O WebSocket é simulado dentro da página e o Playwright não vê os quadros; `/__mocks/realtime/log` mostra o que saiu e para quem, e `/__mocks/realtime/peers` as conexões (usuário e endereço aberto).
+- Relógio controlado com `page.clock` nos cenários de expiração, timeout e envio demorado do pedido.
+- Latência e disparo de eventos controlados pelos cenários (`slow`, `server-error`, `timeout`, `jitter`, `settleMs`, com `routes` para limitar a uma rota), nunca por espera fixa.
+- `tests/fixtures/wait.ts`: `animationsDone` (animações e transições da página terminaram, usado antes do axe), `settledBox` (caixa do elemento parada, para medir toasts depois da animação de entrada) e `realtimeCount`/`realtimeSent` (o servidor já enviou o evento, antes de conferir que a tela **não** mudou).
+- Pagamento decidido com folga: quem testa o estado pendente usa `settleMs` de pelo menos 3 s (com 1,5 s, a máquina carregada às vezes abria a tela do pedido depois da decisão); o caminho de compra do `purchase.spec.ts` aceita pendente ou confirmado.
 
 ## Regras
 
 - As asserções olham a interface e o resultado das operações (texto visível, URL, estado da API simulada).
-- Testes de REST passam pelos handlers MSW. Testes de tempo real passam pelo cliente Socket.IO.
-- Sem `waitForTimeout` para sincronizar. Usar asserções com espera automática.
-- Seletores por papel e nome acessível (`getByRole`, `getByLabel`), o que também valida a semântica.
+- Testes de REST passam pelos handlers MSW. Testes de tempo real passam pelo cliente Socket.IO. `infra.spec.ts` prova os dois: num fluxo de catálogo, detalhe, login, carrinho e pagamento, toda resposta de `/api` tem `fromServiceWorker()` e a página é controlada pelo `mockServiceWorker.js`; a conexão de tempo real é o handshake do Engine.IO v4 (`/socket/?EIO=4&transport=websocket`, o do `socket.io-client`) e um `nft.updated` muda a tela sem nenhuma busca REST do NFT.
+- Sem `waitForTimeout` para sincronizar. Usar asserções com espera automática ou os helpers de `tests/fixtures/wait.ts`. A espera fixa fica só nas checagens de **ausência**, em que não há condição para esperar (provar que algo não acontece): toast que não aparece (`checkout.spec.ts`, `expectNoPublicExpiryToast`), aviso que não se repete e clique que não navega (`out-of-scope.spec.ts`), sessão não revalidada no hover (`auth.spec.ts`), recibo que não muda depois do evento já enviado (`purchase.spec.ts`), evento antigo ignorado (`realtime.spec.ts`) e foco que continua no lugar durante a proteção de 1,5 s do `RouteFocus` (`a11y.spec.ts`). O `trackApi().idle()` faz um laço de 50 ms, que é espera por condição.
+- Seletores por papel e nome acessível (`getByRole`, `getByLabel`), o que também valida a semântica. Nome exato (`exact: true`) quando um nome contém outro: "COMPRAR" casava com "Como comprar NFTs".
 
 ## Cobertura exigida
 
@@ -85,26 +87,39 @@ O `webServer` do Playwright gera o build com `--mode mocks` e serve com `vite pr
 | 9 | Alteração de preço ou disponibilidade via Socket.IO durante o checkout | `realtime.spec.ts` (catálogo, detalhe e carrinho); `checkout.spec.ts` (pagamento) |
 | 10 | Eventos duplicados ou antigos, desconexão e retomada de pedido pendente | `realtime.spec.ts` (duplicado, antigo e reconexão); `checkout.spec.ts` (pedido pendente) |
 | 11 | Navegação por teclado, foco em diálogos e validação de formulários | `a11y.spec.ts` |
-| 12 | Skeletons com carregamento lento, feedback de falha e recuperação | `catalog.spec.ts` (catálogo); `loading-states.spec.ts` (demais telas) |
+| 12 | Skeletons com carregamento lento, feedback de falha e recuperação | `catalog.spec.ts` (catálogo); `loading-states.spec.ts` (detalhe, carrinho, pagamento, perfil, carteiras, lista de interesse e pedido) |
+
+Specs de apoio: `visual.spec.ts` (regressão visual), `infra.spec.ts` (MSW e Socket.IO), `out-of-scope.spec.ts` (links e ações fora do escopo, RF-39), `layout.spec.ts`, `toasts.spec.ts`, `mocks.spec.ts`, `cart-review.spec.ts` e `smoke.spec.ts`.
+
+`loading-states.spec.ts` usa os cenários só na rota da tela (`routes`): `slow` (2,5 s) mostra o skeleton e depois os dados; `server-error` (503, depois das repetições automáticas) mostra o aviso da tela, e o "Tentar de novo" com a API de volta busca de novo sem recarregar.
 
 ## Regressão visual
 
-- Telas: início, detalhe, carrinho e pagamento, em desktop e mobile.
-- Baselines versionadas em `tests/e2e/__screenshots__`.
-- Dados estáveis (fixtures fixas, relógio congelado), animações desligadas e fontes carregadas antes da captura.
+- `visual.spec.ts`: início, detalhe, carrinho (visitante com dois itens) e pagamento (Ana com dois itens), em desktop e mobile, 8 capturas da primeira dobra (abaixo dela as imagens são `loading="lazy"`).
+- Baselines versionadas em `tests/e2e/__screenshots__/visual.spec.ts/`, com o sistema operacional no nome (`inicio-desktop-win32.png`): a renderização de fontes muda entre Windows e Linux, e cada sistema tem a sua. Num sistema novo (CI em Linux), gerar as baselines dele com `npm run test:e2e:update` e revisar antes de versionar.
+- Dados estáveis: fixtures com semente e data fixas e reset antes de cada teste. Não há relógio na tela capturada (o destaque só troca por clique), então o relógio não precisa ser congelado.
+- Antes da captura: sem `aria-busy`, `document.fonts.ready`, imagens visíveis carregadas, toasts e anel de foco escondidos; `animations: 'disabled'` e `caret: 'hide'`.
+- Tolerância de 0,1% da tela (`maxDiffPixelRatio: 0.001`). Prova de sensibilidade: trocando a cor primária só no CSS do build, as 8 capturas falham (com 1% de tolerância, 3 passavam). Estável: 3 execuções seguidas sem diferença.
 - Atualização com `npm run test:e2e:update`, sempre revisando a diferença antes de versionar.
 
 ## Relatórios
 
-- Relatório HTML do Playwright em `playwright-report/`.
-- Trace, screenshot e vídeo guardados nas falhas (`trace: 'retain-on-failure'`).
+- Relatório HTML do Playwright em `playwright-report/` (`npx playwright show-report`), gerado a cada execução junto com a saída em lista.
+- Trace, screenshot e vídeo guardados nas falhas (`trace: 'retain-on-failure'`, `screenshot: 'only-on-failure'`, `video: 'retain-on-failure'`), em `test-results/`. O `error-context.md` de cada falha traz o erro e a árvore de acessibilidade da página no momento.
+- `test-results/` e `playwright-report/` ficam fora do Git.
+
+## Estabilidade
+
+No fechamento do Passo 14, `npm run test:e2e` rodou três vezes seguidas do zero (build novo, sem servidor reaproveitado, sem novas tentativas): 372 aprovados e 30 pulados por viewport em cada uma, sem falha nem intermitência. No CI, `retries: 1` e 2 workers.
 
 ## Comandos
 
 ```bash
-npm run test:e2e                 # suíte completa
+npm run test:e2e                 # suíte completa (build com --mode mocks + preview na 4173)
 npx playwright test --project=mobile
 npx playwright test cart.spec.ts
-npm run test:e2e:update          # atualiza baselines visuais
-npx playwright show-report
+npx playwright test visual.spec.ts
+npm run test:e2e:update          # atualiza baselines visuais (revisar antes de versionar)
+npx playwright show-report       # relatório HTML da última execução
+npx playwright show-trace test-results/<teste>/trace.zip
 ```

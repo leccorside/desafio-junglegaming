@@ -72,7 +72,8 @@ test.describe('pagamento e pedido', () => {
     page,
   }) => {
     await openCheckout(page)
-    await setScenario(page, ['payment-confirmed'], { settleMs: 1500 })
+    // 3 s de pendente: com a máquina carregada, 1,5 s podiam passar antes de a tela do pedido abrir.
+    await setScenario(page, ['payment-confirmed'], { settleMs: 3000 })
     const before = (await orders(page)).length
     await openReview(page)
     const dialog = reviewDialog(page)
@@ -518,7 +519,8 @@ test.describe('pedido decidido sem o evento', () => {
     page,
   }) => {
     await openCheckout(page)
-    await setScenario(page, ['payment-confirmed'], { settleMs: 1500 })
+    // 3 s de pendente: com a máquina carregada, 1,5 s podiam passar antes de a tela do pedido abrir.
+    await setScenario(page, ['payment-confirmed'], { settleMs: 3000 })
     await openReview(page)
     await reviewDialog(page).getByRole('button', { name: 'Confirmar e pagar' }).click()
     await expect(

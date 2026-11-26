@@ -117,7 +117,7 @@ Sempre sem cenários de rede, para o painel e os testes funcionarem mesmo com `o
 | POST | `/api/__mocks/realtime/stale` | Envia um `nft.updated` com `version` anterior à atual e um preço que nunca existiu (`{ nftId, price }`). Devolve `{ event }` |
 | POST | `/api/__mocks/realtime/disconnect` | Derruba as conexões e recusa novas por `downMs` (`{ downMs }`). Eventos desse intervalo se perdem |
 | POST | `/api/__mocks/realtime/auth-delay` | Atrasa por `ms` a leitura do CONNECT das próximas conexões (handshake lento): a conexão abre, mas não recebe nada até se autenticar. `{ "ms": 0 }` desliga; o reset também |
-| GET | `/api/__mocks/realtime/peers` | Conexões que já se autenticaram, com o `userId` de cada uma (`null` para visitante) |
+| GET | `/api/__mocks/realtime/peers` | Conexões que já se autenticaram, com o `userId` de cada uma (`null` para visitante) e o `url` aberto pelo cliente (`ws://localhost/socket/?EIO=4&transport=websocket`, o handshake do `socket.io-client`) |
 | GET | `/api/__mocks/realtime/log` | Últimos 50 envios `{ type, eventId, recipients }` (`recipients` = `userId` de quem recebeu). Zerado no reset |
 
 ## Reset

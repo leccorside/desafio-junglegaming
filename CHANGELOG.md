@@ -6,6 +6,12 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Fechamento da suíte Playwright (Passo 14):
+  - `loading-states.spec.ts` completa o item 12 (skeleton, falha e recuperação no detalhe, carrinho, pagamento, perfil, carteiras, lista de interesse e pedido);
+  - `visual.spec.ts` faz a regressão visual de início, detalhe, carrinho e pagamento em desktop e mobile, com baselines versionadas por sistema operacional;
+  - `infra.spec.ts` prova que o REST passa pelo service worker do MSW e o tempo real pelo `socket.io-client`;
+  - helpers de espera por condição em `tests/fixtures/wait.ts`.
+
 - Links e ações fora do escopo (Passo 13): Criadores, Aprenda, áreas do rodapé, menu "Meu perfil" e "Ler mais" do blog viraram botões desabilitados que, ao serem acionados (clique, toque ou teclado), explicam com um aviso informativo ("Criadores: indisponível nesta demonstração."). Redes sociais do rodapé deixaram de abrir a página inicial genérica de cada rede, e o contato de exemplo deixou de ser `mailto:`/`tel:`.
 - Testes E2E `out-of-scope.spec.ts`: cada área avisa sem sucesso e sem navegar, varredura de todos os itens desabilitados das telas e todos os links internos abrindo páginas que existem.
 
@@ -87,6 +93,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 - Botão do painel de cenários mais alto no mobile, acima da área dos toasts.
 
 ### Corrigido
+
+- Lista de interesse sem `aria-busy` enquanto carregava (as outras telas tinham).
+- Teste de compra intermitente: com a máquina carregada, o pagamento (1 a 1,5 s) era decidido antes de a tela do pedido abrir, e o teste não via "Aguardando". Os testes do estado pendente passaram a 3 s.
 
 - "Esqueceu a senha?" sem "(indisponível nesta demonstração)" no nome acessível, ao contrário dos outros itens fora do escopo. Os avisos dele, do login social e da newsletter também deixaram de se empilhar em cliques repetidos.
 

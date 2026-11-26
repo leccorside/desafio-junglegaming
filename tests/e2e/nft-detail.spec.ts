@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 import { apiFetch, resetMocks, waitForApp } from '../fixtures/mocks'
+import { settledBox } from '../fixtures/wait'
 
 type Json = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -174,8 +175,8 @@ test.describe('detalhe do NFT', () => {
     await page.getByRole('button', { name: 'Adicionar ao carrinho' }).click()
     const toast = page.locator('[data-sonner-toast]').first()
     await expect(toast).toBeVisible()
-    await page.waitForTimeout(500) // animação de entrada do Sonner
-    const toastBox = (await toast.boundingBox())!
+    // Mede depois da animação de entrada do Sonner (a caixa parar de mexer).
+    const toastBox = await settledBox(toast)
     expect(toastBox.y + toastBox.height).toBeLessThanOrEqual(barBox.y - 8)
   })
 

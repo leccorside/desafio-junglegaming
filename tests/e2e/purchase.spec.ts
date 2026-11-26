@@ -4,6 +4,7 @@ import { formatEth } from '../../src/lib/eth'
 import { formatReceiptDate, shortHash } from '../../src/features/orders/receipt-format'
 import { isMobileViewport, loginViaUi } from '../fixtures/auth'
 import { apiFetch, resetMocks, setScenario, waitForApp } from '../fixtures/mocks'
+import { realtimeCount, realtimeSent } from '../fixtures/wait'
 
 /**
  * Compra completa e recibo (item 6 do enunciado): do catálogo ao recibo
@@ -92,10 +93,18 @@ async function buyEmeraldApe(page: Page, isMobile: boolean) {
   const review = page.getByRole('dialog', { name: 'Revise sua compra' })
   await review.getByRole('button', { name: 'Confirmar e pagar' }).click()
   await expect(page).toHaveURL(/\/orders\/ord-/)
+  // Pendente ou já confirmado: com a máquina carregada, a decisão (1 s) pode
+  // vir antes de a tela do pedido abrir. O estado pendente é testado em
+  // checkout.spec.ts; aqui o que importa é chegar ao recibo.
   await expect(
-    page.getByRole('heading', { name: 'Aguardando a confirmação do pagamento' }),
+    page.getByRole('heading', {
+      level: 1,
+      name: /^(Aguardando a confirmação do pagamento|Pagamento confirmado)$/,
+    }),
   ).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Pagamento confirmado' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Pagamento confirmado' })).toBeVisible({
+    timeout: 15_000,
+  })
   return page.url().split('/').pop()!
 }
 
@@ -204,6 +213,7 @@ test.describe('compra completa e recibo', () => {
     await expectReceiptMatches(page, order)
 
     // Preço e nome mudam no catálogo: o evento chega pelo Socket.IO.
+    const sent = await realtimeCount(page, 'nft.updated')
     await apiFetch(page, 'POST', '/__mocks/nfts/nft-042/update', {
       body: { editionId: 'nft-042-open', price: '2.50' },
     })
@@ -211,7 +221,10 @@ test.describe('compra completa e recibo', () => {
       editions: { id: string; price: string }[]
     }
     expect(nft.editions.find((e) => e.id === 'nft-042-open')?.price).toBe('2.50')
-    await page.waitForTimeout(800)
+    // O evento saiu do servidor; a janela curta cobre a aplicação no cliente
+    // (checagem de ausência: o recibo não pode mudar).
+    await realtimeSent(page, 'nft.updated', sent)
+    await page.waitForTimeout(300)
     await expectReceiptMatches(page, order)
     await expect(receipt(page)).not.toContainText('2.50 ETH')
     await expect(receipt(page)).not.toContainText('5.00 ETH')
@@ -301,10 +314,12 @@ test.describe('compra completa e recibo', () => {
     expect(hintBox.y).toBeGreaterThanOrEqual(totalBox.y + totalBox.height)
 
     // Com o preço mudado no catálogo, o aviso e os valores continuam.
+    const sent = await realtimeCount(page, 'nft.updated')
     await apiFetch(page, 'POST', '/__mocks/nfts/nft-042/update', {
       body: { editionId: 'nft-042-open', price: '2.50' },
     })
-    await page.waitForTimeout(800)
+    await realtimeSent(page, 'nft.updated', sent)
+    await page.waitForTimeout(300) // checagem de ausência: os valores não mudam
     await expect(hint).toBeVisible()
     await expect(totals.locator('dd:not([data-summary-hint])')).toHaveText([
       '0.016 ETH',

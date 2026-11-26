@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 import { loginViaUi, submitLogin, trackApi } from '../fixtures/auth'
 import { apiFetch, resetMocks, setScenario, waitForApp } from '../fixtures/mocks'
+import { settledBox } from '../fixtures/wait'
 
 /**
  * Provas das correções do code review do Passo 7 (um teste por achado).
@@ -246,8 +247,8 @@ test.describe('carrinho: correções do code review', () => {
     await summary(page).getByRole('button', { name: 'Aplicar' }).click()
     const toast = page.locator('[data-sonner-toast]').first()
     await expect(toast).toBeVisible()
-    await page.waitForTimeout(500) // animação de entrada do Sonner
-    const toastTop = (await toast.boundingBox())!.y
+    // Mede depois da animação de entrada do Sonner (a caixa parar de mexer).
+    const toastTop = (await settledBox(toast)).y
     const back = (await page.getByRole('button', { name: 'Voltar' }).boundingBox())!
     const title = (await page.getByRole('heading', { name: 'Carrinho de NFTs' }).boundingBox())!
     expect(toastTop).toBeGreaterThanOrEqual(back.y + back.height)

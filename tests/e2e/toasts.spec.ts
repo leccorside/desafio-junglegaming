@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import { submitLogin } from '../fixtures/auth'
 import { resetMocks, waitForApp } from '../fixtures/mocks'
+import { settledBox } from '../fixtures/wait'
 
 /** O toast de boas-vindas aparece logo depois do login: serve de toast real para medir. */
 async function loginAndGetToast(page: Page): Promise<Locator> {
@@ -13,8 +14,8 @@ async function loginAndGetToast(page: Page): Promise<Locator> {
   await submitLogin(page, 'ana@example.com')
   const toast = page.locator('[data-sonner-toast]').filter({ hasText: 'Que bom ver você' })
   await expect(toast).toBeVisible()
-  // Espera a animação de entrada terminar antes de medir.
-  await page.waitForTimeout(500)
+  // Espera a animação de entrada terminar (a caixa parar de mexer) antes de medir.
+  await settledBox(toast)
   return toast
 }
 

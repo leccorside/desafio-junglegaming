@@ -9,7 +9,9 @@ const isCI = !!process.env.CI
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}-{projectName}{ext}',
+  // Uma baseline por sistema operacional: a renderização de fontes muda entre Windows e Linux.
+  snapshotPathTemplate:
+    '{testDir}/__screenshots__/{testFilePath}/{arg}-{projectName}-{platform}{ext}',
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
