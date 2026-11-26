@@ -106,6 +106,62 @@ test.describe('painel de cenários visível (como para o avaliador)', () => {
     await resetMocks(page)
   })
 
+  test('o controle de estoque esgota uma edição sem recarregar a página', async ({ page }) => {
+    // Carrinho de visitante com a 1/50 do Emerald Ape, que é removida.
+    const cartId = '5a6b7c8d-1e2f-4a3b-8c9d-0e1f2a3b4c5d'
+    await page.evaluate((id) => localStorage.setItem('kurio:guest-cart-id', id), cartId)
+    await apiFetch(page, 'POST', '/cart/items', {
+      cartId,
+      body: { nftId: 'nft-042', editionId: 'nft-042-1-50', quantity: 1 },
+    })
+    await page.goto('/cart')
+    await waitForApp(page)
+    await page
+      .getByRole('button', { name: 'Remover Emerald Ape #042 (edição 1/50) do carrinho' })
+      .click()
+    await expect(page.getByRole('button', { name: 'Desfazer' })).toBeVisible()
+    // Marca a página: um reload apagaria a marca (e o toast com o "Desfazer").
+    await page.evaluate(() => ((window as unknown as { stockMark: boolean }).stockMark = true))
+
+    await page.getByRole('button', { name: /^Cenários de teste/ }).click()
+    const panel = page.getByRole('dialog', { name: 'Cenários de teste' })
+    const stock = panel.getByRole('group', { name: 'Estoque' })
+    await stock.getByRole('combobox', { name: 'NFT' }).selectOption({ label: 'Emerald Ape #042' })
+    const edition = stock.getByRole('combobox', { name: 'Edição' })
+    await edition.selectOption({ label: '1/50 · à venda · 37 disp.' })
+    await stock.getByRole('button', { name: 'Marcar como esgotada' }).click()
+    await expect(stock.getByRole('status')).toHaveText(
+      'Edição 1/50 de Emerald Ape #042 marcada como esgotada.',
+    )
+    // A lista já mostra o estado novo, e o botão não age de novo na mesma edição.
+    await expect(edition.locator('option:checked')).toHaveText('1/50 · esgotada · 0 disp.')
+    await expect(stock.getByRole('button', { name: 'Marcar como esgotada' })).toBeDisabled()
+
+    // A API mudou, e a página não recarregou.
+    const nft = (await apiFetch(page, 'GET', '/nfts/nft-042')).json as {
+      editions: { id: string; available: number; status: string }[]
+    }
+    expect(nft.editions.find((e) => e.id === 'nft-042-1-50')).toMatchObject({
+      available: 0,
+      status: 'sold_out',
+    })
+    expect(
+      await page.evaluate(() => (window as unknown as { stockMark?: boolean }).stockMark),
+    ).toBe(true)
+
+    // O "Desfazer" continua na tela e agora recebe o erro de estoque.
+    await page.keyboard.press('Escape')
+    await expect(panel).toBeHidden()
+    await page.getByRole('button', { name: 'Desfazer' }).click()
+    await expect(
+      page.getByText(
+        'Não foi possível devolver Emerald Ape #042 (edição 1/50) ao carrinho. Esta edição está esgotada.',
+      ),
+    ).toBeVisible()
+    const cart = (await apiFetch(page, 'GET', '/cart', { cartId })).json as { items: unknown[] }
+    expect(cart.items).toHaveLength(0)
+  })
+
   test('o nome do botão concorda com o número de cenários ativos', async ({ page }) => {
     const button = page.getByRole('button', { name: /^Cenários de teste/ })
     await expect(button).toHaveAccessibleName('Cenários de teste')

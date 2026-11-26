@@ -6,6 +6,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Painel de cenários: seção "Estoque" para escolher um NFT e uma edição e marcar como esgotada, na hora e sem recarregar a página.
 - Carrinho do Figma (desktop e mobile): itens com quantidade limitada pelo estoque, remoção com "Desfazer", cupom com erro no campo (inválido, expirado, valor mínimo) e remoção, resumo da cotação da API (subtotal, desconto, taxa de rede estimada e total) com skeleton e indicador de atualização, aviso de preço alterado, item esgotado ou acima do estoque bloqueando a finalização, "Conectar e finalizar", "Continuar explorando", estados vazio e de erro e "Colecionadores também viram".
 - Carrinho do visitante persistido (refresh) e juntado ao da conta no login, com aviso do que não coube no estoque; o `X-Cart-Id` é trocado depois do merge.
 - Contador do carrinho no header e na barra inferior, com o total de unidades no nome do link.
@@ -58,7 +59,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 - Carrinho (achados do code review do Passo 7):
   - resposta mais antiga de uma mudança não sobrescreve mais a mais nova no cache (`writeCart` compara a `version`);
-  - o "Desfazer" da remoção avisa se o item voltou ou se não dá para devolver (antes rodava num componente já desmontado e não mostrava nada);
+  - o "Desfazer" da remoção avisa se o item voltou ou se não dá para devolver (antes rodava num componente já desmontado e não mostrava nada), e o toast com ele fica 10 s na tela (o padrão de 4 s era pouco para decidir);
   - o campo de quantidade não envia um valor digitado enquanto a mudança anterior está pendente;
   - as cotações antigas são marcadas como velhas sem nova busca (a da versão nova vem pela chave);
   - o carrinho juntado no login é gravado depois do reinício do cache, sem voltar ao skeleton;

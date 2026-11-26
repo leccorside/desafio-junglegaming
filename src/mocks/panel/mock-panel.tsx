@@ -25,6 +25,7 @@ import {
   updateScenarioNames,
   type ScenarioName,
 } from '../scenarios'
+import { StockControl } from './stock-control'
 
 /**
  * Painel de desenvolvimento dos mocks: escolhe cenários e restaura as fixtures.
@@ -127,6 +128,8 @@ export default function MockPanel() {
         <div className="flex flex-col gap-6 px-4">
           {group('Rede', NETWORK_SCENARIOS)}
           {group('Negócio', BUSINESS_SCENARIOS)}
+          {/* Vale na hora, sem o "Aplicar e recarregar" dos cenários. */}
+          <StockControl />
         </div>
         <SheetFooter>
           <Button onClick={apply}>Aplicar e recarregar</Button>

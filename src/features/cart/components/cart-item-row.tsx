@@ -92,6 +92,8 @@ export function CartItemRow({
     remove.mutate(item.id, {
       onSuccess: () =>
         toast.success(`${title} saiu do carrinho.`, {
+          // Mais tempo que o padrão (4 s) para dar tempo de decidir desfazer.
+          duration: 10_000,
           action: {
             label: 'Desfazer',
             // A linha já saiu da tela: o desfazer não pode depender dela (os
