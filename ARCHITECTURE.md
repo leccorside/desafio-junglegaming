@@ -196,6 +196,11 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Título "Pagamento confirmado" e número do pedido no recibo | O Figma só tem "Seus NFTs agora estão na sua carteira". O título diz o resultado (exigido pelo enunciado) e é o mesmo nome das outras situações do pedido ("Aguardando…", "Pagamento recusado"). |
 | Recibo: edição abaixo do ID do token, "Valores do momento da compra", desconto e explorador por rede | Duas edições do mesmo NFT seriam linhas iguais sem a edição; numa linha só, a coluna estreita partia o texto. O aviso abaixo do total explica por que o recibo não acompanha o preço atual do catálogo. Com cupom, entram o subtotal (base do desconto) e "Desconto (CÓDIGO)" numa linha só, com a coluna dos totais em 360 px em vez de 321; no mobile, se faltar espaço, o valor desce. Sem cupom, só taxa e total, como no Figma. O botão segue a rede do pedido (Etherscan, Polygonscan ou Solscan), e a nota diz que a transação é simulada. |
 | Recibo no mobile | Não há frame. O cartão ocupa a largura, a faixa da transação vira 2 × 2 e quantidade e subtotal descem para a linha de baixo do nome, como no pagamento. A coluna "Edições" do cabeçalho some. |
+| Detalhe do NFT empilhado no tablet (768 a 1023 px) | Não há frame de tablet. Em duas colunas, a galeria (cerca de 550 px) deixava uns 140 px para as informações, e "COMPRAR" e "Favoritar" passavam da tela. As duas colunas começam em 1024 px. |
+| "Aplicar" do cupom com texto escuro no mobile | O texto claro do Figma sobre o gradiente cobre tinha 2,2:1 (AA pede 4,5:1). Igual ao desktop. |
+| Pontos do destaque e da galeria mais espaçados | Cada ponto é um botão de 24 × 24 px (WCAG 2.5.8) com o desenho do Figma (10 e 7 px) no centro. |
+| Links "Crie uma conta" e "Entre" sublinhados | Dentro do texto, a cor do link tinha 1,12:1 contra o texto em volta. |
+| Título da aba por tela e foco no título ao trocar de página | O Figma não define; ver [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md). |
 | Carteira secundária com resumo, "Editar" e "Cancelar" | O Figma só desenha o estado vazio ("Você ainda não adicionou..."). "Igual à carteira principal" vira uma caixa de seleção que abre o formulário já preenchido. |
 
 Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens vêm do arquivo do Figma (ver [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)).

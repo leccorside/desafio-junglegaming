@@ -6,6 +6,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Acessibilidade (Passo 12): título da aba por tela ("Emerald Ape #042 | KURIO") e foco no título ao trocar de página, sem mexer no foco do primeiro carregamento.
+- Auditoria com `@axe-core/playwright` em todas as telas e diálogos, em desktop e mobile, e testes E2E de teclado (compra inteira só pelo teclado), foco em diálogos, validação de formulários e largura (390, 768 e 1440 px e zoom de 200%) em `a11y.spec.ts` (item 11 do enunciado).
+
 - Recibo do pedido confirmado (`/orders/$orderId`) no layout do Figma: ícone de agradecimento, faixa com ID da transação, data, total e carteira, itens com ID do token e edição, desconto (se houve cupom), taxa de rede e total, nota da transação simulada e "Ver no Etherscan" (Polygonscan ou Solscan, conforme a rede). Tudo vem do snapshot do pedido; layout próprio no mobile.
 - Pendente e recusado não mostram recibo nem transação; pedido de outra conta aparece como "Pedido não encontrado.".
 - Ícone "thank-you" exportado do Figma pela geometria (`scripts/export-figma-assets.mjs`).
@@ -81,6 +84,17 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 - Botão do painel de cenários mais alto no mobile, acima da área dos toasts.
 
 ### Corrigido
+
+- Acessibilidade apontada pelo axe e pelos testes de teclado:
+  - listas de valores (`dl`) com `div` aninhado, no carrinho, no pagamento, na revisão e no recibo;
+  - nome do link "NFT em destaque" e do menu da conta diferente do texto visível;
+  - pontos do destaque e da galeria menores que 24 px;
+  - links "Crie uma conta" e "Entre" distinguidos só pela cor;
+  - "Aplicar" do cupom no mobile com 2,2:1 de contraste;
+  - painéis das abas do detalhe e busca do catálogo sem anel de foco;
+  - revisão da compra que não devolvia o foco ao "Confirmar compra";
+  - recibo que deixava o foco cair no topo da página ao sair de "aguardando".
+- Detalhe do NFT no tablet (768 px): os botões "COMPRAR" e "Favoritar" passavam da tela; agora a página empilha galeria e informações até 1023 px.
 
 - Recibo com cupom: faltava o subtotal (a conta não fechava à vista) e "Desconto (BEMVINDO10)" quebrava em duas linhas. Agora o subtotal aparece quando há desconto e o rótulo fica numa linha só.
 - Hash da transação simulada: dependia só do número do pedido, e compras diferentes depois de um reset (as duas como ord-0003) saíam com o mesmo ID. Agora a semente inclui itens, quantidades, preços e total.

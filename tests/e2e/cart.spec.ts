@@ -39,9 +39,9 @@ const row = (page: Page, name: string) =>
 
 async function expectTotals(page: Page, quote: Json) {
   const box = summary(page)
-  await expect(box.getByRole('definition').nth(0)).toHaveText(eth(quote.subtotal))
-  await expect(box.getByRole('definition').nth(2)).toHaveText(eth(quote.networkFee))
-  await expect(box.getByRole('definition').nth(3)).toHaveText(eth(quote.total))
+  await expect(box.locator('dd:not([data-summary-hint])').nth(0)).toHaveText(eth(quote.subtotal))
+  await expect(box.locator('dd:not([data-summary-hint])').nth(2)).toHaveText(eth(quote.networkFee))
+  await expect(box.locator('dd:not([data-summary-hint])').nth(3)).toHaveText(eth(quote.total))
 }
 
 test.describe('carrinho', () => {
@@ -167,7 +167,9 @@ test.describe('carrinho', () => {
     const quote = await quoteFor(page, { cartId: GUEST_CART })
     expect(quote.discount).not.toBe('0')
     await expect(box.getByRole('term').nth(1)).toHaveText('Desconto (BEMVINDO10)')
-    await expect(box.getByRole('definition').nth(1)).toHaveText(`(-) ${eth(quote.discount)}`)
+    await expect(box.locator('dd:not([data-summary-hint])').nth(1)).toHaveText(
+      `(-) ${eth(quote.discount)}`,
+    )
     await expectTotals(page, quote)
 
     // Refresh mantém o cupom; remover volta ao total sem desconto.

@@ -18,15 +18,13 @@ export function FeaturedBanner() {
 
   const image = nft.images[0]
   return (
-    <Link
-      to="/nft/$nftId"
-      params={{ nftId: nft.id }}
-      className="group flex flex-col gap-4"
-      aria-label={`NFT em destaque: ${nft.name}`}
-    >
+    <Link to="/nft/$nftId" params={{ nftId: nft.id }} className="group flex flex-col gap-4">
+      {/* Nome do link = texto visível + o NFT (sem aria-label, que trocaria o
+          texto à vista e falharia em "label-content-name-mismatch"). */}
       <div className="flex flex-col gap-1">
         <span className="text-h2 font-bold text-accent-foreground uppercase">NFT em destaque</span>
         <span className="text-title font-bold text-foreground uppercase">Oferta limitada</span>
+        <span className="sr-only">: {nft.name}</span>
       </div>
       {image ? (
         <img

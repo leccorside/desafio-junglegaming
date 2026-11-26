@@ -93,7 +93,9 @@ export function CouponForm({ appliedCode }: { appliedCode: string | null }) {
         <button
           type="submit"
           disabled={apply.isPending}
-          className="h-full w-[97px] shrink-0 cursor-pointer rounded-full bg-[linear-gradient(135deg,var(--primary-hover),var(--primary))] text-body font-bold text-foreground disabled:cursor-wait disabled:opacity-60 md:w-[102px] md:rounded-none md:bg-primary md:bg-none md:text-primary-foreground"
+          // Texto escuro também no mobile: o claro do Figma (#f5f1eb) sobre o
+          // gradiente cobre dá 2,2:1, abaixo dos 4,5:1 (ver ACCESSIBILITY.md).
+          className="h-full w-[97px] shrink-0 cursor-pointer rounded-full bg-[linear-gradient(135deg,var(--primary-hover),var(--primary))] text-body font-bold text-primary-foreground disabled:cursor-wait disabled:opacity-60 md:w-[102px] md:rounded-none md:bg-primary md:bg-none"
         >
           {apply.isPending ? 'Aplicando…' : 'Aplicar'}
         </button>

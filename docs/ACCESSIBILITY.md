@@ -28,7 +28,10 @@ Meta: WCAG 2.2 nível AA nas telas da entrega e Lighthouse Accessibility ≥ 95.
 - Paginação: `nav` com `aria-label`, página atual com `aria-current="page"`.
 - Formulários: foco vai para o primeiro campo com erro depois do envio.
 - Skeletons: `aria-busy="true"` no contêiner e texto oculto de carregamento.
-- Mudança de rota: foco vai para o `h1` da nova página e o título da aba é atualizado.
+- Mudança de rota (`RouteFocus`, em `components/layout/route-focus.tsx`): ao mudar o caminho, o título da aba vira "<título da tela> | KURIO" (a tela inicial fica com "KURIO | Marketplace de NFTs"; com diálogo aberto, vale o título dele) e o foco vai para o `h1` visível (`tabindex=-1`, sem anel e sem rolar). O `h1` pode chegar depois dos dados: espera até 4 s. O foco não muda no primeiro carregamento (o primeiro Tab continua sendo o "Pular para o conteúdo"), com âncora na URL, com diálogo aberto ou com o foco num campo.
+- Pedido: quando pendente vira confirmado, o título é outro elemento (o do recibo); se o foco estava no título que saiu, vai para o novo.
+- Revisão da compra: abre pelo código (depois de validar e conectar a carteira), então devolve o foco ao "Confirmar compra" ao fechar (`returnFocusTo`).
+- Listas de valores (`dl`): cada par fica num `div` com `dt` e `dd` como filhos diretos; a dica de uma linha ("Taxa estimada", "Valores do momento da compra") é um segundo `dd` do mesmo termo.
 
 ## Movimento
 
@@ -36,9 +39,12 @@ Meta: WCAG 2.2 nível AA nas telas da entrega e Lighthouse Accessibility ≥ 95.
 
 ## Verificação
 
-- `@axe-core/playwright` nas telas principais, sem violações sérias ou críticas.
-- Testes E2E de teclado e foco (item 11 de [TESTING.md](TESTING.md)).
-- Revisão manual com leitor de tela (NVDA) nos fluxos de compra e de conta.
+- `@axe-core/playwright` (regras WCAG 2.0, 2.1 e 2.2, A e AA) em `tests/e2e/a11y.spec.ts`, desktop e mobile: telas públicas (início, página 2, detalhe, detalhe com edições indisponíveis, carrinho, login, cadastro, 404, NFT inexistente), da conta (carrinho, pagamento, perfil, carteiras, lista de interesse, recibo, pedido de outra conta), pedido pendente e diálogos abertos (busca, menu lateral, revisão). O teste falha com qualquer violação séria ou crítica. Na publicação do Passo 12, o axe não apontou nenhuma violação, de nenhum nível, nem de boas práticas.
+- Contraste sobre gradiente, que o axe não calcula: conferido medindo o fundo real atrás do texto. Só o "Aplicar" do cupom no mobile ficava abaixo (2,2:1) e foi corrigido; o teste confere o texto dos botões com gradiente contra as duas pontas do gradiente.
+- Teclado e foco no mesmo arquivo: "Pular para o conteúdo" como primeiro Tab, anel visível em tudo que o Tab alcança, foco e título na troca de página, foco preso e devolvido na busca, no menu lateral e na revisão, e uma compra inteira só pelo teclado (edição pelas setas, quantidade, carrinho, pagamento, revisão e recibo).
+- Formulários: o primeiro campo com erro recebe o foco, fica com `aria-invalid` e anuncia a mensagem por `aria-describedby` (login, pagamento e perfil); o erro geral do login sai em `role="alert"`.
+- Largura: sem rolagem horizontal em 390, 768 e 1440 px nas telas principais, e com zoom de 200% (janela de 640 px CSS), com as ações ao alcance.
+- Revisão manual com leitor de tela (NVDA) nos fluxos de compra e de conta: ainda não feita (precisa de uma pessoa com o leitor; os testes automáticos cobrem nomes, papéis, foco e anúncios).
 - Lighthouse Accessibility ([PERFORMANCE.md](PERFORMANCE.md)).
 
 ## Ajustes em relação ao Figma
@@ -62,3 +68,10 @@ Todo ajuste de contraste, tamanho de alvo de toque ou texto adicionado por acess
 | Botão de mostrar senha com `aria-label` e `aria-pressed` | Campos de senha | O ícone "Hide" não tem texto |
 | Aviso de sessão expirada com `role="status"` | Tela de login | Explica por que a pessoa voltou ao login |
 | Botões de login social e "Esqueceu a senha?" com `aria-disabled` e aviso oculto | Entrar e criar conta | Fora do escopo: focáveis, mas anunciados como indisponíveis |
+| Texto escuro (`Primary foreground`) no "Aplicar" do cupom no mobile | Carrinho, mobile | O texto claro do Figma sobre o gradiente cobre dava 2,2:1 |
+| Links dentro de texto sublinhados | "Crie uma conta" e "Entre" (login e cadastro) | Só pela cor, o link tinha 1,12:1 contra o texto em volta (precisa de 3:1 ou outro sinal) |
+| Área de toque de 24 × 24 px nos pontos | Pontos do destaque da tela inicial e da galeria do detalhe (mobile) | O ponto do Figma tem 10 px e 7 px; o desenho fica igual, mas o espaço entre os pontos cresce |
+| Nome do link e do botão começando pelo texto visível | "NFT em destaque" (link da barra lateral) e menu da conta ("Conta de Ana Ribeiro") | O `aria-label` trocava o texto à vista (WCAG 2.5.3) |
+| Anel de foco nos painéis das abas do detalhe e na caixa da busca do catálogo | Detalhe e catálogo | Os painéis entram no Tab e estavam com `outline-none`; o campo de busca não tem borda, então o anel fica na caixa |
+| Título da aba por tela e foco no `h1` ao trocar de página | Todas as rotas | O Figma não trata navegação; leitor de tela anuncia a tela nova |
+| Detalhe empilhado no tablet | Detalhe do NFT, 768 a 1023 px | Em duas colunas, os botões "COMPRAR" e "Favoritar" passavam da tela |

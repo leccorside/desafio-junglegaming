@@ -130,7 +130,9 @@ export function NftDetailPage({
           </ol>
         </nav>
 
-        <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+        {/* Duas colunas só a partir de 1024 px: no tablet, a galeria (cerca de
+            550 px) deixaria uns 140 px para as informações e os botões. */}
+        <div className="flex flex-col gap-6 md:gap-8 lg:flex-row">
           <NftGallery
             images={nft.images}
             name={nft.name}
@@ -276,7 +278,7 @@ export function NftDetailPage({
 export function NftDetailSkeleton() {
   return (
     <div
-      className="mx-auto flex max-w-content flex-col gap-6 px-4 pt-4 md:flex-row md:gap-8 md:px-6 md:pt-[60px] xl:px-0"
+      className="mx-auto flex max-w-content flex-col gap-6 px-4 pt-4 md:gap-8 md:px-6 md:pt-[60px] lg:flex-row xl:px-0"
       aria-busy="true"
     >
       <span className="sr-only" role="status">

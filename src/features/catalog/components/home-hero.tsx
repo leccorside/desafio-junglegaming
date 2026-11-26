@@ -29,7 +29,9 @@ function Dots({
 }) {
   if (count <= 1) return null
   return (
-    <div className="flex items-center gap-2" role="group" aria-label="Destaques">
+    // Cada ponto é desenhado com o tamanho do Figma (10 px), mas o botão tem
+    // 24 × 24 px de área de toque (WCAG 2.5.8).
+    <div className="flex items-center" role="group" aria-label="Destaques">
       {Array.from({ length: count }, (_, index) => (
         <button
           key={index}
@@ -37,11 +39,18 @@ function Dots({
           onClick={() => onSelect(index)}
           aria-label={`Mostrar ${names[index] ?? `destaque ${index + 1}`}`}
           aria-pressed={index === current}
-          className={cn(
-            'h-2.5 cursor-pointer rounded-full transition-all',
-            index === current ? 'w-6 bg-primary' : 'w-2.5 bg-secondary/60 hover:bg-secondary',
-          )}
-        />
+          className="group/dot flex h-6 min-w-6 cursor-pointer items-center justify-center rounded-full"
+        >
+          <span
+            aria-hidden="true"
+            className={cn(
+              'h-2.5 rounded-full transition-all',
+              index === current
+                ? 'w-6 bg-primary'
+                : 'w-2.5 bg-secondary/60 group-hover/dot:bg-secondary',
+            )}
+          />
+        </button>
       ))}
     </div>
   )

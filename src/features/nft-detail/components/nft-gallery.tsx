@@ -95,11 +95,7 @@ export function NftGallery({
         />
         {overlay}
         {many ? (
-          <div
-            className="mt-4 flex justify-center gap-2 md:hidden"
-            role="group"
-            aria-label="Imagens"
-          >
+          <div className="mt-4 flex justify-center md:hidden" role="group" aria-label="Imagens">
             {images.map((_, position) => (
               <button
                 key={position}
@@ -107,7 +103,8 @@ export function NftGallery({
                 onClick={() => setIndex(position)}
                 aria-label={`Imagem ${position + 1} de ${images.length}`}
                 aria-current={position === index ? 'true' : undefined}
-                className="flex h-6 cursor-pointer items-center"
+                // Ponto de 7 px (Figma) dentro de uma área de toque de 24 px.
+                className="flex h-6 min-w-6 cursor-pointer items-center justify-center"
               >
                 <span
                   className={cn(

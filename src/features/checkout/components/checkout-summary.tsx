@@ -11,26 +11,37 @@ export function SummaryRow({
   value,
   hint,
   strong = false,
+  className,
 }: {
   label: string
   value: React.ReactNode
   hint?: string
   strong?: boolean
+  className?: string
 }) {
+  // Um `div` por par, com `dt` e `dd` como filhos diretos (o único agrupamento
+  // que o HTML aceita dentro de `dl`); a dica é um segundo `dd` do mesmo termo.
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-baseline justify-between gap-3">
-        <dt className={cn('min-w-0 text-body text-foreground', strong && 'font-bold')}>{label}</dt>
-        <dd
-          className={cn(
-            'shrink-0 text-right whitespace-nowrap',
-            strong ? 'text-lead font-bold text-accent-foreground' : 'text-lead text-foreground',
-          )}
-        >
-          {value}
+    <div
+      className={cn(
+        'grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1',
+        className,
+      )}
+    >
+      <dt className={cn('min-w-0 text-body text-foreground', strong && 'font-bold')}>{label}</dt>
+      <dd
+        className={cn(
+          'text-right whitespace-nowrap',
+          strong ? 'text-lead font-bold text-accent-foreground' : 'text-lead text-foreground',
+        )}
+      >
+        {value}
+      </dd>
+      {hint ? (
+        <dd data-summary-hint="" className="col-span-2 text-caption-sm text-accent-foreground">
+          {hint}
         </dd>
-      </div>
-      {hint ? <p className="text-caption-sm text-accent-foreground">{hint}</p> : null}
+      ) : null}
     </div>
   )
 }
@@ -114,9 +125,12 @@ export function QuoteTotals({ quote, updating }: { quote: Quote | undefined; upd
         value={value(quote?.networkFee)}
         hint={quote ? `Taxa estimada · ${NETWORK_LABELS[quote.network]}` : 'Taxa estimada'}
       />
-      <div className="border-t border-primary/30 pt-3">
-        <SummaryRow label="Total" value={value(quote?.total)} strong />
-      </div>
+      <SummaryRow
+        label="Total"
+        value={value(quote?.total)}
+        strong
+        className="border-t border-primary/30 pt-3"
+      />
     </dl>
   )
 }

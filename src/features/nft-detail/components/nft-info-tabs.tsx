@@ -38,7 +38,9 @@ export function NftInfoTabs({ nft }: { nft: Nft }) {
         </TabsPrimitive.Trigger>
       </TabsPrimitive.List>
 
-      <TabsPrimitive.Content value="details" className="flex flex-col gap-3 outline-none">
+      {/* Os painéis entram no Tab (tabindex=0 do Radix): ficam com o anel de
+          foco global, sem `outline-none`. */}
+      <TabsPrimitive.Content value="details" className="flex flex-col gap-3">
         <p className="text-body-sm leading-6 text-muted-foreground">
           {nft.description} A propriedade inclui a arte em alta resolução e um registro permanente
           de procedência na rede. {nft.creator.name} recebe {nft.royaltyPercent}% de direitos
@@ -62,7 +64,7 @@ export function NftInfoTabs({ nft }: { nft: Nft }) {
         </dl>
       </TabsPrimitive.Content>
 
-      <TabsPrimitive.Content value="reviews" className="flex flex-col gap-3 outline-none">
+      <TabsPrimitive.Content value="reviews" className="flex flex-col gap-3">
         <RatingStars average={nft.rating.average} count={nft.rating.count} />
         <p className="text-body-sm text-muted-foreground">
           Os comentários dos colecionadores não estão disponíveis nesta demonstração. A nota acima é

@@ -21,21 +21,28 @@ function Row({
   hint?: string
   strong?: boolean
 }) {
+  // `dt` e `dd` filhos diretos do `div` (único agrupamento válido em `dl`); a
+  // dica é um segundo `dd` do mesmo termo, marcado com `data-summary-hint`.
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-baseline justify-between gap-3">
-        <dt className={cn('min-w-0 text-body text-foreground', strong && 'font-bold')}>{label}</dt>
-        {/* O valor nunca quebra: o rótulo é quem cede espaço. */}
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1">
+      <dt className={cn('min-w-0 text-body text-foreground', strong && 'font-bold')}>{label}</dt>
+      {/* O valor nunca quebra: o rótulo é quem cede espaço. */}
+      <dd
+        className={cn(
+          'text-right whitespace-nowrap',
+          strong ? 'text-lead font-bold text-accent-foreground' : 'text-body-lg text-foreground',
+        )}
+      >
+        {value}
+      </dd>
+      {hint ? (
         <dd
-          className={cn(
-            'shrink-0 text-right whitespace-nowrap',
-            strong ? 'text-lead font-bold text-accent-foreground' : 'text-body-lg text-foreground',
-          )}
+          data-summary-hint=""
+          className="col-span-2 text-right text-caption-sm text-accent-foreground"
         >
-          {value}
+          {hint}
         </dd>
-      </div>
-      {hint ? <p className="text-right text-caption-sm text-accent-foreground">{hint}</p> : null}
+      ) : null}
     </div>
   )
 }

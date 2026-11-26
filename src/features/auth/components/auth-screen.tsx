@@ -128,7 +128,8 @@ export function AuthScreen({ mode }: { mode: Mode }) {
                 to="/register"
                 search={search}
                 replace
-                className="text-accent-foreground hover:underline"
+                // Sublinhado: dentro do texto, a cor sozinha (1,12:1) não distingue o link.
+                className="text-accent-foreground underline underline-offset-2 hover:decoration-2"
               >
                 Crie uma conta
               </Link>
@@ -140,7 +141,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
                 to="/login"
                 search={search}
                 replace
-                className="text-accent-foreground hover:underline"
+                className="text-accent-foreground underline underline-offset-2 hover:decoration-2"
               >
                 Entre
               </Link>

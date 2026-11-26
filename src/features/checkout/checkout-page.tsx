@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useCanGoBack, useNavigate, useRouter } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch, type Resolver } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -208,6 +208,8 @@ function CheckoutForm({
   const [preparing, setPreparing] = useState(false)
   const [review, setReview] = useState<ReviewState | null>(null)
   const [reviewOpen, setReviewOpen] = useState(false)
+  // A revisão devolve o foco ao "Confirmar compra" quando fecha.
+  const confirmRef = useRef<HTMLButtonElement>(null)
   // Aviso de mudança em tempo real (preço, estoque) no pagamento: no fluxo,
   // acima dos totais, sem toast. Com a revisão aberta ele é descartado: a
   // revisão já lista a mudança e pede nova confirmação.
@@ -592,6 +594,7 @@ function CheckoutForm({
         <div className="flex flex-col gap-3 [grid-area:confirm]">
           <FormError message={formError} />
           <button
+            ref={confirmRef}
             type="submit"
             disabled={busy || blocked || !live || !wallet}
             className="h-[60px] w-full cursor-pointer rounded-full bg-[linear-gradient(135deg,var(--primary-hover),var(--primary))] text-body font-bold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 md:h-[45px] md:rounded-lg md:bg-primary md:bg-none"
@@ -618,6 +621,7 @@ function CheckoutForm({
           problem={review.problem}
           onConfirm={() => void submitOrder()}
           onReconnect={() => void reconnect()}
+          returnFocusTo={confirmRef}
         />
       ) : null}
     </Form>

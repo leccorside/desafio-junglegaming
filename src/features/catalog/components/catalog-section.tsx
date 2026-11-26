@@ -73,7 +73,8 @@ function MobileSearchBar({
           lastSent.current = text.trim()
           onSearch(text.trim() || undefined)
         }}
-        className="flex flex-1 items-center gap-2 rounded-[10px] bg-card px-3"
+        // O anel de foco fica na caixa inteira (o campo não tem borda própria).
+        className="flex flex-1 items-center gap-2 rounded-[10px] bg-card px-3 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-ring"
       >
         <SearchIcon size={20} className="shrink-0 text-secondary" />
         <label htmlFor="catalog-search" className="sr-only">

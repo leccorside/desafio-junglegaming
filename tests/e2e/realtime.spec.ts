@@ -124,7 +124,9 @@ test.describe('tempo real', () => {
     ).json as { total: string }
     expect(quote.total).not.toBe('')
     const summary = page.getByRole('region', { name: /Resumo/ }).filter({ visible: true })
-    await expect(summary.getByRole('definition').nth(3)).toHaveText(formatEth(quote.total))
+    await expect(summary.locator('dd:not([data-summary-hint])').nth(3)).toHaveText(
+      formatEth(quote.total),
+    )
   })
 
   test('evento duplicado e evento antigo são ignorados', async ({ page }) => {
@@ -463,7 +465,7 @@ test.describe('tempo real: correções do review', () => {
     await expect(list.locator('[data-line-total]')).not.toContainText('ETH')
     await expect(list.locator('[data-line-total]')).toHaveText('Esgotado, fora do total.')
     const summary = page.getByRole('region', { name: /Resumo/ }).filter({ visible: true })
-    await expect(summary.getByRole('definition').nth(3)).toHaveText('0.00 ETH')
+    await expect(summary.locator('dd:not([data-summary-hint])').nth(3)).toHaveText('0.00 ETH')
   })
 })
 
@@ -554,7 +556,7 @@ test.describe('tempo real: avisos de queda, reconexão e reset', () => {
       'Violet Nomad #314 (edição aberta): o preço mudou de 1.39 ETH para 1.79 ETH. O resumo do carrinho foi atualizado.',
     )
     const summary = page.getByRole('region', { name: /Resumo/ }).filter({ visible: true })
-    await expect(summary.getByRole('definition').nth(3)).toHaveText('3.596 ETH')
+    await expect(summary.locator('dd:not([data-summary-hint])').nth(3)).toHaveText('3.596 ETH')
     expect(await page.locator('[data-sonner-toast]').count()).toBe(0)
   })
 

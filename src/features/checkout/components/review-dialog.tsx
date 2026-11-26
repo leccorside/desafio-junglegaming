@@ -41,7 +41,14 @@ export function ReviewDialog({
   problem,
   onConfirm,
   onReconnect,
+  returnFocusTo,
 }: {
+  /**
+   * Para onde o foco volta ao fechar. A revisão abre pelo código (depois de
+   * validar e conectar a carteira, com o botão desabilitado nesse meio), então
+   * o Radix não tem um gatilho focado para devolver o foco.
+   */
+  returnFocusTo?: React.RefObject<HTMLElement | null>
   open: boolean
   onOpenChange: (open: boolean) => void
   cart: Cart
@@ -66,6 +73,12 @@ export function ReviewDialog({
     >
       <DialogContent
         showCloseButton={!busy}
+        onCloseAutoFocus={(event) => {
+          const target = returnFocusTo?.current
+          if (!target?.isConnected) return
+          event.preventDefault()
+          target.focus()
+        }}
         // Coluna limitada à largura do diálogo: sem isso a grade crescia até o texto mais largo e o conteúdo passava da tela no mobile.
         className="max-h-[calc(100dvh-2rem)] grid-cols-[minmax(0,1fr)] gap-5 overflow-y-auto border-border-soft bg-background px-4 sm:max-w-[560px] sm:px-6"
       >

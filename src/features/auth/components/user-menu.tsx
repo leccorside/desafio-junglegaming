@@ -41,12 +41,16 @@ export function UserMenu({ user }: { user: User }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label={`Conta de ${user.displayName}`}
-        className="flex items-center gap-2 rounded-full text-body-sm text-foreground transition-colors hover:text-accent-foreground"
-      >
-        <UserAvatar user={user} />
-        <span className="hidden max-w-[140px] truncate xl:inline">{user.displayName}</span>
+      {/* Nome "Conta de Ana Ribeiro" montado do texto: o nome visível (xl) faz
+          parte dele, e as iniciais do avatar ficam fora (aria-hidden). */}
+      <DropdownMenuTrigger className="flex items-center gap-2 rounded-full text-body-sm text-foreground transition-colors hover:text-accent-foreground">
+        <span aria-hidden="true" className="contents">
+          <UserAvatar user={user} />
+        </span>
+        <span className="sr-only">Conta de </span>
+        <span className="sr-only xl:not-sr-only xl:max-w-[140px] xl:truncate">
+          {user.displayName}
+        </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60 border-border-soft bg-popover">
         <DropdownMenuLabel className="flex flex-col gap-0.5">

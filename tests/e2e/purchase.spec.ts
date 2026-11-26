@@ -154,10 +154,9 @@ async function expectReceiptMatches(page: Page, order: OrderJson) {
     )
   }
   // Sem desconto: só taxa de rede e total, como no Figma.
-  await expect(box.locator('dl[aria-label="Totais do pedido"] dd')).toHaveText([
-    formatEth(order.snapshot.networkFee),
-    formatEth(order.snapshot.total),
-  ])
+  await expect(
+    box.locator('dl[aria-label="Totais do pedido"] dd:not([data-summary-hint])'),
+  ).toHaveText([formatEth(order.snapshot.networkFee), formatEth(order.snapshot.total)])
 
   const explorer = box.getByRole('link', { name: 'Ver no Etherscan (abre em nova aba)' })
   await expect(explorer).toHaveAttribute('href', order.transaction!.explorerUrl)
@@ -307,7 +306,10 @@ test.describe('compra completa e recibo', () => {
     })
     await page.waitForTimeout(800)
     await expect(hint).toBeVisible()
-    await expect(totals.locator('dd')).toHaveText(['0.016 ETH', '2.396 ETH'])
+    await expect(totals.locator('dd:not([data-summary-hint])')).toHaveText([
+      '0.016 ETH',
+      '2.396 ETH',
+    ])
   })
 
   test('com cupom: subtotal, desconto numa linha só e conta que fecha', async ({ page }) => {
@@ -328,7 +330,7 @@ test.describe('compra completa e recibo', () => {
       'Taxa de rede',
       'Total',
     ])
-    await expect(totals.locator('dd')).toHaveText([
+    await expect(totals.locator('dd:not([data-summary-hint])')).toHaveText([
       '2.58 ETH',
       '(-) 0.258 ETH',
       '0.016 ETH',
@@ -341,7 +343,7 @@ test.describe('compra completa e recibo', () => {
     const value = totals.locator('[data-discount-row] dd')
     const [labelBox, valueBox] = [(await label.boundingBox())!, (await value.boundingBox())!]
     // Valor alinhado à direita, como os outros, e sem passar do cartão.
-    const fee = totals.locator('dd').nth(2)
+    const fee = totals.locator('dd:not([data-summary-hint])').nth(2)
     const feeBox = (await fee.boundingBox())!
     expect(Math.abs(valueBox.x + valueBox.width - (feeBox.x + feeBox.width))).toBeLessThan(1)
     if (!isMobileViewport(page)) {

@@ -5,6 +5,7 @@ import { lazy, Suspense } from 'react'
 import { NotFoundPage } from '@/components/feedback/not-found-page'
 import { RouteErrorPage } from '@/components/feedback/route-error-page'
 import { MobileTabBar } from '@/components/layout/mobile-tab-bar'
+import { RouteFocus } from '@/components/layout/route-focus'
 import { SiteFooter } from '@/components/layout/site-footer'
 import { SiteHeader } from '@/components/layout/site-header'
 import { SkipLink } from '@/components/layout/skip-link'
@@ -59,6 +60,7 @@ function RootLayout() {
   return (
     <div className="flex min-h-dvh flex-col overflow-x-clip">
       <SkipLink />
+      <RouteFocus />
       <SiteHeader />
       <RealtimeStatusBanner />
       <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">

@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { useEffect, useRef } from 'react'
 
 import { NETWORK_LABELS, type Order } from '@/api/contracts'
 import { errorMessage, normalizeError } from '@/api/errors'
@@ -20,6 +21,7 @@ import { useOrder } from './queries'
  */
 export function OrderPage({ orderId }: { orderId: string }) {
   const order = useOrder(orderId)
+  useKeepHeadingFocus(order.data?.status)
 
   if (order.isPending) {
     return (
@@ -82,6 +84,28 @@ export function OrderPage({ orderId }: { orderId: string }) {
       <OrderStatus order={order.data} />
     </Shell>
   )
+}
+
+/**
+ * Pendente → confirmado troca o título por outro elemento (o do recibo). O
+ * foco que estava no título que saiu (vindo do RouteFocus) cai no `body`;
+ * nesse caso vai para o título novo, e o próximo Tab continua do recibo, não
+ * do topo. Foco em outro lugar (um link, um botão) fica onde está.
+ */
+function useKeepHeadingFocus(status: Order['status'] | undefined) {
+  const previous = useRef(status)
+
+  useEffect(() => {
+    const changed = previous.current !== undefined && previous.current !== status
+    previous.current = status
+    if (!changed) return
+    const active = document.activeElement
+    if (active && active !== document.body) return
+    const heading = document.getElementById('order-title')
+    if (!heading) return
+    heading.setAttribute('tabindex', '-1')
+    heading.focus({ preventScroll: true })
+  }, [status])
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
