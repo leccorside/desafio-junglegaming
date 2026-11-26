@@ -27,7 +27,12 @@ export function SocialSignIn() {
           key={name}
           type="button"
           aria-disabled="true"
-          onClick={() => toast.info(`Entrar com ${name} não está disponível nesta demonstração.`)}
+          // `id` fixo: cliques repetidos não empilham o mesmo aviso.
+          onClick={() =>
+            toast.info(`Entrar com ${name} não está disponível nesta demonstração.`, {
+              id: `unavailable:sign-in-${name}`,
+            })
+          }
           className="flex h-10 cursor-pointer items-center justify-center gap-3 rounded-control border border-border text-caption font-medium text-muted-foreground transition-colors hover:border-border-soft hover:bg-accent"
         >
           <img src={logo} alt="" width={20} height={20} />

@@ -38,7 +38,9 @@ export function SiteFooter() {
   // Newsletter está fora do escopo: o envio avisa que não há cadastro, sem simular sucesso.
   const handleNewsletter = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    toast.info('A newsletter não está disponível nesta demonstração.')
+    toast.info('A newsletter não está disponível nesta demonstração.', {
+      id: 'unavailable:newsletter',
+    })
   }
 
   return (

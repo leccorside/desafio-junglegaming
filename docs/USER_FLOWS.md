@@ -159,6 +159,6 @@ Como ficou (Passo 13):
 | Rodapé, newsletter | "Enviar" | Aviso informativo "A newsletter não está disponível nesta demonstração."; nada de "inscrito" |
 | Tela inicial, blog | "Ler mais" | Botão desabilitado: "O artigo completo: indisponível nesta demonstração." |
 | Menu "Meu perfil" (desktop) | Atividade, Ofertas, Arquivos baixados, Suporte | Botão desabilitado com o aviso do item |
-| Entrar e criar conta | "Esqueceu a senha?", "Continuar com Google/Facebook" | Aviso informativo; a pessoa continua na tela, sem sessão |
+| Entrar e criar conta | "Esqueceu a senha?", "Continuar com Google/Facebook" | Botão desabilitado com "(indisponível nesta demonstração)" no nome acessível e aviso informativo; a pessoa continua na tela, sem sessão |
 
 Os avisos são sempre `info` (nunca `success`), não mudam de página e não se empilham em cliques repetidos. Links externos que ficam: compartilhar o NFT no LinkedIn e no X (compartilham o endereço real da página) e "Ver no Etherscan" do recibo (transação simulada, avisado na nota do recibo).

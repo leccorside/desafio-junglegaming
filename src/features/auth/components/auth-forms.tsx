@@ -107,11 +107,15 @@ export function LoginForm({ search }: AuthFormProps) {
           type="button"
           aria-disabled="true"
           onClick={() =>
-            toast.info('A recuperação de senha não está disponível nesta demonstração.')
+            toast.info('A recuperação de senha não está disponível nesta demonstração.', {
+              id: 'unavailable:password-recovery',
+            })
           }
           className="self-end text-body-sm text-accent-foreground hover:underline"
         >
           Esqueceu a senha?
+          {/* Como os outros itens fora do escopo: o leitor de tela ouve que não funciona. */}
+          <span className="sr-only"> (indisponível nesta demonstração)</span>
         </button>
         <FormError message={formError} />
         <Button

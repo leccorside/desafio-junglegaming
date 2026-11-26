@@ -119,7 +119,27 @@ test.describe('links e ações fora do escopo', () => {
     await page.goto('/login')
     await waitForApp(page)
     const auth = isMobileViewport(page) ? page : page.getByRole('dialog')
-    await auth.getByRole('button', { name: 'Esqueceu a senha?' }).click({ force: true })
+    // Nome acessível igual ao dos outros itens fora do escopo.
+    const forgot = auth.getByRole('button', {
+      name: 'Esqueceu a senha? (indisponível nesta demonstração)',
+      exact: true,
+    })
+    await expect(forgot).toHaveAttribute('aria-disabled', 'true')
+    await expect(forgot).toHaveText('Esqueceu a senha? (indisponível nesta demonstração)')
+    // Na tela continua só "Esqueceu a senha?": o trecho extra é só para leitor de tela.
+    const hidden = (await forgot.getByText('(indisponível nesta demonstração)').boundingBox())!
+    expect(hidden.width).toBeLessThanOrEqual(1)
+    await forgot.focus()
+    await page.keyboard.press('Enter')
+    await expect(
+      toasts(page).filter({ hasText: 'A recuperação de senha não está disponível' }),
+    ).toHaveAttribute('data-type', 'info')
+    // De novo, pelo clique: o mesmo aviso, sem empilhar outro.
+    await forgot.click({ force: true })
+    await page.waitForTimeout(300)
+    expect(
+      await toasts(page).filter({ hasText: 'A recuperação de senha não está disponível' }).count(),
+    ).toBe(1)
     await expect(
       toasts(page).filter({ hasText: 'A recuperação de senha não está disponível' }),
     ).toHaveAttribute('data-type', 'info')
