@@ -43,17 +43,26 @@ export function QuoteItems({ cart, quote }: { cart: Cart; quote: Quote }) {
       {quote.lines.map((line) => {
         const item = byId.get(line.itemId)
         return (
-          <li key={line.itemId} className="flex items-center gap-2 bg-card py-0 pr-4 pl-1 md:gap-2">
+          // Mobile: nome e ID do token ao lado da imagem, quantidade e preço na
+          // linha de baixo (o nome não precisa quebrar). Desktop: tudo numa
+          // linha, como no Figma.
+          <li
+            key={line.itemId}
+            className="grid grid-cols-[70px_minmax(0,1fr)] items-center gap-x-2 gap-y-1 bg-card py-2 pr-4 pl-1 md:grid-cols-[70px_minmax(0,1fr)_auto] md:py-0"
+          >
             <img
               {...nftImageSources(item?.imageUrl ?? '', '70px')}
               alt=""
               width={70}
               height={70}
               loading="lazy"
-              className="size-[70px] shrink-0 rounded-lg object-cover"
+              className="row-span-2 size-[70px] shrink-0 rounded-lg object-cover md:row-span-1"
             />
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <p className="line-clamp-2 text-body leading-5 font-bold break-words text-foreground">
+            <div className="flex min-w-0 flex-col gap-1.5 self-end md:self-center">
+              <p
+                data-item-name=""
+                className="line-clamp-2 text-body leading-5 font-bold break-words text-foreground"
+              >
                 {item?.name ?? 'NFT'}
               </p>
               <p className="truncate text-body-sm leading-4 text-secondary">
@@ -63,11 +72,14 @@ export function QuoteItems({ cart, quote }: { cart: Cart; quote: Quote }) {
                   : ''}
               </p>
             </div>
-            <p className="flex shrink-0 items-center gap-3 md:gap-5">
+            <p className="col-start-2 flex items-center justify-between gap-3 self-start md:col-start-3 md:row-start-1 md:justify-end md:gap-5 md:self-center">
               <span className="text-body-sm text-muted-foreground">
                 <span className="sr-only">Quantidade: </span>(x {line.quantity})
               </span>
-              <span className="text-lead leading-4 font-bold text-accent-foreground">
+              <span
+                data-item-total=""
+                className="text-lead leading-4 font-bold text-accent-foreground"
+              >
                 <span className="sr-only">Total do item: </span>
                 {formatEth(line.lineTotal)}
               </span>

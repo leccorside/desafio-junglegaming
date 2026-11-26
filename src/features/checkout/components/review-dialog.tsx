@@ -66,7 +66,8 @@ export function ReviewDialog({
     >
       <DialogContent
         showCloseButton={!busy}
-        className="max-h-[calc(100dvh-2rem)] gap-5 overflow-y-auto border-border-soft bg-background sm:max-w-[560px]"
+        // Coluna limitada à largura do diálogo: sem isso a grade crescia até o texto mais largo e o conteúdo passava da tela no mobile.
+        className="max-h-[calc(100dvh-2rem)] grid-cols-[minmax(0,1fr)] gap-5 overflow-y-auto border-border-soft bg-background px-4 sm:max-w-[560px] sm:px-6"
       >
         <DialogHeader>
           <DialogTitle className="text-title-sm font-bold text-foreground">

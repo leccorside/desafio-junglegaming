@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type NoticeListener = (message: string) => void
 const listeners = new Set<NoticeListener>()
 
 /**
- * Entrega um aviso de mudança no carrinho (tempo real) à página do carrinho,
- * se ela estiver aberta. Devolve `false` quando não há página para mostrar, e
- * quem chamou usa um toast. Na página, o aviso fica no fluxo, acima da lista,
- * em vez de um toast por cima do primeiro item.
+ * Entrega um aviso de mudança no carrinho (tempo real) à tela que mostra o
+ * carrinho, se houver uma aberta (carrinho ou pagamento). Devolve `false`
+ * quando nenhuma está ouvindo, e quem chamou usa um toast. Na tela, o aviso
+ * fica no fluxo, em vez de um toast por cima do conteúdo.
  */
 export function publishCartChange(message: string): boolean {
   if (!listeners.size) return false
@@ -15,15 +15,28 @@ export function publishCartChange(message: string): boolean {
   return true
 }
 
-/** Último aviso de mudança recebido enquanto a página do carrinho está aberta. */
-export function useCartChangeNotice(): [string | null, () => void] {
-  const [message, setMessage] = useState<string | null>(null)
+/**
+ * Ouve os avisos enquanto a tela estiver aberta. O `listener` decide o que
+ * fazer com cada um (inclusive ignorar): mesmo assim o aviso conta como
+ * entregue e não vira toast.
+ */
+export function useCartChangeListener(listener: NoticeListener) {
+  const latest = useRef(listener)
   useEffect(() => {
-    const listener: NoticeListener = (next) => setMessage(next)
-    listeners.add(listener)
+    latest.current = listener
+  })
+  useEffect(() => {
+    const forward: NoticeListener = (message) => latest.current(message)
+    listeners.add(forward)
     return () => {
-      listeners.delete(listener)
+      listeners.delete(forward)
     }
   }, [])
+}
+
+/** Último aviso de mudança recebido enquanto a tela está aberta. */
+export function useCartChangeNotice(): [string | null, () => void] {
+  const [message, setMessage] = useState<string | null>(null)
+  useCartChangeListener(setMessage)
   return [message, () => setMessage(null)]
 }

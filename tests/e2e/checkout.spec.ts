@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-import { PASSWORD, loginViaUi, submitLogin } from '../fixtures/auth'
+import { PASSWORD, isMobileViewport, loginViaUi, submitLogin } from '../fixtures/auth'
 import { apiFetch, resetMocks, setScenario, waitForApp } from '../fixtures/mocks'
 
 /**
@@ -296,5 +296,87 @@ test.describe('pagamento e pedido', () => {
     await expect(page.getByLabel(/^Nome de exibição/)).toBeFocused()
     await expect(reviewDialog(page)).toHaveCount(0)
     expect(posts).toHaveLength(0)
+  })
+})
+
+/** Elementos que passam da borda direita da janela (o diálogo fica fora do `main`). */
+const overflowing = (page: Page, selector: string) =>
+  page.evaluate(
+    (sel) =>
+      [...document.querySelectorAll(`${sel} *`)]
+        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1)
+        .map((el) => (el.textContent ?? '').trim().slice(0, 30)),
+    selector,
+  )
+
+test.describe('pagamento: ajustes da demonstração', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await waitForApp(page)
+    await resetMocks(page)
+  })
+
+  test('a revisão cabe na tela, com preços, totais e botões à vista', async ({ page }) => {
+    await openCheckout(page)
+    await openReview(page)
+    const dialog = reviewDialog(page)
+    expect(await overflowing(page, '[role="dialog"]')).toEqual([])
+    const box = (await dialog.boundingBox())!
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+    const totals = dialog.locator('[data-item-total]')
+    await expect(totals).toHaveText(['Total do item: 2.38 ETH', 'Total do item: 1.39 ETH'])
+    for (const total of await totals.all()) await expect(total).toBeInViewport()
+    await expect(dialog.getByText('3.786 ETH', { exact: true })).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Confirmar e pagar' })).toBeInViewport()
+  })
+
+  test('preço alterado com a revisão aberta: só o aviso da revisão, sem toast', async ({
+    page,
+  }) => {
+    await openCheckout(page)
+    await setScenario(page, ['price-changed-on-checkout'])
+    await openReview(page)
+    const dialog = reviewDialog(page)
+    await dialog.getByRole('button', { name: 'Confirmar e pagar' }).click()
+    await expect(dialog.getByRole('alert').filter({ hasText: 'Os valores mudaram' })).toBeVisible()
+    // O evento em tempo real chega junto: espera o tempo de um toast aparecer e
+    // confere uma vez (toHaveCount(0) passaria quando o toast sumisse sozinho).
+    await page.waitForTimeout(800)
+    expect(await page.locator('[data-sonner-toast]').count()).toBe(0)
+  })
+
+  test('preço alterado com a revisão fechada: aviso no fluxo do pagamento, sem toast', async ({
+    page,
+  }) => {
+    await openCheckout(page)
+    await apiFetch(page, 'POST', '/__mocks/nfts/nft-042/update', { body: { price: '1.55' } })
+    const notice = page.getByRole('status').filter({ hasText: 'o preço mudou' })
+    await expect(notice).toHaveText(
+      'Emerald Ape #042 (edição aberta): o preço mudou de 1.19 ETH para 1.55 ETH. O total foi atualizado.',
+    )
+    await expect(page.getByText('4.506 ETH', { exact: true })).toBeVisible()
+    await page.waitForTimeout(500)
+    expect(await page.locator('[data-sonner-toast]').count()).toBe(0)
+  })
+
+  test('itens: no mobile, quantidade e preço na linha de baixo; no desktop, na mesma linha', async ({
+    page,
+  }) => {
+    await openCheckout(page)
+    const list = page.getByRole('list', { name: 'Itens da compra' })
+    const name = list.locator('[data-item-name]').first()
+    const total = list.locator('[data-item-total]').first()
+    const [nameBox, totalBox] = [(await name.boundingBox())!, (await total.boundingBox())!]
+    if (isMobileViewport(page)) {
+      expect(totalBox.y).toBeGreaterThanOrEqual(nameBox.y + nameBox.height)
+      // O nome cabe numa linha só (20 px de altura de linha).
+      expect(nameBox.height).toBeLessThan(25)
+    } else {
+      expect(totalBox.x).toBeGreaterThan(nameBox.x + nameBox.width)
+      const center = (b: { y: number; height: number }) => b.y + b.height / 2
+      expect(Math.abs(center(totalBox) - center(nameBox))).toBeLessThan(20)
+    }
+    expect(await overflowing(page, 'main')).toEqual([])
   })
 })

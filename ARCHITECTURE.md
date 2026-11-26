@@ -189,6 +189,7 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Campos de senha em branco no perfil | O Figma desenha os três campos sem dizer quando são obrigatórios. Em branco, a senha não muda; preenchido um, os três são pedidos. |
 | Pagamento sem "Nome de usuário", "Rede", "Endereço da carteira", "Tipo de carteira", "Nome do perfil", "Código de indicação", "ENS ou carteira secundária" e "Nome ENS" | O contrato do pedido só leva nome de exibição, e-mail e observação do colecionador, mais a carteira e a rede. Os dados da carteira vêm da carteira cadastrada, escolhida em "Carteira e rede"; editar fica em `/wallets` ("Trocar carteira", "Usar outra carteira?"). |
 | "Carteira e rede" lista as carteiras cadastradas | No Figma, as opções são marcas (MetaMask, Coinbase Wallet). Aqui cada opção é uma carteira da conta (apelido, tipo, rede, endereço), e a rede vem dela. |
+| Itens do pagamento no mobile | No mobile, quantidade e preço ficam na linha de baixo do nome, para o nome caber inteiro; no desktop, tudo numa linha, como no Figma. |
 | Pagamento mobile com os dados do colecionador | O frame mobile só tem carteiras e total. Os campos do colecionador (obrigatórios no contrato) entram entre as carteiras e o resumo. |
 | Cupom no pagamento | "Tem um código promocional? Aplique aqui" leva ao carrinho, onde o cupom é aplicado. |
 | Carteira secundária com resumo, "Editar" e "Cancelar" | O Figma só desenha o estado vazio ("Você ainda não adicionou..."). "Igual à carteira principal" vira uma caixa de seleção que abre o formulário já preenchido. |

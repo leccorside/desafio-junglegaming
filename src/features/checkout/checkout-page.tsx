@@ -24,6 +24,7 @@ import { AccountLabel, accountFieldClass } from '@/features/account/components/f
 import { useProfile, useWallets } from '@/features/account/queries'
 import { useSession } from '@/features/auth/session-store'
 import { FormError } from '@/features/auth/components/form-error'
+import { useCartChangeListener } from '@/features/cart/cart-notices'
 import { useCart, useCartOwner, useQuote, quoteQuery } from '@/features/cart/queries'
 import { cartKeys, quoteKeys } from '@/features/cart/cart-cache'
 import { usePendingOrders } from '@/features/orders/queries'
@@ -207,6 +208,16 @@ function CheckoutForm({
   const [preparing, setPreparing] = useState(false)
   const [review, setReview] = useState<ReviewState | null>(null)
   const [reviewOpen, setReviewOpen] = useState(false)
+  // Aviso de mudança em tempo real (preço, estoque) no pagamento: no fluxo,
+  // acima dos totais, sem toast. Com a revisão aberta ele é descartado: a
+  // revisão já lista a mudança e pede nova confirmação.
+  const [changeNotice, setChangeNotice] = useState<string | null>(null)
+  useCartChangeListener((message) => {
+    if (reviewOpen) return
+    setChangeNotice(
+      message.replace('O resumo do carrinho foi atualizado.', 'O total foi atualizado.'),
+    )
+  })
   const [pendingAttempt, setPendingAttempt] = useState(draft?.attempt ?? null)
   const [recoverError, setRecoverError] = useState<string | null>(null)
   const placeOrder = usePlaceOrder()
@@ -540,6 +551,16 @@ function CheckoutForm({
           <p role="status" className="sr-only">
             {updating ? 'Atualizando o total…' : live ? `Total: ${live.total} ETH` : ''}
           </p>
+          <div role="status" className={changeNotice ? 'contents' : 'sr-only'}>
+            {changeNotice ? (
+              <p
+                data-checkout-notice=""
+                className="rounded-md border border-warning/50 bg-card p-3 text-body-sm text-foreground"
+              >
+                {changeNotice}
+              </p>
+            ) : null}
+          </div>
           <QuoteTotals quote={quote.data} updating={updating} />
           {blocked ? (
             <p role="alert" className="text-body-sm text-destructive-foreground">

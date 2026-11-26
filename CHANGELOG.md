@@ -77,6 +77,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Pagamento: a revisão no mobile ficava mais larga que a tela e cortava preços, totais e botões.
+- Pagamento: a mudança de preço em tempo real não vira mais toast; aparece acima dos totais, ou só na revisão, quando ela está aberta.
+- Pagamento mobile: quantidade e preço de cada item passaram para a linha de baixo do nome.
 - Perfil: o aviso de arquivo recusado no avatar continuava na tela depois de a imagem ser salva; agora some ao salvar, e a recusa diz qual arquivo não foi usado e que a imagem escolhida antes (ou o avatar atual) continua.
 - Formulários: o campo com erro que recebe o foco vai para o meio da tela; no mobile, o toast de sucesso de outra parte do "Salvar" cobria o campo.
 - Depois do reset dos mocks sem recarregar, a aba deixava de receber eventos (`eventId` e versões repetidos).
