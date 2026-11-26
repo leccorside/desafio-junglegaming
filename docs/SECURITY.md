@@ -61,6 +61,7 @@ A proteção acontece no `beforeLoad` do layout `_authenticated`, que redirecion
 - O login (`startSession`) faz o mesmo reinício: respostas de visitante ainda em andamento são canceladas e não gravam no cache da conta. Entrar com outra conta sem sair também avisa `onSessionEnd('switch')`.
 - Todos os toasts fecham no fim da sessão (`onSessionEnd(() => toast.dismiss())` em `router.ts`), para uma mensagem como "Que bom ver você, Ana Ribeiro." não ficar na tela de quem entra depois. Os avisos do próprio fim ("Você saiu da sua conta.", "Sua sessão expirou...") são criados depois e continuam visíveis.
 - Eventos com `userId` diferente do usuário atual são descartados. O servidor simulado já não envia evento de pedido para outra conta, e o cliente confere de novo (`createEventGate`).
+- O socket simulado aplica à sessão as mesmas regras da API REST (`sessionUserId`: existente, não revogada e dentro da validade) e confere de novo a cada envio com dono. Token vencido não recebe evento de pedido, e uma conexão só recebe eventos depois de se autenticar.
 - A API responde `403 FORBIDDEN` para pedido ou carteira de outro usuário.
 - O carrinho do visitante é juntado ao do usuário no login (Passo 7) e depois deixa de ser usado.
 

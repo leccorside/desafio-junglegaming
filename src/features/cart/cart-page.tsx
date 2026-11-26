@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useCanGoBack, useNavigate, useRouter } from '@tanstack/react-router'
+import { TriangleAlertIcon as WarningIcon, XIcon } from 'lucide-react'
 
 import { errorMessage } from '@/api/errors'
 import { ArrowLeftIcon } from '@/components/icons/figma-icons'
@@ -8,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { NftCard, NftCardSkeleton } from '@/features/catalog/components/nft-card'
 import { nftListQuery } from '@/features/catalog/queries'
 
+import { useCartChangeNotice } from './cart-notices'
 import { CartItemRow } from './components/cart-item-row'
 import { CartSummary } from './components/cart-summary'
 import { useCart, useQuote } from './queries'
@@ -50,6 +52,42 @@ function AlsoViewed({ exclude }: { exclude: string[] }) {
             ))}
       </ul>
     </section>
+  )
+}
+
+/**
+ * Aviso de mudança em tempo real (preço, estoque) com a página do carrinho
+ * aberta. Fica no fluxo, acima da lista: um toast no topo cobria o nome do
+ * primeiro item no mobile. A região `role="status"` existe sempre, para o
+ * leitor de tela anunciar o texto quando ele chega.
+ */
+function CartChangeNotice() {
+  const [message, dismiss] = useCartChangeNotice()
+  return (
+    <div
+      className={
+        message
+          ? 'flex items-start gap-3 rounded-md border border-warning/50 bg-card p-3'
+          : 'contents'
+      }
+    >
+      {message ? (
+        <WarningIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-warning" />
+      ) : null}
+      <p role="status" className={message ? 'flex-1 text-body-sm text-foreground' : 'sr-only'}>
+        {message ?? ''}
+      </p>
+      {message ? (
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label="Fechar aviso"
+          className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <XIcon aria-hidden="true" className="size-4" />
+        </button>
+      ) : null}
+    </div>
   )
 }
 
@@ -156,6 +194,7 @@ export function CartPage() {
         ) : (
           <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between md:gap-10">
             <div className="flex min-w-0 flex-col gap-3 md:max-w-[782px] md:flex-1">
+              <CartChangeNotice />
               <div
                 aria-hidden="true"
                 className="hidden grid-cols-[250px_1fr_1fr_1fr_24px] gap-x-6 border-b border-primary/30 pr-6 pb-3 text-body-lg leading-4 text-foreground md:grid"

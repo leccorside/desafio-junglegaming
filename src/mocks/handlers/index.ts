@@ -65,6 +65,8 @@ import {
   dropConnections,
   replayLastNftEvent,
   sendStaleNftEvent,
+  sentEvents,
+  setAuthDelay,
 } from '../socket/server'
 
 type IdParams = { id: string }
@@ -377,9 +379,26 @@ const mocksHandlers = [
       { network: false },
     ),
   ),
+  http.post(
+    apiPath(`${MOCKS_PREFIX}/realtime/auth-delay`),
+    route(
+      async ({ request }) => {
+        const body = await readBody(
+          request,
+          z.object({ ms: z.number().int().nonnegative().max(60_000) }),
+        )
+        return setAuthDelay(body.ms)
+      },
+      { network: false },
+    ),
+  ),
   http.get(
     apiPath(`${MOCKS_PREFIX}/realtime/peers`),
     route(() => ({ peers: connectedPeers() }), { network: false }),
+  ),
+  http.get(
+    apiPath(`${MOCKS_PREFIX}/realtime/log`),
+    route(() => ({ events: sentEvents() }), { network: false }),
   ),
 ]
 

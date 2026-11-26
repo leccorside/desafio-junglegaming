@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
 
 import { formatEth } from '../../src/lib/eth'
-import { logoutViaUi, submitLogin, trackApi } from '../fixtures/auth'
-import { apiFetch, resetMocks, waitForApp } from '../fixtures/mocks'
+import { loginViaUi, logoutViaUi, submitLogin, trackApi } from '../fixtures/auth'
+import { apiFetch, resetMocks, setScenario, waitForApp } from '../fixtures/mocks'
 
 /**
  * Tempo real (itens 9 e 10, parte do Passo 8): toda mudança chega pelo
@@ -98,13 +98,20 @@ test.describe('tempo real', () => {
     await connected(page)
 
     await updateNft(page, 'nft-314', { price: '1.59' })
-    await expect(
-      page.getByText(
+    // Na página do carrinho o aviso fica no fluxo (role="status"), acima da lista.
+    const notice = page.getByRole('status').filter({
+      hasText:
         'Violet Nomad #314 (edição aberta): o preço mudou de 1.39 ETH para 1.59 ETH. O resumo do carrinho foi atualizado.',
-      ),
-    ).toBeVisible()
-    // O aviso do Sonner fica numa região aria-live.
-    await expect(page.getByRole('region', { name: /Notificações/ })).toBeAttached()
+    })
+    await expect(notice).toBeVisible()
+    // Conferido uma vez: toHaveCount(0) esperaria o toast sumir sozinho.
+    expect(await page.locator('[data-sonner-toast]').count()).toBe(0)
+    const list = page.getByRole('list', { name: 'Itens do carrinho' })
+    const [noticeBox, listBox] = [await notice.boundingBox(), await list.boundingBox()]
+    expect(noticeBox!.y + noticeBox!.height).toBeLessThanOrEqual(listBox!.y)
+    // Fechar o aviso devolve o espaço.
+    await page.getByRole('button', { name: 'Fechar aviso' }).click()
+    await expect(notice).toHaveCount(0)
     await expect(
       page.getByText('O preço mudou de 1.39 ETH para 1.59 ETH.', { exact: true }),
     ).toBeVisible()
@@ -140,7 +147,7 @@ test.describe('tempo real', () => {
     // Duplicado: o mesmo eventId de novo não refaz nada (nem invalida o carrinho).
     const cartFetches = restCalls(page, 'GET', /^\/api\/cart$/)
     const replay = (await apiFetch(page, 'POST', '/__mocks/realtime/replay')).json as EventReply
-    expect(replay.event.eventId).toBe('nft-nft-314-v2')
+    expect(replay.event.eventId).toMatch(/^nft-nft-314-v2-e\d+$/)
     // Antigo: versão anterior, com um preço que nunca existiu.
     const stale = (
       await apiFetch(page, 'POST', '/__mocks/realtime/stale', {
@@ -190,5 +197,269 @@ test.describe('tempo real', () => {
 
     await logoutViaUi(page)
     await connected(page, null)
+  })
+})
+
+/** Token da sessão salva pela aplicação. */
+const sessionToken = (page: Page) =>
+  page.evaluate(
+    () => (JSON.parse(localStorage.getItem('kurio:session')!) as { token: string }).token,
+  )
+
+const sentLog = async (page: Page) =>
+  (
+    (await apiFetch(page, 'GET', '/__mocks/realtime/log')).json as {
+      events: { type: string; eventId: string; recipients: (string | null)[] }[]
+    }
+  ).events
+
+/** Carrinho de visitante com o Violet Nomad #314 (edição aberta, 2 unidades). */
+async function guestCartWithVioletNomad(page: Page) {
+  await page.evaluate((id) => localStorage.setItem('kurio:guest-cart-id', id), GUEST_CART)
+  await apiFetch(page, 'POST', '/cart/items', {
+    cartId: GUEST_CART,
+    body: { nftId: 'nft-314', editionId: 'nft-314-open', quantity: 2 },
+  })
+}
+
+/**
+ * Um teste por achado dos dois /code-review do Passo 8 e por ajuste pedido
+ * depois da demonstração em produção. Os que só dependem de regra do cliente
+ * ou da sessão do servidor estão em src/features/realtime/realtime.test.ts.
+ */
+test.describe('tempo real: correções do review', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await waitForApp(page)
+    await resetMocks(page)
+  })
+
+  test('reset dos mocks sem recarregar: a tela volta ao dado inicial e segue recebendo eventos', async ({
+    page,
+  }) => {
+    await page.goto('/nft/nft-042')
+    await waitForApp(page)
+    await connected(page)
+    await updateNft(page, 'nft-042', { price: '1.55' })
+    await expect(detailPrice(page)).toHaveText(/1\.55 ETH/)
+
+    // Reset com a página aberta: as versões voltam para trás (v1).
+    await resetMocks(page)
+    await expect(detailPrice(page)).toHaveText(/1\.19 ETH/)
+    // A v2 seguinte tem outro eventId (época) e passa pelo porteiro.
+    await updateNft(page, 'nft-042', { price: '1.77' })
+    await expect(detailPrice(page)).toHaveText(/1\.77 ETH/)
+  })
+
+  test('o reset limpa o servidor simulado: sem reenvio de evento de antes nem emissão', async ({
+    page,
+  }) => {
+    await page.goto('/nft/nft-042')
+    await waitForApp(page)
+    await connected(page)
+    await updateNft(page, 'nft-042', { price: '1.55' })
+    await expect(detailPrice(page)).toHaveText(/1\.55 ETH/)
+    expect((await sentLog(page)).map((e) => e.type)).toEqual(['nft.updated'])
+
+    await resetMocks(page)
+    const replay = (await apiFetch(page, 'POST', '/__mocks/realtime/replay')).json as {
+      event: unknown
+    }
+    expect(replay.event).toBeNull()
+    expect(await sentLog(page)).toEqual([])
+  })
+
+  test('evento atrasado numa conexão nova não gera aviso falso nem busca o carrinho', async ({
+    page,
+  }) => {
+    await guestCartWithVioletNomad(page)
+    // O preço muda antes de a página abrir: o carrinho já vem da API com a v2.
+    await updateNft(page, 'nft-314', { price: '1.59' })
+    await page.goto('/cart')
+    await waitForApp(page)
+    await expect(
+      page.getByText('O preço mudou de 1.39 ETH para 1.59 ETH.', { exact: true }),
+    ).toBeVisible()
+    await connected(page)
+    const api = trackApi(page)
+    await api.idle()
+    const cartFetches = restCalls(page, 'GET', /^\/api\/cart$/)
+
+    const stale = (
+      await apiFetch(page, 'POST', '/__mocks/realtime/stale', {
+        body: { nftId: 'nft-314', price: '9.99' },
+      })
+    ).json as EventReply
+    expect(stale.event.version).toBe(1)
+    await page.waitForTimeout(500)
+    await api.idle()
+    api.dispose()
+
+    expect(await page.getByText(/9\.99/).count()).toBe(0)
+    expect(cartFetches).toHaveLength(0)
+  })
+
+  test('na reconexão, a lista de interesse também é buscada de novo', async ({ page }) => {
+    await loginViaUi(page, 'ana@example.com')
+    const token = await sessionToken(page)
+    await apiFetch(page, 'PUT', '/me/favorites/nft-042', { token })
+    await page.goto('/favorites')
+    await waitForApp(page)
+    const card = page.locator('[data-nft-id="nft-042"]').filter({ visible: true }).first()
+    await expect(card).toContainText('1.19 ETH')
+    await connected(page, 'user-ana')
+
+    await apiFetch(page, 'POST', '/__mocks/realtime/disconnect', { body: { downMs: 1500 } })
+    await expect.poll(async () => (await peers(page)).length).toBe(0)
+    await updateNft(page, 'nft-042', { price: '1.66' })
+    await expect(card).toContainText('1.19 ETH')
+
+    await connected(page, 'user-ana')
+    await expect(card).toContainText('1.66 ETH')
+  })
+
+  test('o pagamento vencido é decidido e anunciado sem nenhuma requisição REST', async ({
+    page,
+  }) => {
+    await loginViaUi(page, 'ana@example.com')
+    const token = await sessionToken(page)
+    await connected(page, 'user-ana')
+    await setScenario(page, ['payment-confirmed'], { settleMs: 1500 })
+    await apiFetch(page, 'POST', '/cart/items', {
+      token,
+      body: { nftId: 'nft-042', editionId: 'nft-042-open', quantity: 1 },
+    })
+    const quote = (
+      await apiFetch(page, 'POST', '/quotes', { token, body: { network: 'ethereum' } })
+    ).json as { id: string; version: number }
+    const order = await page.evaluate(
+      async ({ token, quote }) => {
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            'Idempotency-Key': crypto.randomUUID(),
+          },
+          body: JSON.stringify({
+            quoteId: quote.id,
+            quoteVersion: quote.version,
+            walletId: 'wallet-ana-primary',
+            network: 'ethereum',
+            buyer: { displayName: 'Ana Ribeiro', email: 'ana@example.com' },
+          }),
+        })
+        return (await response.json()) as { id: string; status: string }
+      },
+      { token, quote },
+    )
+    expect(order.status).toBe('pending')
+
+    // A criação muda o estoque (nft.updated): espera a tela buscar o que precisa.
+    const api = trackApi(page)
+    await api.idle()
+    api.dispose()
+    const calls: string[] = []
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname.startsWith('/api/')) calls.push(request.url())
+    })
+
+    // Lido direto do banco no navegador, sem passar pela API.
+    await expect
+      .poll(() =>
+        page.evaluate((id) => {
+          const db = JSON.parse(localStorage.getItem('kurio:mocks:db')!) as {
+            orders: { id: string; status: string }[]
+          }
+          return db.orders.find((o) => o.id === id)?.status
+        }, order.id),
+      )
+      .toBe('confirmed')
+    expect(calls).toEqual([])
+
+    const sent = (await sentLog(page)).filter((e) => e.type === 'order.updated')
+    expect(sent.at(-1)?.recipients).toEqual(['user-ana'])
+  })
+
+  test('troca de sessão com handshake lento: nada é entregue antes da autenticação e o que mudou é buscado', async ({
+    page,
+  }) => {
+    await loginViaUi(page, 'ana@example.com')
+    await page.goto('/')
+    await waitForApp(page)
+    const card = page.locator('[data-nft-id="nft-042"]').filter({ visible: true }).first()
+    await expect(card).toContainText('1.19 ETH')
+    await connected(page, 'user-ana')
+
+    await apiFetch(page, 'POST', '/__mocks/realtime/auth-delay', { body: { ms: 2000 } })
+    await logoutViaUi(page)
+    // A conexão de visitante já abriu, mas ainda não se autenticou: fora da lista.
+    expect(await peers(page)).toEqual([])
+    await updateNft(page, 'nft-042', { price: '1.55' })
+    const last = (await sentLog(page)).at(-1)
+    expect(last?.type).toBe('nft.updated')
+    expect(last?.recipients).toEqual([])
+
+    // Depois do CONNECT: entra na lista, recebe o sync e busca o NFT de novo.
+    await connected(page, null)
+    await expect(card).toContainText('1.55 ETH')
+  })
+
+  test('painel: "Novo preço" altera o preço da edição e o carrinho avisa na hora', async ({
+    page,
+  }) => {
+    await page.addInitScript(() =>
+      Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }),
+    )
+    await guestCartWithVioletNomad(page)
+    await page.goto('/cart')
+    await waitForApp(page)
+    await expect(page.getByRole('list', { name: 'Itens do carrinho' })).toBeVisible()
+    await connected(page)
+
+    await page.getByRole('button', { name: /^Cenários de teste/ }).click()
+    const panel = page.getByRole('dialog', { name: 'Cenários de teste' })
+    await panel.getByLabel('NFT', { exact: true }).selectOption('nft-314')
+    await panel.getByLabel('Edição', { exact: true }).selectOption('nft-314-open')
+    const price = panel.getByLabel('Novo preço (ETH)')
+
+    await price.fill('abc')
+    await panel.getByRole('button', { name: 'Alterar preço' }).click()
+    await expect(
+      panel.getByText('Informe um preço maior que zero em ETH, como 1.59.'),
+    ).toBeVisible()
+    await expect(price).toHaveAttribute('aria-invalid', 'true')
+
+    await price.fill('1,59')
+    await panel.getByRole('button', { name: 'Alterar preço' }).click()
+    await expect(
+      panel.getByText('Preço da edição aberta de Violet Nomad #314 alterado para 1.59 ETH.'),
+    ).toBeVisible()
+    await expect(price).toHaveValue('')
+    await page.keyboard.press('Escape')
+
+    await expect(
+      page.getByRole('status').filter({ hasText: 'o preço mudou de 1.39 ETH para 1.59 ETH.' }),
+    ).toBeVisible()
+    const nft = (await apiFetch(page, 'GET', '/nfts/nft-314')).json as {
+      editions: { id: string; price: string }[]
+    }
+    expect(nft.editions.find((e) => e.id === 'nft-314-open')?.price).toBe('1.59')
+  })
+
+  test('item esgotado não mostra total na linha, igual ao resumo', async ({ page }) => {
+    await guestCartWithVioletNomad(page)
+    await page.goto('/cart')
+    await waitForApp(page)
+    const list = page.getByRole('list', { name: 'Itens do carrinho' })
+    await expect(list.locator('[data-line-total]')).toContainText('2.78 ETH')
+    await connected(page)
+
+    await updateNft(page, 'nft-314', { editionId: 'nft-314-open', available: 0 })
+    await expect(list.getByText('Esgotado: remova do carrinho para finalizar.')).toBeVisible()
+    await expect(list.locator('[data-line-total]')).not.toContainText('ETH')
+    await expect(list.locator('[data-line-total]')).toHaveText('Esgotado, fora do total.')
+    const summary = page.getByRole('region', { name: /Resumo/ }).filter({ visible: true })
+    await expect(summary.getByRole('definition').nth(3)).toHaveText('0.00 ETH')
   })
 })

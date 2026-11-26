@@ -68,10 +68,15 @@ export function mutate<T>(change: (state: DbState) => T): T {
   }
 }
 
-/** Restaura as fixtures. */
+/**
+ * Restaura as fixtures. Avisa primeiro os interessados no reset (o socket
+ * simulado ressincroniza sem emitir nada: as versões voltam para trás) e
+ * depois os de mudança.
+ */
 export function resetDb(): DbState {
   db = createSeed()
   persist(db)
+  for (const listener of resetListeners) listener(db)
   for (const listener of listeners) listener(db)
   return db
 }
@@ -79,6 +84,14 @@ export function resetDb(): DbState {
 export function onDbChange(listener: Listener): () => void {
   listeners.add(listener)
   return () => listeners.delete(listener)
+}
+
+const resetListeners = new Set<Listener>()
+
+/** Avisado só no reset, antes dos listeners de mudança. */
+export function onDbReset(listener: Listener): () => void {
+  resetListeners.add(listener)
+  return () => resetListeners.delete(listener)
 }
 
 /** Próximo número de uma sequência (`order` → 3, 4...), para IDs determinísticos. */

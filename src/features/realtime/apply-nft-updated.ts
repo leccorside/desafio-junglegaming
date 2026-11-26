@@ -32,15 +32,22 @@ function patchNft(nft: Nft, event: NftUpdatedEvent): Nft {
 
 const editionLabel = (name: string) => (name === 'Aberta' ? 'edição aberta' : `edição ${name}`)
 
+/** Itens do carrinho que o evento torna desatualizados (a cópia é mais antiga que ele). */
+const outdatedItems = (cart: Cart | undefined, event: NftUpdatedEvent) =>
+  cart?.items?.filter(
+    (item) => item.nftId === event.data.nftId && item.nftVersion < event.version,
+  ) ?? []
+
 /** O que mudou para os itens do carrinho, em frases para o aviso. */
 function cartChanges(cart: Cart, event: NftUpdatedEvent): string[] {
   const messages: string[] = []
-  for (const item of cart.items) {
-    if (item.nftId !== event.data.nftId) continue
+  for (const item of outdatedItems(cart, event)) {
     const edition = event.data.editions.find((e) => e.id === item.editionId)
     if (!edition) continue
     const what = `${item.name} (${editionLabel(item.editionName)})`
-    if (edition.status !== 'available' || edition.available === 0) {
+    if (edition.status === 'unavailable') {
+      messages.push(`${what} ficou indisponível.`)
+    } else if (edition.status === 'sold_out' || edition.available === 0) {
       messages.push(`${what} esgotou.`)
     } else if (edition.available < item.quantity) {
       messages.push(
@@ -58,11 +65,17 @@ function cartChanges(cart: Cart, event: NftUpdatedEvent): string[] {
 /**
  * Aplica um `nft.updated` no cache do TanStack Query: detalhe, páginas do
  * catálogo, destaques e lista de interesse que contêm o NFT (cada cópia só
- * muda se for mais antiga que o evento). Se o NFT está no carrinho, invalida
- * carrinho e cotação (a API recalcula preço e estoque) e devolve o que mudou,
- * para o aviso.
+ * muda se for mais antiga que o evento). Se algum carrinho em cache tem o
+ * NFT numa versão mais antiga que a do evento, invalida carrinho e cotação (a
+ * API recalcula preço e estoque) e devolve o que mudou no carrinho de
+ * `cartOwner` (o da sessão atual), para o aviso. Um evento atrasado em relação
+ * ao carrinho (versão igual ou menor) não avisa nem invalida nada.
  */
-export function applyNftUpdated(queryClient: QueryClient, event: NftUpdatedEvent): string[] {
+export function applyNftUpdated(
+  queryClient: QueryClient,
+  event: NftUpdatedEvent,
+  cartOwner: string,
+): string[] {
   queryClient.setQueryData<Nft>(nftKeys.detail(event.data.nftId), (nft) =>
     nft ? patchNft(nft, event) : nft,
   )
@@ -79,12 +92,23 @@ export function applyNftUpdated(queryClient: QueryClient, event: NftUpdatedEvent
   )
 
   const carts = queryClient.getQueriesData<Cart>({ queryKey: cartKeys.all })
-  const inCart = carts.some(([, cart]) =>
-    cart?.items?.some((item) => item.nftId === event.data.nftId),
-  )
-  if (!inCart) return []
-  const messages = carts.flatMap(([, cart]) => (cart?.items ? cartChanges(cart, event) : []))
-  void queryClient.invalidateQueries({ queryKey: cartKeys.all })
-  void queryClient.invalidateQueries({ queryKey: quoteKeys.all })
+  if (!carts.some(([, cart]) => outdatedItems(cart, event).length)) return []
+  const mine = queryClient.getQueryData<Cart>(cartKeys.current(cartOwner))
+  const messages = mine?.items ? cartChanges(mine, event) : []
+  refreshQueries(queryClient, cartKeys.all)
+  refreshQueries(queryClient, quoteKeys.all)
   return messages
+}
+
+/**
+ * Busca de novo, inclusive o que está na primeira busca. O `invalidateQueries`
+ * sozinho não basta: com a primeira busca em andamento (sem dado em cache), o
+ * TanStack reaproveita essa busca em vez de refazer, e a resposta, calculada
+ * antes da mudança, chega e apaga a marca de "velho" (o resumo ficava com a
+ * cotação antiga). Cancelar antes faz a busca começar de novo.
+ */
+export function refreshQueries(queryClient: QueryClient, queryKey: readonly unknown[]) {
+  void queryClient
+    .cancelQueries({ queryKey, predicate: (query) => query.state.data === undefined })
+    .then(() => queryClient.invalidateQueries({ queryKey }))
 }

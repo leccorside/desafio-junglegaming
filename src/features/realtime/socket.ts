@@ -2,13 +2,19 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { Socket } from 'socket.io-client'
 import { toast } from 'sonner'
 
-import { REALTIME_EVENTS, realtimeEventSchema, type RealtimeEvent } from '@/api/contracts'
-import { cartKeys, quoteKeys } from '@/features/cart/cart-cache'
-import { nftKeys } from '@/features/catalog/queries'
+import {
+  REALTIME_EVENTS,
+  realtimeEventSchema,
+  realtimeSyncSchema,
+  type RealtimeEvent,
+} from '@/api/contracts'
+import { publishCartChange } from '@/features/cart/cart-notices'
+import { currentCartOwner } from '@/features/cart/queries'
 import { env } from '@/lib/env'
 
 import { applyNftUpdated } from './apply-nft-updated'
 import { createEventGate, type EventGate } from './event-gate'
+import { reconcileWithServer } from './reconcile'
 
 /** `ws://localhost/socket` → origem `ws://localhost` e caminho `/socket/`. */
 const socketUrl = new URL(env.socketUrl)
@@ -75,36 +81,66 @@ export function connectRealtime({
   }
 }
 
-function listen(socket: Socket, gate: EventGate, queryClient: QueryClient) {
-  const handle = (raw: unknown) => {
+/** Mostra o aviso de mudança no carrinho: na página do carrinho, se aberta; senão, toast. */
+function notifyCartChange(message: string, eventId: string) {
+  if (publishCartChange(message)) return
+  // O Sonner anuncia em região aria-live; o id evita dois avisos do mesmo evento.
+  toast.warning(message, { id: `cart-change-${eventId}` })
+}
+
+/**
+ * Trata um evento recebido: contrato, porteiro, aplicação e só então o
+ * registro. Se a aplicação falhar, o evento não fica marcado como aplicado
+ * (uma reentrega tenta de novo). Cada listener de pedido roda isolado: a
+ * falha de um não impede os seguintes.
+ */
+export function createEventHandler(gate: EventGate, queryClient: QueryClient) {
+  return (raw: unknown) => {
     const parsed = realtimeEventSchema.safeParse(raw)
-    if (!parsed.success) return // Fora do contrato: descartado.
+    if (!parsed.success) return 'invalid' as const // Fora do contrato: descartado.
     const event = parsed.data
-    if (gate.check(event) !== 'apply') return
-    gate.record(event)
+    const decision = gate.check(event)
+    if (decision !== 'apply') return decision
 
     if (event.type === REALTIME_EVENTS.nftUpdated) {
-      const changes = applyNftUpdated(queryClient, event)
-      // Aviso acessível (o Sonner anuncia em região aria-live), uma vez por evento.
+      let changes: string[]
+      try {
+        changes = applyNftUpdated(queryClient, event, currentCartOwner())
+      } catch (error) {
+        console.error('Falha ao aplicar nft.updated', error)
+        return 'failed' as const
+      }
+      gate.record(event)
       if (changes.length) {
-        toast.warning(`${changes.join(' ')} O resumo do carrinho foi atualizado.`, {
-          id: `cart-change-${event.eventId}`,
-        })
+        notifyCartChange(`${changes.join(' ')} O resumo do carrinho foi atualizado.`, event.eventId)
       }
     } else {
-      for (const listener of orderListeners) listener(event)
+      gate.record(event)
+      for (const listener of [...orderListeners]) {
+        try {
+          listener(event)
+        } catch (error) {
+          console.error('Falha num listener de order.updated', error)
+        }
+      }
     }
+    return decision
   }
+}
 
+function listen(socket: Socket, gate: EventGate, queryClient: QueryClient) {
+  const handle = createEventHandler(gate, queryClient)
   socket.on(REALTIME_EVENTS.nftUpdated, handle)
   socket.on(REALTIME_EVENTS.orderUpdated, handle)
 
-  // Reconexão: eventos perdidos enquanto a conexão estava fora são
-  // recuperados pela API (que passa a ser a referência de versão).
-  socket.io.on('reconnect', () => {
-    void queryClient.invalidateQueries({ queryKey: nftKeys.all })
-    void queryClient.invalidateQueries({ queryKey: cartKeys.all })
-    void queryClient.invalidateQueries({ queryKey: quoteKeys.all })
-    void queryClient.invalidateQueries({ queryKey: ['orders'] })
+  // A cada conexão (a primeira, a de uma sessão nova, cada reconexão) e no
+  // reset dos mocks, o servidor manda as versões atuais: elas viram a
+  // referência do porteiro, e o que está diferente no cache é buscado de
+  // novo pela API (inclui o que mudou enquanto não havia conexão).
+  socket.on(REALTIME_EVENTS.sync, (raw: unknown) => {
+    const parsed = realtimeSyncSchema.safeParse(raw)
+    if (!parsed.success) return
+    gate.sync(parsed.data)
+    reconcileWithServer(queryClient, parsed.data)
   })
 }

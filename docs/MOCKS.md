@@ -66,7 +66,7 @@ Os handlers só traduzem HTTP: leem o corpo com o schema Zod do contrato (`readB
 Ativados de três formas, combináveis. Ficam salvos (`kurio:mocks:scenario`) até o reset.
 
 1. URL: `?scenario=slow,payment-rejected`, com `&scenarioRoutes=/nfts,/cart` opcional para limitar os cenários de rede a algumas rotas. Os dois parâmetros são aplicados uma vez e saem da barra de endereço (`history.replaceState`), e os outros parâmetros ficam. Assim o reload usa o estado salvo, sem desfazer o que foi escolhido no painel nem redisparar cenários de uso único.
-2. Painel de desenvolvimento: botão com ícone de frasco no canto inferior esquerdo. Além dos cenários, tem a seção **Estoque**: escolhe um NFT e uma edição (a lista mostra a situação e as unidades disponíveis) e "Marcar como esgotada" chama `POST /api/__mocks/nfts/:id/update` com `available: 0`, na hora e sem recarregar a página (um toast com "Desfazer" na tela continua lá). O painel não mexe no cache da aplicação: a tela mostra o estado novo na próxima busca e, a partir do Passo 8, pelo evento `nft.updated`. No mobile é uma aba estreita colada à borda esquerda, na margem vazia da barra inferior (antes do ícone Início), para não cobrir conteúdo. O nome acessível traz quantos cenários estão ativos ("Cenários de teste (1 ativo)"). Escondido em navegador automatizado (`navigator.webdriver`); os testes do próprio painel desligam essa marca com `addInitScript`.
+2. Painel de desenvolvimento: botão com ícone de frasco no canto inferior esquerdo. Além dos cenários, tem a seção **Estoque**: escolhe um NFT e uma edição (a lista mostra a situação e as unidades disponíveis) e "Marcar como esgotada" chama `POST /api/__mocks/nfts/:id/update` com `available: 0`, na hora e sem recarregar a página (um toast com "Desfazer" na tela continua lá). O campo "Novo preço (ETH)" com "Alterar preço" troca o preço da edição pela mesma rota (aceita vírgula ou ponto; valor inválido ou zero mostra o erro no campo). O painel não mexe no cache da aplicação: a tela mostra o estado novo pelo evento `nft.updated` do socket. No mobile é uma aba estreita colada à borda esquerda, na margem vazia da barra inferior (antes do ícone Início), para não cobrir conteúdo. O nome acessível traz quantos cenários estão ativos ("Cenários de teste (1 ativo)"). Escondido em navegador automatizado (`navigator.webdriver`); os testes do próprio painel desligam essa marca com `addInitScript`.
 3. API: `PUT /api/__mocks/scenario` com `{ "names": [...], "options": {...} }`.
 
 Opções: `routes` (limita os cenários de rede), `latencyMs` (do `slow`), `seed` (do `jitter`) e `settleMs` (prazo do pagamento). O "Aplicar" do painel troca só os cenários e mantém as opções em vigor. Um valor corrompido no `localStorage` é ignorado: a aplicação sobe sem cenário.
@@ -116,7 +116,9 @@ Sempre sem cenários de rede, para o painel e os testes funcionarem mesmo com `o
 | POST | `/api/__mocks/realtime/replay` | Reenvia o último `nft.updated` com o mesmo `eventId` (duplicado). Devolve `{ event }` |
 | POST | `/api/__mocks/realtime/stale` | Envia um `nft.updated` com `version` anterior à atual e um preço que nunca existiu (`{ nftId, price }`). Devolve `{ event }` |
 | POST | `/api/__mocks/realtime/disconnect` | Derruba as conexões e recusa novas por `downMs` (`{ downMs }`). Eventos desse intervalo se perdem |
-| GET | `/api/__mocks/realtime/peers` | Conexões abertas, com o `userId` de cada uma (`null` para visitante) |
+| POST | `/api/__mocks/realtime/auth-delay` | Atrasa por `ms` a leitura do CONNECT das próximas conexões (handshake lento): a conexão abre, mas não recebe nada até se autenticar. `{ "ms": 0 }` desliga; o reset também |
+| GET | `/api/__mocks/realtime/peers` | Conexões que já se autenticaram, com o `userId` de cada uma (`null` para visitante) |
+| GET | `/api/__mocks/realtime/log` | Últimos 50 envios `{ type, eventId, recipients }` (`recipients` = `userId` de quem recebeu). Zerado no reset |
 
 ## Reset
 

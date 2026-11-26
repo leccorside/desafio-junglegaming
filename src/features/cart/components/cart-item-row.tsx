@@ -172,9 +172,19 @@ export function CartItemRow({
         />
       </div>
 
-      <p className="col-start-2 row-start-3 pb-3 text-lead font-bold text-accent-foreground md:col-start-auto md:row-start-auto md:pb-0 md:text-body-lg">
-        <span className="sr-only">Total do item: </span>
-        {formatEth(lineTotal)}
+      {/* Esgotado não entra na cotação: mostrar o total da linha contradiria o resumo. */}
+      <p
+        data-line-total=""
+        className="col-start-2 row-start-3 pb-3 text-lead font-bold text-accent-foreground md:col-start-auto md:row-start-auto md:pb-0 md:text-body-lg"
+      >
+        {item.status === 'sold_out' ? (
+          <span className="sr-only">Esgotado, fora do total.</span>
+        ) : (
+          <>
+            <span className="sr-only">Total do item: </span>
+            {formatEth(lineTotal)}
+          </>
+        )}
       </p>
 
       <button

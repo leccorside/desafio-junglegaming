@@ -106,8 +106,9 @@ O carrinho não usa atualização otimista (decisão do Passo 7): o limite de qu
 Eventos atualizam o cache por `setQueryData` quando trazem o dado completo, ou por `invalidateQueries` quando não trazem. Regras de versão e duplicados em [REALTIME.md](REALTIME.md).
 
 - `nft.updated` traz preço e estoque das edições: `applyNftUpdated` grava direto no detalhe (`nftKeys.detail`), nas páginas da listagem (`['nfts','list']`), nos destaques e na lista de interesse, só onde a cópia tem `version` menor. Assim o preço muda na tela sem nova requisição.
-- O carrinho e a cotação não são recalculados no cliente: se o NFT está em algum carrinho do cache, os dois são invalidados e a API devolve o preço novo (com `previousUnitPrice`) e a cotação nova. O aviso compara o carrinho em cache com o evento; se o carrinho ainda não carregou, não há aviso, e a busca que já está em andamento traz o dado novo.
-- Na reconexão, `nfts`, `cart`, `quote` e `orders` são invalidados: o que mudou com a conexão fora volta pela API.
+- O carrinho e a cotação não são recalculados no cliente: se algum carrinho do cache tem o NFT numa versão mais antiga que a do evento, os dois são buscados de novo e a API devolve o preço novo (com `previousUnitPrice`) e a cotação nova. O aviso compara o carrinho da sessão atual com o evento; se o carrinho ainda não carregou, não há aviso.
+- `refreshQueries` cancela a primeira busca em andamento (query sem dado) antes de invalidar. O `invalidateQueries` sozinho reaproveita essa busca em vez de refazer: a resposta, calculada antes da mudança, chegava e apagava a marca de "velho", e o resumo ficava com a cotação antiga.
+- A cada conexão, o `realtime.sync` traz as versões do servidor, e só as queries com cópias de versão diferente são buscadas de novo (`nfts`, `favorites`, `cart`, `quote`); `orders` é sempre marcado como velho. Isso cobre reconexão, sessão nova, handshake lento e reset dos mocks sem duplicar requisições ao abrir a página.
 
 ## Sessão e troca de usuário
 

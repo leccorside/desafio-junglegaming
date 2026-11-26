@@ -3,8 +3,11 @@
 ## Transporte
 
 - Cliente: `socket.io-client` (`src/features/realtime/socket.ts`), conectado a `VITE_SOCKET_URL` (`ws://localhost/socket`). A URL vira origem `ws://localhost` e caminho `/socket/`, que o Socket.IO completa com `?EIO=4&transport=websocket`.
-- Servidor simulado: `src/mocks/socket/server.ts`, com `@mswjs/socket.io-binding` sobre o `ws.link` do MSW, registrado no mesmo worker da API REST. Ele lê o banco dos mocks: a cada `onDbChange`, compara as versões e emite `nft.updated` (para todos) quando a `version` de um NFT sobe, e `order.updated` (só para o dono) quando a de um pedido sobe. O reset do banco só ressincroniza as versões, sem emitir nada.
-- O usuário da conexão vem do `auth.token` do handshake (pacote `40{...}` do cliente), procurado nas sessões do banco. Sem token, ou com token revogado, a conexão é de visitante.
+- Servidor simulado: `src/mocks/socket/server.ts`, com `@mswjs/socket.io-binding` sobre o `ws.link` do MSW, registrado no mesmo worker da API REST. Ele lê o banco dos mocks: a cada `onDbChange`, compara as versões e emite `nft.updated` (para todos) quando a `version` de um NFT sobe, e `order.updated` (só para o dono) quando a de um pedido sobe. O `eventId` é `<recurso>-<id>-v<version>-e<época>`: a época sobe a cada reset dos mocks, porque as versões voltam às das fixtures e o mesmo `eventId` se repetiria.
+- O reset dos mocks (`onDbReset`) não emite nada: zera o último evento guardado e o log, ressincroniza as versões e manda um `realtime.sync` novo para cada conexão aberta. A aba aberta volta ao dado inicial sem recarregar.
+- Um timer (500 ms) decide os pagamentos vencidos (`settleDueOrders`). Antes só a próxima requisição REST decidia, e sem tráfego o `order.updated` não saía.
+- O usuário da conexão vem do `auth.token` do handshake (pacote `40{...}` do cliente), com as mesmas regras da API REST: sessão existente, não revogada e dentro da validade (`sessionUserId`). Token vencido vale como visitante, e a sessão é conferida de novo a cada envio com dono.
+- O binding confirma o CONNECT sozinho, mas a conexão só entra na lista de envio depois de o servidor ler o pacote do cliente (com o token). Em seguida recebe o `realtime.sync`.
 - Os testes disparam eventos pelo servidor simulado (rotas `/__mocks/...`, ver [MOCKS.md](MOCKS.md)). Nunca chamam setter, callback ou o cache direto.
 
 ### Limitações do transporte
@@ -26,6 +29,25 @@ Encontradas ao integrar o binding (versões `msw` 2.15 e `@mswjs/socket.io-bindi
 - Cada conexão tem o próprio registro de eventos (`createEventGate`), então nada da sessão anterior passa para a seguinte.
 - O visitante recebe só eventos públicos (`nft.updated`).
 - Reconexão automática do Socket.IO com espera de 500 ms a 3 s.
+
+## Sincronização (`realtime.sync`)
+
+Mensagem de controle, fora do envelope dos eventos (schema `realtimeSyncSchema`):
+
+```ts
+type RealtimeSync = {
+  nfts: Record<string, number>    // versão atual de cada NFT
+  orders: Record<string, number>  // versão atual dos pedidos do usuário da conexão
+}
+```
+
+O servidor manda a cada conexão (a primeira, a de uma sessão nova, cada reconexão) e no reset dos mocks. O cliente:
+
+1. Passa a usar essas versões como referência do porteiro (`gate.sync`): evento com versão menor ou igual é antigo, mesmo que esta conexão nunca o tenha visto. As versões são substituídas, não somadas, porque no reset elas voltam para trás.
+2. Compara com as cópias em cache (`reconcileWithServer`): detalhe, catálogo, destaques, lista de interesse e itens do carrinho (`nftVersion`). Busca de novo só o que tem versão diferente. Sem diferença, nada é buscado, e abrir a página não duplica requisições.
+3. Marca `['orders']` como velho (os pedidos ganham tela no Passo 10).
+
+Assim volta pela API o que mudou antes de a conexão abrir (página carregando, troca de sessão, handshake lento) ou durante uma queda.
 
 ## Envelope dos eventos
 
@@ -63,7 +85,8 @@ type NftUpdatedData = {
 Efeito no cliente (`applyNftUpdated`):
 
 - Atualiza o NFT no cache do detalhe, das páginas do catálogo, dos destaques e da lista de interesse, só onde a cópia tem `version` menor que a do evento.
-- Se o NFT está no carrinho, invalida o carrinho e a cotação e mostra um toast (região `aria-live` do Sonner) com o que mudou: "Violet Nomad #314 (edição aberta): o preço mudou de 1.39 ETH para 1.59 ETH. O resumo do carrinho foi atualizado.", "… esgotou." ou "… só N disponíveis.". O carrinho buscado de novo traz `previousUnitPrice`, e a linha do item mostra a mudança.
+- Se algum carrinho em cache tem o NFT numa versão mais antiga que a do evento (`nftVersion`), invalida carrinho e cotação. Evento atrasado em relação ao carrinho não avisa nem invalida nada. A invalidação cancela antes a primeira busca em andamento: sem isso o TanStack reaproveitava essa busca, calculada antes da mudança, e o resumo ficava com a cotação antiga.
+- O aviso diz o que mudou no carrinho da sessão atual (não soma o do visitante durante o merge do login): "Violet Nomad #314 (edição aberta): o preço mudou de 1.39 ETH para 1.59 ETH. O resumo do carrinho foi atualizado.", "… esgotou.", "… ficou indisponível." ou "… só N disponíveis.". Com a página do carrinho aberta, ele aparece no fluxo, acima da lista, numa região `role="status"` com o botão "Fechar aviso" (um toast no topo cobria o nome do primeiro item no mobile). Em outras telas, vira toast do Sonner. O carrinho buscado de novo traz `previousUnitPrice`, e a linha do item mostra a mudança. Item esgotado não mostra total na linha, porque fica fora da cotação.
 - No checkout (Passo 9), invalida a cotação atual. A confirmação fica bloqueada até o usuário revisar a nova cotação.
 
 ### `order.updated`
@@ -89,17 +112,19 @@ Efeito no cliente:
 - Para cada recurso, guarda a última `version` aplicada. Evento com versão menor ou igual é descartado.
 - Pedido em estado terminal (`confirmed` ou `rejected`) nunca volta para `pending`.
 - Efeitos colaterais (aviso, limpeza do carrinho) só rodam na primeira aplicação de um evento.
+- O evento só é registrado depois de aplicado. Se a aplicação falhar, uma reentrega tenta de novo. Cada listener de `order.updated` roda isolado: a falha de um não impede os seguintes.
 
 ## Isolamento por usuário
 
 - Evento com `userId` diferente do usuário da sessão atual é descartado.
 - O registro de eventos processados é zerado na troca de sessão.
+- O servidor não entrega evento de pedido a token vencido ou revogado, nem a uma conexão que ainda não se autenticou.
 
 ## Reconexão
 
-Ao reconectar (`socket.io.on('reconnect')`):
+Ao reconectar, pelo `realtime.sync` da nova conexão:
 
-1. Invalidar as queries de NFTs, carrinho, cotação e pedidos (`['orders']`). As que estão na tela buscam de novo na hora.
+1. Buscar de novo o que tem versão diferente da do servidor: NFTs, lista de interesse, carrinho e cotação. Pedidos são sempre marcados como velhos.
 2. Buscar os pedidos pendentes do usuário (`GET /orders?status=pending`) e atualizar o cache (Passo 10, junto com o fluxo de pedido).
 3. A versão vinda da API passa a ser a referência para os próximos eventos.
 

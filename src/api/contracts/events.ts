@@ -8,7 +8,20 @@ import { orderStatusSchema } from './order'
 export const REALTIME_EVENTS = {
   nftUpdated: 'nft.updated',
   orderUpdated: 'order.updated',
+  sync: 'realtime.sync',
 } as const
+
+/**
+ * Mensagem de controle enviada logo depois de cada conexão (e no reset dos
+ * mocks): as versões atuais dos NFTs e dos pedidos do usuário. O cliente
+ * compara com o que tem em cache, busca de novo o que está diferente e passa
+ * a usar essas versões como referência para descartar eventos antigos.
+ */
+export const realtimeSyncSchema = z.object({
+  nfts: z.record(idSchema, versionSchema),
+  orders: z.record(idSchema, versionSchema),
+})
+export type RealtimeSync = z.infer<typeof realtimeSyncSchema>
 
 /**
  * Envelope comum: identidade estável (`eventId`) para descartar duplicados,

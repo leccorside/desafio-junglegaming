@@ -7,11 +7,13 @@ import {
   type NftUpdatedEvent,
   type OrderUpdatedEvent,
   type RealtimeEvent,
+  type RealtimeSync,
 } from '@/api/contracts'
 import { env } from '@/lib/env'
 
-import { getDb, onDbChange } from '../db/store'
+import { getDb, onDbChange, onDbReset } from '../db/store'
 import type { DbOrder, DbState } from '../db/state'
+import { settleDueOrders } from '../services/orders'
 
 /**
  * Servidor Socket.IO simulado (MSW + `@mswjs/socket.io-binding`). Lê o mesmo
@@ -19,28 +21,51 @@ import type { DbOrder, DbState } from '../db/state'
  * `nft.updated` (para todos) ou `order.updated` (só para o dono). REST e
  * evento mostram o mesmo dado porque saem do mesmo estado.
  *
+ * Cada conexão só entra na lista de envio depois do pacote CONNECT do
+ * cliente (com o token) e recebe na hora um `realtime.sync` com as versões
+ * atuais, para o cliente buscar o que mudou antes de a conexão abrir.
+ *
  * Ver docs/REALTIME.md (limitações do transporte).
  */
 
 /** Intervalo dos pings do Engine.IO (o binding não manda; sem eles o cliente cai). */
 const PING_INTERVAL_MS = 20_000
+/** De quanto em quanto tempo o servidor decide os pagamentos vencidos (sem esperar REST). */
+const SETTLE_INTERVAL_MS = 500
+/** Quantos envios o log guarda (rota de teste `/__mocks/realtime/log`). */
+const LOG_SIZE = 50
 
 interface Peer {
   io: ReturnType<typeof toSocketIo>
   close: () => void
-  /** Usuário do token enviado no handshake (`auth.token`); `null` para visitante. */
+  /** Token do handshake (`auth.token`), conferido de novo a cada envio com dono. */
+  token: string | null
+  /** Usuário do token; `null` para visitante. */
   userId: string | null
   timer: ReturnType<typeof setInterval>
+}
+
+export interface SentEvent {
+  type: string
+  eventId: string
+  /** `userId` de cada conexão que recebeu (`null` = visitante). */
+  recipients: (string | null)[]
 }
 
 const peers = new Set<Peer>()
 /** Até quando o servidor recusa conexões (queda simulada). */
 let downUntil = 0
+/** Atraso para ler o CONNECT do cliente (handshake lento, rota de teste). */
+let authDelayMs = 0
 /** Últimas versões vistas, para emitir só o que mudou. */
 let nftVersions = new Map<string, number>()
 let orderVersions = new Map<string, number>()
 /** Último `nft.updated` emitido (para reenviar como duplicado nos testes). */
 let lastNftEvent: NftUpdatedEvent | null = null
+/** Sobe a cada reset: as versões voltam para trás, e o `eventId` não pode se repetir. */
+let epoch = 0
+let sentLog: SentEvent[] = []
+let settleTimer: ReturnType<typeof setInterval> | null = null
 
 const socketUrl = new URL(env.socketUrl)
 /** `ws://localhost/socket` → o Socket.IO conecta em `ws://localhost/socket/?EIO=4...`. */
@@ -50,15 +75,20 @@ export const SOCKET_PATH = `${socketUrl.pathname.replace(/\/$/, '')}/`
 // Caminho exato: a query do Engine.IO (`?EIO=4&transport=websocket`) não entra na comparação.
 const realtime = ws.link(`${SOCKET_ORIGIN}${SOCKET_PATH}`)
 
-function userFromToken(token: unknown): string | null {
+/**
+ * Usuário de um token, com as mesmas regras da API REST: sessão existente,
+ * não revogada e dentro da validade. Token vencido vale como visitante.
+ */
+export function sessionUserId(token: unknown, now = Date.now()): string | null {
   if (typeof token !== 'string') return null
-  const session = getDb().sessions.find((s) => s.token === token && !s.revoked)
-  return session ? session.userId : null
+  const session = getDb().sessions.find((s) => s.token === token)
+  if (!session || session.revoked || Date.parse(session.expiresAt) <= now) return null
+  return session.userId
 }
 
 export function nftEvent(nft: Nft): NftUpdatedEvent {
   return {
-    eventId: `nft-${nft.id}-v${nft.version}`,
+    eventId: `nft-${nft.id}-v${nft.version}-e${epoch}`,
     type: REALTIME_EVENTS.nftUpdated,
     resource: { type: 'nft', id: nft.id },
     version: nft.version,
@@ -79,7 +109,7 @@ export function nftEvent(nft: Nft): NftUpdatedEvent {
 
 function orderEvent(order: DbOrder): OrderUpdatedEvent {
   return {
-    eventId: `order-${order.id}-v${order.version}`,
+    eventId: `order-${order.id}-v${order.version}-e${epoch}`,
     type: REALTIME_EVENTS.orderUpdated,
     resource: { type: 'order', id: order.id },
     version: order.version,
@@ -94,12 +124,36 @@ function orderEvent(order: DbOrder): OrderUpdatedEvent {
   }
 }
 
-/** Envia para quem pode receber: eventos públicos para todos, de pedido só para o dono. */
+/**
+ * Envia para quem pode receber: eventos públicos para todos, de pedido só
+ * para o dono, com a sessão conferida agora (vencida ou revogada depois da
+ * conexão deixa de receber).
+ */
 export function broadcast(event: RealtimeEvent) {
+  const recipients: (string | null)[] = []
   for (const peer of peers) {
-    if (event.userId !== null && event.userId !== peer.userId) continue
+    if (event.userId !== null) {
+      peer.userId = sessionUserId(peer.token)
+      if (peer.userId !== event.userId) continue
+    }
     peer.io.client.emit(event.type, event)
+    recipients.push(peer.userId)
   }
+  sentLog = [...sentLog, { type: event.type, eventId: event.eventId, recipients }].slice(-LOG_SIZE)
+}
+
+function syncPayload(userId: string | null): RealtimeSync {
+  const state = getDb()
+  return {
+    nfts: Object.fromEntries(state.nfts.map((n) => [n.id, n.version])),
+    orders: Object.fromEntries(
+      state.orders.filter((o) => userId && o.userId === userId).map((o) => [o.id, o.version]),
+    ),
+  }
+}
+
+function sendSync(peer: Peer) {
+  peer.io.client.emit(REALTIME_EVENTS.sync, syncPayload(peer.userId))
 }
 
 function snapshot(state: DbState) {
@@ -107,7 +161,21 @@ function snapshot(state: DbState) {
   orderVersions = new Map(state.orders.map((o) => [o.id, o.version]))
 }
 
-/** A cada mudança no banco: emite o que subiu de versão. Reset (versões menores) só ressincroniza. */
+/**
+ * Reset dos mocks: as versões voltam às das fixtures. Nada é emitido (não é
+ * uma mudança de dado); cada conexão recebe um `realtime.sync` novo e o
+ * cliente busca de novo o que ficou diferente.
+ */
+onDbReset((state) => {
+  epoch += 1
+  lastNftEvent = null
+  sentLog = []
+  authDelayMs = 0
+  snapshot(state)
+  for (const peer of peers) sendSync(peer)
+})
+
+/** A cada mudança no banco: emite o que subiu de versão. */
 onDbChange((state) => {
   for (const nft of state.nfts) {
     const before = nftVersions.get(nft.id)
@@ -122,6 +190,14 @@ onDbChange((state) => {
   }
   snapshot(state)
 })
+
+/**
+ * O pedido é decidido no `settleAt`. Antes só a próxima requisição REST
+ * decidia; com o timer, o `order.updated` sai na hora mesmo sem tráfego.
+ */
+function startSettleTimer() {
+  settleTimer ??= setInterval(() => settleDueOrders(), SETTLE_INTERVAL_MS)
+}
 
 export const socketHandlers = [
   realtime.addEventListener('connection', (connection) => {
@@ -140,27 +216,42 @@ export const socketHandlers = [
       return
     }
     if (nftVersions.size === 0) snapshot(getDb())
+    startSettleTimer()
     const io = toSocketIo(connection)
     const peer: Peer = {
       io,
       close: () => connection.client.close(),
+      token: null,
       userId: null,
       timer: setInterval(() => connection.client.send('2'), PING_INTERVAL_MS),
     }
-    peers.add(peer)
+    let closed = false
 
-    // O pacote CONNECT do cliente ("40{...}") traz o `auth` do Socket.IO.
+    // O binding confirma o CONNECT sozinho, mas o usuário só se sabe pelo
+    // pacote do cliente ("40{...}", com o `auth`). Antes dele a conexão não
+    // recebe nada; depois, entra na lista e recebe as versões atuais.
+    const join = (token: string | null) => {
+      if (closed) return
+      peer.token = token
+      peer.userId = sessionUserId(token)
+      peers.add(peer)
+      sendSync(peer)
+    }
     connection.client.addEventListener('message', (event) => {
       const data = event.data
       if (typeof data !== 'string' || !data.startsWith('40')) return
+      let token: string | null = null
       try {
         const auth = JSON.parse(data.slice(2) || '{}') as { token?: unknown }
-        peer.userId = userFromToken(auth.token)
+        token = typeof auth.token === 'string' ? auth.token : null
       } catch {
-        peer.userId = null
+        token = null
       }
+      if (authDelayMs > 0) setTimeout(() => join(token), authDelayMs)
+      else join(token)
     })
     connection.client.addEventListener('close', () => {
+      closed = true
       clearInterval(peer.timer)
       peers.delete(peer)
     })
@@ -200,6 +291,18 @@ export function dropConnections(downMs: number) {
   return { dropped: true, downMs }
 }
 
+/** Atrasa a leitura do CONNECT das próximas conexões (handshake lento). `0` desliga. */
+export function setAuthDelay(ms: number) {
+  authDelayMs = ms
+  return { authDelayMs }
+}
+
+/** Conexões que já passaram do CONNECT (as que recebem eventos). */
 export function connectedPeers() {
   return [...peers].map((peer) => ({ userId: peer.userId }))
+}
+
+/** Últimos envios, do mais antigo ao mais novo. Zerado no reset. */
+export function sentEvents(): SentEvent[] {
+  return sentLog
 }

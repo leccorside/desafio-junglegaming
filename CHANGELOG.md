@@ -6,6 +6,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Painel de cenários: campo "Novo preço (ETH)" com "Alterar preço" na seção "Estoque".
+- Sincronização a cada conexão (`realtime.sync`): o servidor manda as versões atuais e o cliente busca de novo só o que está diferente no cache. Cobre página carregando, troca de sessão, reconexão e reset dos mocks.
+- Rotas de teste `/__mocks/realtime/auth-delay` (handshake lento) e `/__mocks/realtime/log` (envios recentes).
 - Tempo real com Socket.IO: servidor simulado com `@mswjs/socket.io-binding` que emite `nft.updated` quando um NFT muda no banco dos mocks e `order.updated` só para o dono do pedido. O cliente (`socket.io-client`) conecta por sessão (visitante ou conta), fecha no logout e na troca de conta antes de reiniciar o cache, e ignora eventos duplicados, antigos e de outro usuário.
 - Preço e estoque mudam na hora no catálogo, no detalhe, nos destaques e na lista de interesse, sem nova requisição. Com o NFT no carrinho, um aviso conta o que mudou e o carrinho e o resumo são buscados de novo.
 - Reconexão automática que busca pela API o que mudou com a conexão fora.
@@ -62,6 +65,20 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Depois do reset dos mocks sem recarregar, a aba deixava de receber eventos (`eventId` e versões repetidos).
+- O socket simulado aceitava token vencido e continuava entregando eventos de pedido a ele.
+- O reset não limpava o servidor simulado: o reenvio de teste devolvia um evento de antes do reset.
+- Um evento atrasado gerava aviso de preço falso no carrinho e buscava o carrinho à toa.
+- A lista de interesse não era reconciliada depois de uma queda de conexão.
+- Pagamento vencido só era decidido na próxima requisição REST; agora o servidor decide sozinho e o `order.updated` sai na hora.
+- Mudança feita antes de a conexão abrir (troca de sessão, handshake lento) se perdia sem aviso.
+- Evento emitido antes de a conexão se autenticar podia não chegar ao dono.
+- Edição indisponível era anunciada como "esgotou".
+- Evento marcado como aplicado antes de aplicar, e a falha de um listener de pedido impedia os seguintes.
+- O aviso podia repetir a mesma frase quando o carrinho do visitante e o da conta estavam em cache.
+- O resumo do carrinho podia ficar com a cotação antiga quando a mudança chegava durante a primeira busca da cotação.
+- No carrinho, o aviso de mudança fica acima da lista, em vez de um toast por cima do nome do item no mobile.
+- Item esgotado não mostra mais total na linha (o resumo já o deixava de fora).
 - Carrinho (achados do code review do Passo 7):
   - resposta mais antiga de uma mudança não sobrescreve mais a mais nova no cache (`writeCart` compara a `version`);
   - o "Desfazer" da remoção avisa se o item voltou ou se não dá para devolver (antes rodava num componente já desmontado e não mostrava nada), e o toast com ele fica 10 s na tela (o padrão de 4 s era pouco para decidir);

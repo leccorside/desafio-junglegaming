@@ -7,8 +7,8 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 
-import type { AddCartItemRequest, Cart, Network } from '@/api/contracts'
-import { useSession } from '@/features/auth/session-store'
+import type { AddCartItemRequest, Cart, Network, Session } from '@/api/contracts'
+import { getSession, useSession } from '@/features/auth/session-store'
 
 import { cartApi } from './api'
 import { cartKeys, quoteKeys, writeCart } from './cart-cache'
@@ -29,9 +29,16 @@ export { cartKeys, quoteKeys }
  */
 export const CART_QUOTE_NETWORK: Network = 'ethereum'
 
+const ownerOf = (session: Session | null) =>
+  session ? `user:${session.user.id}` : `guest:${getGuestCartId()}`
+
 export function useCartOwner(): string {
-  const session = useSession()
-  return session ? `user:${session.user.id}` : `guest:${getGuestCartId()}`
+  return ownerOf(useSession())
+}
+
+/** Dono do carrinho da sessão atual, fora do React (tempo real). */
+export function currentCartOwner(): string {
+  return ownerOf(getSession())
 }
 
 export const cartQuery = (owner: string) =>

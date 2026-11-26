@@ -1,4 +1,4 @@
-import type { RealtimeEvent } from '@/api/contracts'
+import type { RealtimeEvent, RealtimeSync } from '@/api/contracts'
 
 /** Quantos `eventId` lembrar (janela limitada, os mais antigos saem). */
 const MAX_REMEMBERED = 500
@@ -33,6 +33,18 @@ export function createEventGate(sessionUserId: string | null) {
       }
       const key = `${event.resource.type}:${event.resource.id}`
       versions.set(key, Math.max(versions.get(key) ?? 0, event.version))
+    },
+    /**
+     * Versões atuais do servidor (`realtime.sync`, a cada conexão e no reset
+     * dos mocks) passam a ser a referência: um evento com versão menor ou
+     * igual é antigo, mesmo que esta conexão nunca o tenha visto. Substitui o
+     * que havia, porque no reset as versões voltam para trás.
+     */
+    sync(current: RealtimeSync) {
+      versions.clear()
+      for (const [id, version] of Object.entries(current.nfts)) versions.set(`nft:${id}`, version)
+      for (const [id, version] of Object.entries(current.orders))
+        versions.set(`order:${id}`, version)
     },
   }
 }
