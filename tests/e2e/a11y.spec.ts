@@ -320,6 +320,9 @@ test.describe('acessibilidade: teclado e foco', () => {
     await expect(menu).toBeVisible()
     const items = await menu.getByRole('menuitem').count()
     expect(items).toBeGreaterThan(2)
+    // Espera o primeiro item receber o foco (o Radix foca o item depois de abrir).
+    await expect(menu.getByRole('menuitem').first()).toBeFocused()
+    const focusedName = () => page.evaluate(() => document.activeElement?.textContent?.trim() ?? '')
     const seen = new Set<string>()
     for (let i = 0; i < items; i += 1) {
       const state = await page.evaluate(() => {
@@ -338,11 +341,45 @@ test.describe('acessibilidade: teclado e foco', () => {
       expect(state.ring, state.name).toBe(true)
       expect(state.highlighted, state.name).toBe(true)
       seen.add(state.name)
+      if (i === items - 1) break
       await page.keyboard.press('ArrowDown')
+      // Só lê o próximo depois de o foco andar (sob carga, a leitura podia vir antes).
+      await expect.poll(focusedName).not.toBe(state.name)
     }
+    expect([...seen]).toHaveLength(items)
     expect(seen.has('Sair')).toBe(true)
     await page.keyboard.press('Escape')
     await expect(page.getByRole('button', { name: /^Conta de/ })).toBeFocused()
+  })
+
+  test('menu lateral do mobile abre com o foco em "Início", não em "Sair"', async ({ page }) => {
+    test.skip(!isMobileViewport(page), 'Menu lateral do mobile')
+    for (const logged of [false, true]) {
+      if (logged) await loginViaUi(page, 'ana@example.com')
+      await page.goto('/')
+      await settled(page)
+      const open = page
+        .getByRole('navigation', { name: 'Navegação inferior' })
+        .getByRole('button', { name: 'Abrir menu' })
+      await open.focus()
+      await page.keyboard.press('Enter')
+      const menu = page.getByRole('dialog')
+      await expect(menu).toBeVisible()
+      await expect(menu.getByRole('link', { name: 'Início' })).toBeFocused()
+      if (logged) {
+        // Enter de novo não sai da conta: leva ao início e fecha o menu.
+        await expect(menu.getByRole('button', { name: 'Sair' })).not.toBeFocused()
+        await page.keyboard.press('Enter')
+        await expect(menu).toBeHidden()
+        await expect(page.getByText('Você saiu da sua conta.')).toHaveCount(0)
+        await expect(page.getByRole('link', { name: 'Perfil' }).last()).toBeVisible()
+        expect(await page.evaluate(() => localStorage.getItem('kurio:session'))).not.toBeNull()
+      } else {
+        await page.keyboard.press('Escape')
+        await expect(menu).toBeHidden()
+        await expect(open).toBeFocused()
+      }
+    }
   })
 
   test('sair da conta: foco no "Entrar" do header (desktop) ou no título da tela (mobile)', async ({

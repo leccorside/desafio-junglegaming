@@ -52,6 +52,17 @@ export function MobileMenu({ trigger }: MobileMenuProps) {
       <SheetContent
         side="left"
         className="w-72 border-border bg-card p-0"
+        // Foco inicial no primeiro link do menu ("Início"). O Radix pula links
+        // no foco automático, e o primeiro botão que sobrava era o "Sair": um
+        // Enter a mais tirava a pessoa da conta.
+        onOpenAutoFocus={(event) => {
+          const first = (event.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>(
+            'nav[aria-label="Menu"] a[href]',
+          )
+          if (!first) return
+          event.preventDefault()
+          first.focus()
+        }}
         onCloseAutoFocus={(event) => {
           if (!signingOut.current) return
           signingOut.current = false

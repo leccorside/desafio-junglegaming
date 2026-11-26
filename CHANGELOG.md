@@ -85,6 +85,8 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Menu lateral do mobile abria com o foco no "Sair" (um Enter a mais saía da conta); agora abre no "Início".
+
 - Senha e nome de usuário mostravam uma regra por vez a cada tentativa. Agora o erro lista de uma vez tudo o que falta ("A senha precisa de: uma letra maiúscula e um símbolo.", "Use pelo menos 3 caracteres e só letras, números, ponto, hífen e sublinhado ("!" não vale).") no cadastro, na troca de senha e na API simulada.
 
 - Cadastro e login pelo teclado (demonstração no desktop):
