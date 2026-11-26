@@ -60,7 +60,7 @@ Implementados em `shouldRetry` e `retryDelay` (`src/lib/query-client.ts`):
 - Queries: até 2 novas tentativas (`MAX_QUERY_RETRIES`), só quando o `ApiError` tem `retryable: true`. Isso vale para rede (`NETWORK_ERROR`), 5xx e 503 (`SERVICE_UNAVAILABLE`). Nunca para 4xx.
 - Timeout (`TIMEOUT`, 15 s no Axios): só 1 nova tentativa (`MAX_TIMEOUT_RETRIES`). Cada tentativa já custa os 15 s inteiros; com 2 repetições, o erro levava cerca de 47 s para aparecer, e agora leva cerca de 31 s. Enquanto a nova tentativa roda, o catálogo troca "Carregando NFTs…" por "O servidor está demorando para responder. Ainda estamos tentando…" (`isTimeoutError(query.failureReason)`, que o TanStack Query zera a cada busca nova).
 - Backoff exponencial: 0,5 s, 1 s, 2 s, com teto de 4 s.
-- Mutations: sem retry automático (`retry: false`). A criação de pedido (`usePlaceOrder`) repete por conta própria até 2 vezes, com a mesma `Idempotency-Key`, em `TIMEOUT`, `NETWORK_ERROR` ou `SERVICE_UNAVAILABLE`; se o pedido já tinha sido criado, a API devolve o mesmo (200).
+- Mutations: sem retry automático (`retry: false`). A criação de pedido (`usePlaceOrder`) repete por conta própria até 2 vezes, com a mesma `Idempotency-Key`, em `TIMEOUT`, `NETWORK_ERROR` ou `SERVICE_UNAVAILABLE`; se o pedido já tinha sido criado, a API devolve o mesmo (200). Sem resposta em 5 s (`ORDER_SLOW_MS`), a fase vira `slow` e a revisão mostra "Ainda enviando…".
 - `SESSION_EXPIRED` e `UNAUTHENTICATED` não se repetem: disparam o fluxo de expiração de sessão ([SECURITY.md](SECURITY.md)).
 
 ## Erros

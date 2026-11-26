@@ -123,9 +123,11 @@ export function ReviewDialog({
         <p role="status" className="text-body-sm text-muted-foreground empty:hidden">
           {phase === 'retrying'
             ? 'O servidor está demorando. Tentando de novo com a mesma compra, sem risco de cobrança duplicada…'
-            : phase === 'sending'
-              ? 'Enviando o pedido…'
-              : ''}
+            : phase === 'slow'
+              ? 'Ainda enviando…'
+              : phase === 'sending'
+                ? 'Enviando o pedido…'
+                : ''}
         </p>
         {problem ? (
           <p role="alert" className="text-body-sm text-destructive-foreground">

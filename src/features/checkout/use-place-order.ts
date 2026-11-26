@@ -13,7 +13,10 @@ const RETRY_DELAY_MS = 500
 
 const RETRYABLE = new Set(['TIMEOUT', 'NETWORK_ERROR', 'SERVICE_UNAVAILABLE'])
 
-export type PlaceOrderPhase = 'idle' | 'sending' | 'retrying' | 'done'
+/** Depois disto sem resposta, a revisão avisa "Ainda enviando…" (o timeout é de 15 s). */
+export const ORDER_SLOW_MS = 5000
+
+export type PlaceOrderPhase = 'idle' | 'sending' | 'slow' | 'retrying' | 'done'
 
 /** Gera a chave da tentativa (UUID v4; o contrato exige UUID). */
 function newKey(): string {
@@ -43,6 +46,19 @@ export function usePlaceOrder() {
 
     const run = async (): Promise<Order> => {
       setPhase('sending')
+      // Sem resposta em 5 s, a tela avisa que ainda está enviando (antes, ficava
+      // 15 s só com "Enviando o pedido…" até a nova tentativa).
+      const slowTimer = setTimeout(() => {
+        setPhase((current) => (current === 'sending' ? 'slow' : current))
+      }, ORDER_SLOW_MS)
+      try {
+        return await send()
+      } finally {
+        clearTimeout(slowTimer)
+      }
+    }
+
+    const send = async (): Promise<Order> => {
       for (let attempt = 0; ; attempt += 1) {
         try {
           const order = await ordersApi.create(body, key)

@@ -380,3 +380,54 @@ test.describe('pagamento: ajustes da demonstração', () => {
     expect(await overflowing(page, 'main')).toEqual([])
   })
 })
+
+test.describe('pagamento: envio demorado', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await waitForApp(page)
+    await resetMocks(page)
+  })
+
+  test('envio sem resposta: "Ainda enviando…" depois de 5 s, antes da nova tentativa com a mesma chave', async ({
+    page,
+  }) => {
+    await openCheckout(page)
+    const before = (await orders(page)).length
+    await setScenario(page, ['order-timeout'], { settleMs: 60_000 })
+    // Relógio controlado: 5 s e 15 s passam sem esperar de verdade.
+    await page.clock.install()
+    await page.reload()
+    await waitForApp(page)
+    await expect(page.getByRole('button', { name: 'Confirmar compra' })).toBeEnabled()
+    await openReview(page)
+    const dialog = reviewDialog(page)
+    const posts = orderPosts(page)
+    await dialog.getByRole('button', { name: 'Confirmar e pagar' }).click()
+    const status = dialog.getByRole('status')
+
+    await expect(status).toHaveText('Enviando o pedido…')
+    await page.clock.runFor(4_000)
+    await expect(status).toHaveText('Enviando o pedido…')
+
+    await page.clock.runFor(1_500)
+    await expect(status).toHaveText('Ainda enviando…')
+    await expect(dialog.getByRole('button', { name: 'Enviando…' })).toBeDisabled()
+    expect(posts).toHaveLength(1)
+
+    // Aos 15 s o timeout estoura e a nova tentativa sai, com a mesma chave.
+    await page.clock.runFor(10_000)
+    await expect(page).toHaveURL(/\/orders\/ord-/)
+    expect(posts).toHaveLength(2)
+    expect(posts[0]).toBe(posts[1])
+    expect((await orders(page)).length).toBe(before + 1)
+  })
+
+  test('envio rápido não mostra "Ainda enviando…"', async ({ page }) => {
+    await openCheckout(page)
+    await openReview(page)
+    await page.clock.install()
+    await reviewDialog(page).getByRole('button', { name: 'Confirmar e pagar' }).click()
+    await expect(page).toHaveURL(/\/orders\/ord-/)
+    expect(await page.getByText('Ainda enviando…').count()).toBe(0)
+  })
+})
