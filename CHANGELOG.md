@@ -78,6 +78,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Pedido: a linha da carteira dizia "Pago com" também no pendente e no recusado; agora é "Carteira usada:" nesses dois e "Pago com" só no confirmado.
 - Pedido confirmado pela consulta à API (evento perdido numa queda): o contador do carrinho ficava com os itens comprados; agora carrinho e cotação são buscados de novo.
 - Aviso de queda em uma linha no mobile ("Reconectando… Os preços podem ter mudado."), sem cobrir o título da página.
 - Pagamento: a revisão no mobile ficava mais larga que a tela e cortava preços, totais e botões.

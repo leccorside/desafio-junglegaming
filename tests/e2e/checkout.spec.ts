@@ -84,8 +84,12 @@ test.describe('pagamento e pedido', () => {
     await expect(
       page.getByRole('heading', { name: 'Aguardando a confirmação do pagamento' }),
     ).toBeVisible()
+    // "Pago com" só depois da confirmação: pendente ainda não cobrou nada.
+    const wallet = page.locator('[data-order-wallet]')
+    await expect(wallet).toHaveText('Carteira usada: Carteira principal · Rede Ethereum')
     await expect(page.getByRole('heading', { name: 'Pagamento confirmado' })).toBeVisible()
     await expect(page.getByText('Transação (simulada)')).toBeVisible()
+    await expect(wallet).toHaveText('Pago com Carteira principal · Rede Ethereum')
     expect((await orders(page)).length).toBe(before + 1)
     const cart = (await apiFetch(page, 'GET', '/cart', { token: await token(page) })).json as {
       items: unknown[]
@@ -105,6 +109,10 @@ test.describe('pagamento e pedido', () => {
     await expect(
       page.getByText(/O pagamento foi recusado pela carteira. Nenhum valor foi cobrado./),
     ).toBeVisible()
+    await expect(page.locator('[data-order-wallet]')).toHaveText(
+      'Carteira usada: Carteira principal · Rede Ethereum',
+    )
+    expect(await page.getByText(/Pago com/).count()).toBe(0)
     const cart = (await apiFetch(page, 'GET', '/cart', { token: await token(page) })).json as {
       items: { quantity: number }[]
     }

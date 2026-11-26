@@ -179,8 +179,10 @@ function OrderStatus({ order }: { order: Order }) {
           expiresAt: order.updatedAt,
         }}
       />
-      <p className="text-body-sm text-muted-foreground">
-        Pago com {snapshot.wallet.label} · Rede {NETWORK_LABELS[snapshot.network]}
+      {/* "Pago com" só quando houve pagamento: pendente e recusado não cobraram nada. */}
+      <p data-order-wallet="" className="text-body-sm text-muted-foreground">
+        {order.status === 'confirmed' ? 'Pago com' : 'Carteira usada:'} {snapshot.wallet.label} ·
+        Rede {NETWORK_LABELS[snapshot.network]}
       </p>
 
       <div className="flex flex-col gap-3 md:flex-row">
