@@ -113,7 +113,7 @@ Como ficou (Passo 10):
 
 Como ficou (Passo 11):
 
-- `/orders/$orderId` confirmado mostra o recibo do Figma num cartão: ícone de agradecimento, "Pagamento confirmado", "Seus NFTs agora estão na sua carteira" e o número do pedido; a faixa com ID da transação (abreviado, `0xA91F…E82C`, inteiro no `title`), data, total e tipo de carteira; "Detalhes da transação" com cada item (imagem, nome, ID do token e edição, quantidade, subtotal), desconto quando houve cupom, taxa de rede e total; a nota "Transação confirmada na Ethereum (simulada)…" (com a rede do pedido) e "Ver no Etherscan" (Polygonscan ou Solscan, conforme a rede), em nova aba.
+- `/orders/$orderId` confirmado mostra o recibo do Figma num cartão: ícone de agradecimento, "Pagamento confirmado", "Seus NFTs agora estão na sua carteira" e o número do pedido; a faixa com ID da transação (abreviado, `0xA91F…E82C`, inteiro no `title`), data, total e tipo de carteira; "Detalhes da transação" com cada item (imagem, nome, ID do token e, na linha de baixo, a edição, quantidade, subtotal), desconto quando houve cupom, taxa de rede e total com "Valores do momento da compra"; a nota "Transação confirmada na Ethereum (simulada)…" (com a rede do pedido) e "Ver no Etherscan" (Polygonscan ou Solscan, conforme a rede), em nova aba.
 - Tudo vem do `Order.snapshot`. Preço ou nome mudados depois no catálogo, pelo tempo real ou com refresh, não mexem no recibo.
 - Pendente e recusado não têm recibo nem transação. Pedido de outra conta volta 404 da API e aparece como "Pedido não encontrado."; visitante vai para o login.
 - Abaixo do cartão, "Ver carrinho" (com o que sobrou) e "Continuar explorando". O X do cartão volta ao início.

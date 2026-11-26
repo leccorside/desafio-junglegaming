@@ -108,10 +108,20 @@ export function OrderReceipt({ order }: { order: Order }) {
                 <p className="line-clamp-2 text-body-lg leading-5 font-bold break-words text-foreground">
                   {item.name}
                 </p>
-                {/* Quebra em vez de cortar: a edição diferencia linhas do mesmo NFT. */}
-                <p data-item-meta="" className="text-body-sm leading-4 text-secondary">
-                  ID do token: #{item.tokenId} · Edição{' '}
-                  {item.editionName === 'Aberta' ? 'aberta' : item.editionName}
+                {/* Token e edição em linhas próprias (a edição diferencia linhas do
+                    mesmo NFT). Numa linha só, a coluna estreita partia o texto e
+                    deixava "aberta" ou o "·" sozinhos. */}
+                <p
+                  data-item-meta=""
+                  className="flex flex-col gap-1 text-body-sm leading-4 text-secondary"
+                >
+                  <span data-item-token="" className="whitespace-nowrap">
+                    ID do token: #{item.tokenId}
+                  </span>
+                  <span className="sr-only">, </span>
+                  <span data-item-edition="" className="whitespace-nowrap">
+                    Edição {item.editionName === 'Aberta' ? 'aberta' : item.editionName}
+                  </span>
                 </p>
               </div>
               <p className="col-start-2 flex items-center justify-between gap-3 self-start md:col-start-3 md:row-start-1 md:justify-end md:gap-12 md:self-center">
@@ -138,7 +148,13 @@ export function OrderReceipt({ order }: { order: Order }) {
             />
           )}
           <SummaryRow label="Taxa de rede" value={formatEth(snapshot.networkFee)} />
-          <SummaryRow label="Total" value={formatEth(snapshot.total)} strong />
+          {/* O recibo guarda o que foi pago: deixa claro que o catálogo pode ter mudado. */}
+          <SummaryRow
+            label="Total"
+            value={formatEth(snapshot.total)}
+            hint="Valores do momento da compra"
+            strong
+          />
         </dl>
 
         <div className="mt-3 flex flex-col items-start gap-8 border-t border-primary pt-3 md:gap-12">

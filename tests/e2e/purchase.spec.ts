@@ -238,6 +238,44 @@ test.describe('compra completa e recibo', () => {
     expect(await page.getByText(/ID da transação|Ver no Etherscan|Pago com/).count()).toBe(0)
   })
 
+  test('recibo: token e edição em duas linhas e "Valores do momento da compra" abaixo do total', async ({
+    page,
+    isMobile,
+  }) => {
+    const orderId = await buyEmeraldApe(page, isMobile)
+    await expectReceiptMatches(page, await orderById(page, orderId))
+
+    const item = receipt(page).locator('[data-receipt-item]').first()
+    const token = item.locator('[data-item-token]')
+    const edition = item.locator('[data-item-edition]')
+    await expect(token).toHaveText('ID do token: #0042')
+    await expect(edition).toHaveText('Edição aberta')
+    const [tokenBox, editionBox] = [(await token.boundingBox())!, (await edition.boundingBox())!]
+    // Cada parte numa linha só (16 px de altura de linha), nunca partida no meio.
+    expect(tokenBox.height).toBeLessThan(20)
+    expect(editionBox.height).toBeLessThan(20)
+    // Edição na linha de baixo, alinhada ao token, nos dois tamanhos.
+    expect(editionBox.y).toBeGreaterThanOrEqual(tokenBox.y + tokenBox.height)
+    expect(Math.abs(editionBox.x - tokenBox.x)).toBeLessThan(1)
+    // Leitor de tela ouve as duas partes separadas.
+    await expect(item.locator('[data-item-meta]')).toHaveText('ID do token: #0042, Edição aberta')
+
+    const totals = receipt(page).locator('dl[aria-label="Totais do pedido"]')
+    const hint = totals.getByText('Valores do momento da compra', { exact: true })
+    await expect(hint).toBeVisible()
+    const totalLabel = totals.locator('dt', { hasText: /^Total$/ })
+    const [hintBox, totalBox] = [(await hint.boundingBox())!, (await totalLabel.boundingBox())!]
+    expect(hintBox.y).toBeGreaterThanOrEqual(totalBox.y + totalBox.height)
+
+    // Com o preço mudado no catálogo, o aviso e os valores continuam.
+    await apiFetch(page, 'POST', '/__mocks/nfts/nft-042/update', {
+      body: { editionId: 'nft-042-open', price: '2.50' },
+    })
+    await page.waitForTimeout(800)
+    await expect(hint).toBeVisible()
+    await expect(totals.locator('dd')).toHaveText(['0.016 ETH', '2.396 ETH'])
+  })
+
   test('visitante que abre o recibo vai para o login', async ({ page }) => {
     await page.goto('/orders/ord-0001')
     await expect(page).toHaveURL(/\/login\?redirect=%2Forders%2Ford-0001/)
