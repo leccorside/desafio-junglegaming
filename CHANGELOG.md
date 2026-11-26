@@ -85,6 +85,13 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Compra pelo teclado (demonstração no mobile):
+  - o foco caía no topo depois de "Adicionar ao carrinho" (o botão agora fica com `aria-disabled` durante o envio);
+  - o "Ver carrinho" do toast não mostrava foco;
+  - o carrinho aberto pelo toast ficava com o foco no rodapé (o título agora segura o foco);
+  - a aba continuava "Aguardando a confirmação do pagamento" no recibo;
+  - a edição saía cortada ("Edição a…") no pagamento e na revisão.
+
 - Acessibilidade apontada pelo axe e pelos testes de teclado:
   - listas de valores (`dl`) com `div` aninhado, no carrinho, no pagamento, na revisão e no recibo;
   - nome do link "NFT em destaque" e do menu da conta diferente do texto visível;

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QuoteTotals } from '@/features/checkout/components/checkout-summary'
 import { formatEth } from '@/lib/eth'
+import { pageTitle } from '@/lib/page-title'
 import { nftImageSources } from '@/lib/images'
 import { cn } from '@/lib/utils'
 
@@ -99,10 +100,12 @@ function useKeepHeadingFocus(status: Order['status'] | undefined) {
     const changed = previous.current !== undefined && previous.current !== status
     previous.current = status
     if (!changed) return
-    const active = document.activeElement
-    if (active && active !== document.body) return
     const heading = document.getElementById('order-title')
     if (!heading) return
+    // O endereço não muda (o RouteFocus não roda): a aba acompanha a situação.
+    document.title = pageTitle(heading.textContent)
+    const active = document.activeElement
+    if (active && active !== document.body) return
     heading.setAttribute('tabindex', '-1')
     heading.focus({ preventScroll: true })
   }, [status])

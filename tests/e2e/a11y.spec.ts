@@ -413,7 +413,108 @@ test.describe('acessibilidade: teclado e foco', () => {
     await expect(receiptTitle).toBeVisible({ timeout: 15_000 })
     // O título do recibo substitui o de "aguardando" e fica com o foco.
     await expect(receiptTitle).toBeFocused()
+    // O endereço é o mesmo, mas a aba acompanha a situação do pedido.
+    await expect(page).toHaveTitle('Pagamento confirmado | KURIO')
     await tabTo(page, page.getByRole('link', { name: 'Ver no Etherscan (abre em nova aba)' }), 15)
+  })
+
+  test('adicionar ao carrinho: o foco fica no botão enquanto a API responde', async ({ page }) => {
+    await page.goto('/nft/nft-042')
+    await settled(page)
+    // Latência de 2,5 s: dá para ver o botão em envio.
+    await setScenario(page, ['slow'])
+    // No desktop o texto vira "Adicionando…" durante o envio.
+    const button = isMobileViewport(page)
+      ? page.getByRole('button', { name: 'Adicionar ao carrinho' })
+      : page.getByRole('button', { name: /^(COMPRAR|Adicionando…)$/ })
+    await tabTo(page, button)
+    await page.keyboard.press('Enter')
+    await expect(button).toHaveAttribute('aria-disabled', 'true')
+    await expect(button).toHaveAttribute('aria-busy', 'true')
+    await expect(button).toBeFocused()
+    // Enter repetido durante o envio não adiciona de novo.
+    await page.keyboard.press('Enter')
+    await expect(page.getByText(/adicionado ao carrinho/).first()).toBeVisible({
+      timeout: 15_000,
+    })
+    if (isMobileViewport(page)) {
+      await expect(button).toBeFocused()
+      await expect(button).not.toHaveAttribute('aria-disabled', 'true')
+    } else {
+      await expect(page).toHaveURL(/\/cart$/)
+    }
+    const cartId = await page.evaluate(() => localStorage.getItem('kurio:guest-cart-id') ?? '')
+    const cart = (await apiFetch(page, 'GET', '/cart', { cartId })).json as {
+      items: { quantity: number }[]
+    }
+    expect(cart.items.map((i) => i.quantity)).toEqual([1])
+  })
+
+  test('toast: "Ver carrinho" com anel de foco e, no carrinho, o foco fica no título', async ({
+    page,
+  }) => {
+    test.skip(
+      !isMobileViewport(page),
+      'O toast com "Ver carrinho" é do botão do carrinho no mobile',
+    )
+    await page.goto('/nft/nft-042')
+    await settled(page)
+    await tabTo(page, page.getByRole('button', { name: 'Adicionar ao carrinho' }))
+    await page.keyboard.press('Enter')
+    const action = page.getByRole('button', { name: 'Ver carrinho' })
+    await expect(action).toBeVisible()
+    await tabTo(page, action, 60)
+    const ring = await action.evaluate((el) => {
+      const cs = getComputedStyle(el)
+      const probe = document.createElement('span')
+      probe.style.color = 'var(--ring)'
+      document.body.append(probe)
+      const ringColor = getComputedStyle(probe).color
+      probe.remove()
+      return { style: cs.outlineStyle, width: cs.outlineWidth, color: cs.outlineColor, ringColor }
+    })
+    expect(ring.style).toBe('solid')
+    expect(parseFloat(ring.width)).toBeGreaterThanOrEqual(2)
+    expect(ring.color).toBe(ring.ringColor)
+
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/\/cart$/)
+    const heading = page.getByRole('heading', { level: 1, name: 'Carrinho de NFTs' })
+    await expect(heading).toBeFocused()
+    // O toast fecha depois e tentaria devolver o foco ao rodapé: o título segura.
+    await page.waitForTimeout(1200)
+    await expect(heading).toBeFocused()
+    expect(await focusedInside(page, 'footer')).toBe(false)
+  })
+
+  test('pagamento e revisão: token e edição em linhas próprias, sem corte', async ({ page }) => {
+    await loginViaUi(page, 'ana@example.com')
+    await anaCart(page)
+    await page.goto('/checkout')
+    await settled(page)
+
+    const checkLines = async (scope: ReturnType<Page['locator']>) => {
+      const items = scope.locator('[data-item-meta]')
+      await expect(items).toHaveCount(2)
+      for (const meta of await items.all()) {
+        await expect(meta.locator('[data-item-edition]')).toHaveText('Edição aberta')
+        const [token, edition] = [
+          (await meta.locator('[data-item-token]').boundingBox())!,
+          (await meta.locator('[data-item-edition]').boundingBox())!,
+        ]
+        expect(edition.y).toBeGreaterThanOrEqual(token.y + token.height)
+        expect(token.height).toBeLessThan(20)
+        expect(edition.height).toBeLessThan(20)
+        expect(await meta.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
+        await expect(meta).toHaveText(/^ID do token: #\d+, Edição aberta$/)
+      }
+    }
+    await checkLines(page.getByRole('list', { name: 'Itens da compra' }).first())
+
+    await page.getByRole('button', { name: 'Confirmar compra' }).click()
+    const review = page.getByRole('dialog', { name: 'Revise sua compra' })
+    await expect(review).toBeVisible()
+    await checkLines(review)
   })
 })
 

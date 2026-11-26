@@ -29,7 +29,11 @@ Meta: WCAG 2.2 nível AA nas telas da entrega e Lighthouse Accessibility ≥ 95.
 - Formulários: foco vai para o primeiro campo com erro depois do envio.
 - Skeletons: `aria-busy="true"` no contêiner e texto oculto de carregamento.
 - Mudança de rota (`RouteFocus`, em `components/layout/route-focus.tsx`): ao mudar o caminho, o título da aba vira "<título da tela> | KURIO" (a tela inicial fica com "KURIO | Marketplace de NFTs"; com diálogo aberto, vale o título dele) e o foco vai para o `h1` visível (`tabindex=-1`, sem anel e sem rolar). O `h1` pode chegar depois dos dados: espera até 4 s. O foco não muda no primeiro carregamento (o primeiro Tab continua sendo o "Pular para o conteúdo"), com âncora na URL, com diálogo aberto ou com o foco num campo.
-- Pedido: quando pendente vira confirmado, o título é outro elemento (o do recibo); se o foco estava no título que saiu, vai para o novo.
+- Proteção do foco no título: por 1,5 s depois da troca de página, se o foco cair no `body` ou for parar fora do conteúdo sem tecla nem clique (o toast que levou à página fecha e devolve o foco ao rodapé), ele volta ao título. Foco levado para dentro do conteúdo (o coração do favorito concluído depois do login) fica onde está.
+- Pedido: quando pendente vira confirmado (ou recusado), o título da aba acompanha ("Pagamento confirmado | KURIO"), porque o endereço não muda. O título da tela é outro elemento no recibo; se o foco estava no título que saiu, vai para o novo.
+- Botões de compra do detalhe ("COMPRAR", "Comprar NFT" e "Adicionar ao carrinho"): durante o envio ficam com `aria-disabled` e `aria-busy` (não `disabled`), para o foco não cair no topo; o Enter repetido não adiciona de novo.
+- Toasts: os botões de ação ("Ver carrinho", "Desfazer") usam o mesmo anel de foco do site (o padrão do Sonner era uma sombra escura, invisível no fundo).
+- Itens do pagamento, da revisão e do recibo: ID do token e edição em linhas próprias (lidos como "ID do token: #0042, Edição aberta"), sem corte.
 - Revisão da compra: abre pelo código (depois de validar e conectar a carteira), então devolve o foco ao "Confirmar compra" ao fechar (`returnFocusTo`).
 - Listas de valores (`dl`): cada par fica num `div` com `dt` e `dd` como filhos diretos; a dica de uma linha ("Taxa estimada", "Valores do momento da compra") é um segundo `dd` do mesmo termo.
 

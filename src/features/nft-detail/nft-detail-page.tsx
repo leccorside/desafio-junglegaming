@@ -205,9 +205,10 @@ export function NftDetailPage({
               <div className="flex gap-2">
                 <Button
                   onClick={purchase.buy}
-                  disabled={!purchase.canBuy || purchase.pending}
+                  disabled={!purchase.canBuy}
+                  aria-disabled={purchase.pending || undefined}
                   aria-busy={purchase.pending}
-                  className="h-10 w-[130px] rounded-md font-bold"
+                  className="h-10 w-[130px] rounded-md font-bold aria-disabled:cursor-wait aria-disabled:opacity-60"
                 >
                   {purchase.pending ? 'Adicionando…' : 'COMPRAR'}
                 </Button>
@@ -250,11 +251,13 @@ export function NftDetailPage({
           <button
             type="button"
             onClick={purchase.buy}
-            disabled={!purchase.canBuy || purchase.pending}
+            // Enviando: `aria-disabled` (o foco fica no botão); `disabled` só sem edição.
+            disabled={!purchase.canBuy}
+            aria-disabled={purchase.pending || undefined}
             aria-busy={purchase.pending}
             className={cn(
               'h-[60px] flex-1 cursor-pointer rounded-full bg-[linear-gradient(135deg,var(--primary-hover),var(--primary))] text-body-lg font-bold text-primary-foreground',
-              'disabled:cursor-not-allowed disabled:opacity-50',
+              'disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-wait aria-disabled:opacity-60',
             )}
           >
             {purchase.pending ? 'Adicionando…' : soldOut ? 'Esgotado' : 'Comprar NFT'}
@@ -262,9 +265,11 @@ export function NftDetailPage({
           <button
             type="button"
             onClick={purchase.addToCart}
-            disabled={!purchase.canBuy || purchase.pending}
+            disabled={!purchase.canBuy}
+            aria-disabled={purchase.pending || undefined}
+            aria-busy={purchase.pending}
             aria-label="Adicionar ao carrinho"
-            className="flex size-[60px] shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-popover text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex size-[60px] shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-popover text-foreground disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
             <ShopIcon size={20} />
           </button>

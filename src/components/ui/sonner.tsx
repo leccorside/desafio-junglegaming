@@ -53,6 +53,14 @@ function Toaster(props: ToasterProps) {
           toast: 'font-sans text-body-sm',
           error: 'text-destructive-foreground!',
           success: 'text-foreground!',
+          // O foco padrão do Sonner é uma sombra escura, invisível no fundo
+          // escuro: os botões do toast usam o mesmo anel do resto do site.
+          actionButton:
+            'focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-solid! focus-visible:outline-ring! focus-visible:shadow-none!',
+          cancelButton:
+            'focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-solid! focus-visible:outline-ring! focus-visible:shadow-none!',
+          closeButton:
+            'focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-solid! focus-visible:outline-ring! focus-visible:shadow-none!',
         },
       }}
       style={

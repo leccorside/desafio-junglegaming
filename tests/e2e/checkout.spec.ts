@@ -447,8 +447,10 @@ test.describe('pagamento: ajustes da demonstração', () => {
       expect(nameBox.height).toBeLessThan(25)
     } else {
       expect(totalBox.x).toBeGreaterThan(nameBox.x + nameBox.width)
+      // Preço centralizado na linha do item (nome, token e edição ao lado da imagem).
+      const rowBox = (await list.getByRole('listitem').first().boundingBox())!
       const center = (b: { y: number; height: number }) => b.y + b.height / 2
-      expect(Math.abs(center(totalBox) - center(nameBox))).toBeLessThan(20)
+      expect(Math.abs(center(totalBox) - center(rowBox))).toBeLessThan(6)
     }
     expect(await overflowing(page, 'main')).toEqual([])
   })

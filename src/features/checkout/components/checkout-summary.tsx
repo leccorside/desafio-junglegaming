@@ -76,11 +76,23 @@ export function QuoteItems({ cart, quote }: { cart: Cart; quote: Quote }) {
               >
                 {item?.name ?? 'NFT'}
               </p>
-              <p className="truncate text-body-sm leading-4 text-secondary">
-                ID do token: #{item?.tokenId ?? ''}
-                {item
-                  ? ` · Edição ${item.editionName === 'Aberta' ? 'aberta' : item.editionName}`
-                  : ''}
+              {/* Token e edição em linhas próprias, como no recibo: numa linha só,
+                  a edição saía cortada ("Edição a…") no mobile. */}
+              <p
+                data-item-meta=""
+                className="flex flex-col gap-1 text-body-sm leading-4 text-secondary"
+              >
+                <span data-item-token="" className="whitespace-nowrap">
+                  ID do token: #{item?.tokenId ?? ''}
+                </span>
+                {item ? (
+                  <>
+                    <span className="sr-only">, </span>
+                    <span data-item-edition="" className="whitespace-nowrap">
+                      Edição {item.editionName === 'Aberta' ? 'aberta' : item.editionName}
+                    </span>
+                  </>
+                ) : null}
               </p>
             </div>
             <p className="col-start-2 flex items-center justify-between gap-3 self-start md:col-start-3 md:row-start-1 md:justify-end md:gap-5 md:self-center">

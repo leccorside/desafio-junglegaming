@@ -16,7 +16,9 @@ export function usePurchase(nft: Nft, edition: NftEdition | null, quantity: numb
   const canBuy = Boolean(edition) && quantity > 0
 
   const add = (goToCart: boolean) => {
-    if (!edition || quantity <= 0) return
+    // Os botões ficam com `aria-disabled` (não `disabled`) durante o envio,
+    // para o foco do teclado não cair no topo: o clique repetido para aqui.
+    if (!edition || quantity <= 0 || addToCart.isPending) return
     addToCart.mutate(
       { nftId: nft.id, editionId: edition.id, quantity },
       {
