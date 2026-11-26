@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 import { formatEth } from '../../src/lib/eth'
 import { formatReceiptDate, shortHash } from '../../src/features/orders/receipt-format'
-import { loginViaUi } from '../fixtures/auth'
+import { isMobileViewport, loginViaUi } from '../fixtures/auth'
 import { apiFetch, resetMocks, setScenario, waitForApp } from '../fixtures/mocks'
 
 /**
@@ -17,6 +17,9 @@ type OrderJson = {
   updatedAt: string
   transaction: { hash: string; explorerUrl: string } | null
   snapshot: {
+    subtotal: string
+    discount: string
+    couponCode: string | null
     total: string
     networkFee: string
     wallet: { type: string }
@@ -94,6 +97,37 @@ async function buyEmeraldApe(page: Page, isMobile: boolean) {
   ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Pagamento confirmado' })).toBeVisible()
   return page.url().split('/').pop()!
+}
+
+const EMERALD = { nftId: 'nft-042', editionId: 'nft-042-open', quantity: 1 }
+const VIOLET = { nftId: 'nft-314', editionId: 'nft-314-open', quantity: 1 }
+
+/** Carrinho pela API (com cupom opcional) e compra pela revisão até o recibo. */
+async function checkoutWith(
+  page: Page,
+  items: { nftId: string; editionId: string; quantity: number }[],
+  coupon?: string,
+): Promise<OrderJson> {
+  const auth = await token(page)
+  for (const body of items) await apiFetch(page, 'POST', '/cart/items', { token: auth, body })
+  if (coupon) {
+    const { status } = await apiFetch(page, 'PUT', '/cart/coupon', {
+      token: auth,
+      body: { code: coupon },
+    })
+    expect(status).toBe(200)
+  }
+  await setScenario(page, ['payment-confirmed'], { settleMs: 500 })
+  await page.goto('/checkout')
+  await waitForApp(page)
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await page
+    .getByRole('dialog', { name: 'Revise sua compra' })
+    .getByRole('button', { name: 'Confirmar e pagar' })
+    .click()
+  await expect(page).toHaveURL(/\/orders\/ord-/)
+  await expect(receipt(page)).toBeVisible()
+  return orderById(page, page.url().split('/').pop()!)
 }
 
 /** O recibo mostra exatamente o snapshot do pedido. */
@@ -274,6 +308,81 @@ test.describe('compra completa e recibo', () => {
     await page.waitForTimeout(800)
     await expect(hint).toBeVisible()
     await expect(totals.locator('dd')).toHaveText(['0.016 ETH', '2.396 ETH'])
+  })
+
+  test('com cupom: subtotal, desconto numa linha só e conta que fecha', async ({ page }) => {
+    await loginViaUi(page, 'ana@example.com')
+    const order = await checkoutWith(page, [EMERALD, VIOLET], 'bemvindo10')
+    expect(order.snapshot).toMatchObject({
+      subtotal: '2.58',
+      discount: '0.258',
+      couponCode: 'BEMVINDO10',
+      total: '2.338',
+    })
+    await expect(receipt(page)).toBeVisible()
+
+    const totals = receipt(page).locator('dl[aria-label="Totais do pedido"]')
+    await expect(totals.locator('dt')).toHaveText([
+      'Subtotal',
+      'Desconto (BEMVINDO10)',
+      'Taxa de rede',
+      'Total',
+    ])
+    await expect(totals.locator('dd')).toHaveText([
+      '2.58 ETH',
+      '(-) 0.258 ETH',
+      '0.016 ETH',
+      '2.338 ETH',
+    ])
+    // O rótulo do desconto não quebra (altura de uma linha de 20 px).
+    const label = totals.locator('[data-discount-row] dt')
+    expect((await label.boundingBox())!.height).toBeLessThan(25)
+    expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
+    const value = totals.locator('[data-discount-row] dd')
+    const [labelBox, valueBox] = [(await label.boundingBox())!, (await value.boundingBox())!]
+    // Valor alinhado à direita, como os outros, e sem passar do cartão.
+    const fee = totals.locator('dd').nth(2)
+    const feeBox = (await fee.boundingBox())!
+    expect(Math.abs(valueBox.x + valueBox.width - (feeBox.x + feeBox.width))).toBeLessThan(1)
+    if (!isMobileViewport(page)) {
+      // No desktop, rótulo e valor na mesma linha.
+      expect(Math.abs(valueBox.y - labelBox.y)).toBeLessThan(6)
+    }
+    const overflow = await page.evaluate(() =>
+      [...document.querySelectorAll('main *')]
+        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1)
+        .map((el) => (el.textContent ?? '').trim().slice(0, 30)),
+    )
+    expect(overflow).toEqual([])
+  })
+
+  test('hash da transação: compras diferentes com o mesmo número têm IDs diferentes; a mesma compra repete o ID', async ({
+    page,
+  }) => {
+    await loginViaUi(page, 'ana@example.com')
+    const first = await checkoutWith(page, [EMERALD])
+    const shown = await meta(page, 'ID da transação').innerText()
+
+    // Reset: o próximo pedido volta a ter o mesmo número, com outros itens.
+    await resetMocks(page)
+    await page.evaluate(() => localStorage.removeItem('kurio:session'))
+    await loginViaUi(page, 'ana@example.com')
+    const second = await checkoutWith(page, [EMERALD, VIOLET], 'bemvindo10')
+    expect(second.id).toBe(first.id)
+    expect(second.transaction!.hash).not.toBe(first.transaction!.hash)
+    await expect(meta(page, 'ID da transação')).not.toHaveText(shown)
+    await expect(meta(page, 'ID da transação')).toHaveText(shortHash(second.transaction!.hash))
+    await expect(
+      receipt(page).getByRole('link', { name: 'Ver no Etherscan (abre em nova aba)' }),
+    ).toHaveAttribute('href', `https://etherscan.io/tx/${second.transaction!.hash}`)
+
+    // A mesma compra depois de outro reset dá o mesmo hash (previsível nos testes).
+    await resetMocks(page)
+    await page.evaluate(() => localStorage.removeItem('kurio:session'))
+    await loginViaUi(page, 'ana@example.com')
+    const again = await checkoutWith(page, [EMERALD])
+    expect(again.id).toBe(first.id)
+    expect(again.transaction!.hash).toBe(first.transaction!.hash)
   })
 
   test('visitante que abre o recibo vai para o login', async ({ page }) => {

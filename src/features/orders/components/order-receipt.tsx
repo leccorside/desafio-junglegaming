@@ -140,12 +140,26 @@ export function OrderReceipt({ order }: { order: Order }) {
           ))}
         </ul>
 
-        <dl aria-label="Totais do pedido" className="flex flex-col gap-3 md:ml-auto md:w-[321px]">
+        {/* 360 px no desktop (321 no Figma, que não tem desconto): cabe
+            "Desconto (BEMVINDO10)" e o valor na mesma linha. */}
+        <dl aria-label="Totais do pedido" className="flex flex-col gap-3 md:ml-auto md:w-[360px]">
           {isEthZero(snapshot.discount) ? null : (
-            <SummaryRow
-              label={snapshot.couponCode ? `Desconto (${snapshot.couponCode})` : 'Desconto'}
-              value={`(-) ${formatEth(snapshot.discount)}`}
-            />
+            <>
+              {/* Com desconto, o subtotal mostra a base do cálculo. */}
+              <SummaryRow label="Subtotal" value={formatEth(snapshot.subtotal)} />
+              {/* Rótulo sempre numa linha; sem espaço (mobile), o valor desce. */}
+              <div
+                data-discount-row=""
+                className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"
+              >
+                <dt className="text-body whitespace-nowrap text-foreground">
+                  {snapshot.couponCode ? `Desconto (${snapshot.couponCode})` : 'Desconto'}
+                </dt>
+                <dd className="ml-auto text-right text-lead whitespace-nowrap text-foreground">
+                  (-) {formatEth(snapshot.discount)}
+                </dd>
+              </div>
+            </>
           )}
           <SummaryRow label="Taxa de rede" value={formatEth(snapshot.networkFee)} />
           {/* O recibo guarda o que foi pago: deixa claro que o catálogo pode ter mudado. */}

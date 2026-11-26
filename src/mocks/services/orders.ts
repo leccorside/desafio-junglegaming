@@ -191,15 +191,32 @@ export function createOrder(
   })
 }
 
+/**
+ * Semente do hash simulado: número do pedido, itens (NFT, edição, quantidade,
+ * preço) e total. O hash continua previsível (mesmo pedido, mesmo hash), mas
+ * compras diferentes com o mesmo número depois de um reset ganham IDs
+ * diferentes. Hash de 32 bits (FNV-1a) para não perder precisão.
+ */
+export function transactionSeed(order: Pick<DbOrder, 'id' | 'snapshot'>): number {
+  const items = order.snapshot.items
+    .map((item) => `${item.nftId}/${item.editionId}/${item.quantity}/${item.unitPrice}`)
+    .join(',')
+  const source = `${order.id}|${items}|${order.snapshot.total}`
+  let hash = 0x811c9dc5
+  for (let i = 0; i < source.length; i += 1) {
+    hash ^= source.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return hash >>> 0
+}
+
 function settle(state: DbState, order: DbOrder) {
   order.status = order.outcome
   order.version += 1
   order.updatedAt = new Date().toISOString()
 
   if (order.outcome === 'confirmed') {
-    const random = createRandom(
-      Array.from(order.id).reduce((acc, c) => acc * 31 + c.charCodeAt(0), 7),
-    )
+    const random = createRandom(transactionSeed(order))
     const hash = order.snapshot.network === 'solana' ? random.hex(64) : `0x${random.hex(64)}`
     order.transaction = { hash, explorerUrl: `${EXPLORERS[order.snapshot.network]}${hash}` }
     removePurchased(state, order.cartOwnerKey, order.snapshot.items)

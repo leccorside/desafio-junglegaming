@@ -82,6 +82,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Recibo com cupom: faltava o subtotal (a conta não fechava à vista) e "Desconto (BEMVINDO10)" quebrava em duas linhas. Agora o subtotal aparece quando há desconto e o rótulo fica numa linha só.
+- Hash da transação simulada: dependia só do número do pedido, e compras diferentes depois de um reset (as duas como ord-0003) saíam com o mesmo ID. Agora a semente inclui itens, quantidades, preços e total.
+
 - Recibo: a linha "ID do token · Edição aberta" quebrava no meio e deixava "aberta" ou o "·" sozinhos; agora o token e a edição ficam em linhas próprias. Abaixo do total entrou "Valores do momento da compra".
 
 - Painel de cenários com a revisão da compra (ou outro diálogo) aberta: o botão ficava sob o véu do modal e não abria. Agora abre por cima, o "Alterar preço" funciona e fechar o painel não fecha a revisão.
