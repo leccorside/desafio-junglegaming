@@ -74,7 +74,9 @@ test.describe('layout base', () => {
     await expect(principal.getByText('Criadores')).toHaveAttribute('aria-disabled', 'true')
   })
 
-  test('footer com links e redes sociais em nova aba', async ({ page }) => {
+  test('footer com links e redes sociais indisponíveis (a Kurio não tem perfis)', async ({
+    page,
+  }) => {
     await page.goto('/')
 
     const footer = page.getByRole('contentinfo')
@@ -84,9 +86,11 @@ test.describe('layout base', () => {
     )
     await expect(footer.getByRole('link', { name: 'Minha coleção' })).toHaveCount(0)
 
-    const instagram = footer.getByRole('link', { name: /Instagram/ })
-    await expect(instagram).toHaveAttribute('target', '_blank')
-    await expect(instagram).toHaveAttribute('rel', /noopener/)
+    // Sem link para a página inicial genérica da rede (Passo 13).
+    await expect(footer.getByRole('link', { name: /Instagram/ })).toHaveCount(0)
+    await expect(
+      footer.getByRole('button', { name: 'Instagram (indisponível nesta demonstração)' }),
+    ).toHaveAttribute('aria-disabled', 'true')
   })
 
   test('newsletter avisa que está indisponível, sem simular sucesso', async ({ page }) => {

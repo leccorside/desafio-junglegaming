@@ -147,3 +147,18 @@ Telas: `/profile` e `/wallets`, com o menu "Meu perfil" do Figma no desktop (Dad
 ## Ações fora do escopo
 
 Links de páginas editoriais, suporte, atividade, ofertas e downloads ficam desabilitados com explicação ou indicados como indisponíveis. Nenhum deles mostra mensagem de sucesso.
+
+Como ficou (Passo 13):
+
+| Onde | Itens | Comportamento |
+| --- | --- | --- |
+| Header (desktop) e menu lateral (mobile) | Criadores, Aprenda | Botão desabilitado (`aria-disabled`, apagado, `title`). Ao acionar (clique, toque ou Enter): aviso informativo "Criadores: indisponível nesta demonstração." |
+| Rodapé, "Meu perfil" e "Central de ajuda" | Minha coleção, Atividade, Estúdio do criador, Central de ajuda, Como comprar NFTs, Carteira e segurança, Política do mercado, Denunciar item | Igual: botão desabilitado com o aviso do item |
+| Rodapé, redes sociais | Facebook, Instagram, Twitter, LinkedIn, YouTube | A Kurio da demonstração não tem perfis. Os ícones ficam (Figma) e avisam "Perfil da Kurio no Instagram: indisponível nesta demonstração."; não abrem a página inicial genérica da rede |
+| Rodapé, contato | `contato@email.com`, `+55 11 4002 8922` | Texto (contato de exemplo do Figma), sem `mailto:`/`tel:` |
+| Rodapé, newsletter | "Enviar" | Aviso informativo "A newsletter não está disponível nesta demonstração."; nada de "inscrito" |
+| Tela inicial, blog | "Ler mais" | Botão desabilitado: "O artigo completo: indisponível nesta demonstração." |
+| Menu "Meu perfil" (desktop) | Atividade, Ofertas, Arquivos baixados, Suporte | Botão desabilitado com o aviso do item |
+| Entrar e criar conta | "Esqueceu a senha?", "Continuar com Google/Facebook" | Aviso informativo; a pessoa continua na tela, sem sessão |
+
+Os avisos são sempre `info` (nunca `success`), não mudam de página e não se empilham em cliques repetidos. Links externos que ficam: compartilhar o NFT no LinkedIn e no X (compartilham o endereço real da página) e "Ver no Etherscan" do recibo (transação simulada, avisado na nota do recibo).

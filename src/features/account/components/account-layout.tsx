@@ -12,6 +12,7 @@ import {
   ShopIcon,
   UserIcon,
 } from '@/components/icons/figma-icons'
+import { UnavailableAction } from '@/components/layout/unavailable-action'
 import { useSignOut } from '@/features/auth/use-sign-out'
 import { cn } from '@/lib/utils'
 
@@ -69,14 +70,10 @@ function AccountSidebar({ current }: { current: Section }) {
                   {label}
                 </Link>
               ) : (
-                <span
-                  aria-disabled="true"
-                  className={cn(itemClass, 'cursor-not-allowed opacity-60')}
-                >
+                <UnavailableAction what={label} className={cn(itemClass, 'w-full')}>
                   <Icon size={18} className="text-secondary" />
                   {label}
-                  <span className="sr-only"> (indisponível nesta demonstração)</span>
-                </span>
+                </UnavailableAction>
               )}
             </li>
           )

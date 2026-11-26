@@ -642,7 +642,7 @@ test.describe('acessibilidade: teclado e foco', () => {
       await page.goto('/cart')
       await settled(page)
     } else {
-      await tabTo(page, page.getByRole('button', { name: 'COMPRAR' }))
+      await tabTo(page, page.getByRole('button', { name: 'COMPRAR', exact: true }))
       await page.keyboard.press('Enter')
       await expect(page).toHaveURL(/\/cart$/)
       await settled(page)

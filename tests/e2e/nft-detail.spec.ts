@@ -138,7 +138,7 @@ test.describe('detalhe do NFT', () => {
       await expect(page.getByRole('button', { name: 'Ver carrinho' })).toBeVisible()
       await expect(page).toHaveURL(/\/nft\/nft-042/)
     } else {
-      await page.getByRole('button', { name: 'COMPRAR' }).click()
+      await page.getByRole('button', { name: 'COMPRAR', exact: true }).click()
       await expect(page).toHaveURL(/\/cart$/)
       await expect(page.getByText('Emerald Ape #042 (1/10) adicionado ao carrinho.')).toBeVisible()
     }
@@ -163,7 +163,7 @@ test.describe('detalhe do NFT', () => {
     await expect(page.getByText('Máximo: 999 disponíveis.')).toBeVisible()
 
     const bar = page
-      .getByRole('button', { name: 'Comprar NFT' })
+      .getByRole('button', { name: 'Comprar NFT', exact: true })
       .locator('xpath=ancestor::div[contains(@class,"fixed")][1]')
     const barBox = (await bar.boundingBox())!
     // Preço numa linha só e a barra com a altura prevista (164 px).
@@ -187,7 +187,7 @@ test.describe('detalhe do NFT', () => {
     await page.goto('/nft/nft-042')
     await waitForApp(page)
     await expect(page.getByRole('navigation', { name: 'Navegação inferior' })).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Comprar NFT' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Comprar NFT', exact: true })).toBeVisible()
     // Voltar sem histórico leva ao início.
     await page.getByRole('button', { name: 'Voltar' }).click()
     await expect(page).toHaveURL(/\/$/)

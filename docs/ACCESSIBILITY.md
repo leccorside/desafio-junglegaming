@@ -70,7 +70,7 @@ Todo ajuste de contraste, tamanho de alvo de toque ou texto adicionado por acess
 | Link "Pular para o conteúdo" | Primeiro item do Tab, leva o foco ao `<main id="conteudo">` | Pular o header em toda página |
 | Alvos de toque de 44 × 44 px | Itens da barra inferior mobile | O ícone do Figma tem 20 px |
 | Nomes acessíveis em botões só com ícone | Busca, carrinho, menu, itens da barra inferior, redes sociais ("abre em nova aba") | Os ícones não têm texto visível |
-| Itens fora do escopo como texto com `aria-disabled` e aviso oculto "(indisponível nesta demonstração)" | Header, menu lateral e footer | Não anunciar como link algo que não funciona |
+| Itens fora do escopo como botão com `aria-disabled`, "(indisponível nesta demonstração)" no nome e aviso `info` ao acionar | Header, menu lateral, footer (inclusive redes sociais), menu "Meu perfil" e "Ler mais" do blog | Não anunciar como link algo que não funciona e explicar a quem usa toque ou teclado (o `title` só aparece com o mouse) |
 | `prefers-reduced-motion` desliga animações e transições | Global, incluindo o shimmer do skeleton | Preferência do sistema |
 | Rótulo oculto (`sr-only`) em cada campo de login e cadastro | Formulários de entrada | O Figma só tem placeholder, que some ao digitar e não é rótulo |
 | Erro de campo ligado por `aria-describedby`, `aria-invalid` e foco no primeiro campo com erro da API | Formulários (shadcn `Form` + `applyApiError`) | Leitor de tela anuncia o erro junto com o campo |

@@ -121,7 +121,10 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | --- | --- |
 | Navegação no tablet (768 a 1023 px) | O Figma só tem desktop e mobile. O header fica com logo, busca e carrinho, e a navegação vai para um menu lateral (Sheet). |
 | Navegação no mobile | O Figma não tem header no mobile, só a barra inferior. O botão central da barra (ícone de leitura, sem função no escopo) abre o menu lateral, para a navegação principal continuar acessível. |
-| Itens fora do escopo (Criadores, Aprenda, Atividade, Central de ajuda...) | Aparecem como texto com 60% de opacidade e aviso "(indisponível nesta demonstração)" para leitores de tela. Não são links, para não parecer que funcionam. |
+| Itens fora do escopo (Criadores, Aprenda, Atividade, Central de ajuda, Ofertas, Suporte, "Ler mais"...) | Botão com `aria-disabled`, 60% de opacidade, `title` e "(indisponível nesta demonstração)" no nome acessível (`UnavailableAction`). Não são links, para não parecer que funcionam. Ao acionar (clique, toque ou teclado), um aviso `info` explica ("Criadores: indisponível nesta demonstração."); antes eram texto, e a explicação só aparecia no passar do mouse. Mesmo padrão de "Esqueceu a senha?", do login social e da newsletter. |
+| Redes sociais do rodapé | A Kurio da demonstração não tem perfis. Os ícones do Figma ficam e avisam "Perfil da Kurio no Instagram: indisponível nesta demonstração."; levar à página inicial genérica de cada rede pareceria funcionar. |
+| Contato do rodapé | `contato@email.com` e `+55 11 4002 8922` são dados de exemplo do Figma: texto, sem `mailto:`/`tel:`, que abririam o e-mail ou o discador para um contato que não existe. |
+| Links externos que ficam | Compartilhar o NFT no LinkedIn e no X (compartilham o endereço real) e "Ver no Etherscan" do recibo (transação simulada, dita na nota do recibo). |
 | Newsletter do footer | O envio mostra um toast informativo dizendo que a newsletter não está disponível. Não simula cadastro. |
 | Redes sociais | Abrem a página inicial de cada rede em nova aba (`rel="noopener noreferrer"`), com o aviso no nome acessível. |
 | Contador do carrinho (antes do Passo 7) | O Figma mostra "6". O badge mostra a quantidade real do carrinho e some quando ele está vazio. |

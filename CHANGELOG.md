@@ -6,6 +6,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Links e ações fora do escopo (Passo 13): Criadores, Aprenda, áreas do rodapé, menu "Meu perfil" e "Ler mais" do blog viraram botões desabilitados que, ao serem acionados (clique, toque ou teclado), explicam com um aviso informativo ("Criadores: indisponível nesta demonstração."). Redes sociais do rodapé deixaram de abrir a página inicial genérica de cada rede, e o contato de exemplo deixou de ser `mailto:`/`tel:`.
+- Testes E2E `out-of-scope.spec.ts`: cada área avisa sem sucesso e sem navegar, varredura de todos os itens desabilitados das telas e todos os links internos abrindo páginas que existem.
+
 - Acessibilidade (Passo 12): título da aba por tela ("Emerald Ape #042 | KURIO") e foco no título ao trocar de página, sem mexer no foco do primeiro carregamento.
 - Auditoria com `@axe-core/playwright` em todas as telas e diálogos, em desktop e mobile, e testes E2E de teclado (compra inteira só pelo teclado), foco em diálogos, validação de formulários e largura (390, 768 e 1440 px e zoom de 200%) em `a11y.spec.ts` (item 11 do enunciado).
 

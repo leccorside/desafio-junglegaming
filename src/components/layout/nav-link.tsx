@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 import type { NavItem } from './nav-config'
+import { UnavailableAction } from './unavailable-action'
 
 interface NavLinkProps {
   item: NavItem
@@ -24,7 +25,8 @@ interface NavLinkProps {
 
 /**
  * Link de navegação tipado. Sem `to`, o item é uma área fora do escopo: vira
- * texto não interativo, com aviso para leitores de tela, em vez de link morto.
+ * um `UnavailableAction` (desabilitado, que explica ao ser acionado), em vez
+ * de link morto.
  */
 export function NavLink({
   item,
@@ -40,19 +42,12 @@ export function NavLink({
 
   if (!item.to) {
     return (
-      <span
-        aria-disabled="true"
-        title="Indisponível nesta demonstração"
-        className={cn(
-          className,
-          inactiveClassName,
-          'cursor-not-allowed opacity-60',
-          disabledClassName,
-        )}
+      <UnavailableAction
+        what={item.label}
+        className={cn(className, inactiveClassName, disabledClassName)}
       >
         {children ?? item.label}
-        <span className="sr-only"> (indisponível nesta demonstração)</span>
-      </span>
+      </UnavailableAction>
     )
   }
 

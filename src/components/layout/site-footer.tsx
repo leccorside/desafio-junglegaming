@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 import { useBottomBar } from './bottom-bar'
 import { footerColumns, footerFeatures, socialLinks } from './nav-config'
 import { NavLink } from './nav-link'
+import { UnavailableAction } from './unavailable-action'
 
 const socialIcons: Record<(typeof socialLinks)[number]['label'], ComponentType<IconProps>> = {
   Facebook: FacebookIcon,
@@ -108,18 +109,16 @@ export function SiteFooter() {
           <br />
           criadores e cultura
         </p>
-        <a
-          href="mailto:contato@email.com"
-          className="text-body-sm text-foreground hover:text-accent-foreground"
-        >
+        {/* Contatos de exemplo do Figma: texto, não link. Como `mailto:`/`tel:`
+            abririam o e-mail ou o discador para um contato que não existe. */}
+        <p className="text-body-sm text-foreground">
           contato@email.com
-        </a>
-        <a
-          href="tel:+551140028922"
-          className="text-body-sm text-foreground hover:text-accent-foreground"
-        >
+          <span className="sr-only"> (contato de exemplo)</span>
+        </p>
+        <p className="text-body-sm text-foreground">
           +55 11 4002 8922
-        </a>
+          <span className="sr-only"> (contato de exemplo)</span>
+        </p>
       </div>
 
       <div className="grid gap-8 bg-card p-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -143,19 +142,20 @@ export function SiteFooter() {
           <section className="flex flex-col gap-5">
             <h2 className="text-lead leading-4 font-bold text-foreground">Redes sociais</h2>
             <ul className="flex gap-2.5">
-              {socialLinks.map(({ label, href }) => {
+              {/* A Kurio não tem perfis nas redes: levar à página inicial de cada
+                  rede pareceria funcionar. Os ícones ficam, como no Figma, e
+                  explicam ao serem acionados. */}
+              {socialLinks.map(({ label }) => {
                 const Icon = socialIcons[label]
                 return (
                   <li key={label}>
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`${label} (abre em nova aba)`}
-                      className="flex size-[30px] items-center justify-center rounded-sm border border-primary text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                    <UnavailableAction
+                      what={`Perfil da Kurio no ${label}`}
+                      label={label}
+                      className="flex size-[30px] items-center justify-center rounded-sm border border-primary text-primary"
                     >
                       <Icon size={16} />
-                    </a>
+                    </UnavailableAction>
                   </li>
                 )
               })}

@@ -77,7 +77,7 @@ async function buyEmeraldApe(page: Page, isMobile: boolean) {
     await page.getByRole('button', { name: 'Adicionar ao carrinho' }).click()
     await page.getByRole('button', { name: 'Ver carrinho' }).click()
   } else {
-    await page.getByRole('button', { name: 'COMPRAR' }).click()
+    await page.getByRole('button', { name: 'COMPRAR', exact: true }).click()
   }
   await expect(page).toHaveURL(/\/cart$/)
   await page

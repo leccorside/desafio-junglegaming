@@ -1,4 +1,5 @@
 ﻿import { ArrowRightIcon } from '@/components/icons/figma-icons'
+import { UnavailableAction } from '@/components/layout/unavailable-action'
 
 const POSTS = [
   {
@@ -60,14 +61,12 @@ export function HomeBlog() {
                 <p className="text-caption-sm font-medium text-accent-foreground">{post.meta}</p>
                 <h3 className="text-body-lg font-bold text-foreground">{post.title}</h3>
                 <p className="flex-1 text-body-sm text-muted-foreground">{post.text}</p>
-                <span
-                  aria-disabled="true"
-                  title="Indisponível nesta demonstração"
-                  className="mt-2 flex w-fit cursor-not-allowed items-center gap-1 text-body-sm font-bold text-accent-foreground opacity-60"
+                <UnavailableAction
+                  what="O artigo completo"
+                  className="mt-2 flex w-fit items-center gap-1 text-body-sm font-bold text-accent-foreground"
                 >
                   Ler mais <ArrowRightIcon size={14} />
-                  <span className="sr-only"> (indisponível nesta demonstração)</span>
-                </span>
+                </UnavailableAction>
               </div>
             </article>
           </li>

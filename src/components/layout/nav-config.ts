@@ -94,10 +94,15 @@ export const footerFeatures = [
   },
 ] as const
 
+/**
+ * Redes sociais do footer. A Kurio da demonstração não tem perfis: os ícones
+ * ficam (Figma) e avisam que estão indisponíveis, em vez de abrir a página
+ * inicial genérica de cada rede.
+ */
 export const socialLinks = [
-  { label: 'Facebook', href: 'https://www.facebook.com/' },
-  { label: 'Instagram', href: 'https://www.instagram.com/' },
-  { label: 'Twitter', href: 'https://x.com/' },
-  { label: 'LinkedIn', href: 'https://www.linkedin.com/' },
-  { label: 'YouTube', href: 'https://www.youtube.com/' },
+  { label: 'Facebook' },
+  { label: 'Instagram' },
+  { label: 'Twitter' },
+  { label: 'LinkedIn' },
+  { label: 'YouTube' },
 ] as const
