@@ -69,6 +69,31 @@ test.describe('carregamento sob demanda', () => {
     ).toBe(false)
   })
 
+  test('opção das mutations com senha num chunk próprio, sem imports, fora do chunk dos hooks de login', async ({
+    request,
+  }) => {
+    // Quando a troca de senha importava `auth/hooks.ts`, o Rolldown embutiu as
+    // chaves da sessão no chunk dos hooks: um script a menos no carregamento
+    // inicial e o TBT simulado do Lighthouse da tela inicial (mobile) subiu de
+    // cerca de 210 para 275 ms (docs/PERFORMANCE.md).
+    const html = await (await request.get('/')).text()
+    const initial = [
+      ...html.matchAll(/<script type="module"[^>]*src="([^"]+)"/g),
+      ...html.matchAll(/rel="modulepreload"[^>]*href="([^"]+)"/g),
+    ].map((m) => m[1]!)
+    const shared = initial.filter((url) => /\/assets\/sensitive-mutation-[\w-]+\.js$/.test(url))
+    expect(shared, 'chunk próprio no carregamento inicial').toHaveLength(1)
+    const sharedCode = await (await request.get(shared[0]!)).text()
+    expect(sharedCode).toContain('gcTime:0')
+    expect(sharedCode.includes('import'), 'chunk compartilhado sem imports').toBe(false)
+
+    const hooks = initial.filter((url) => /\/assets\/hooks-[\w-]+\.js$/.test(url))
+    expect(hooks).toHaveLength(1)
+    const hooksCode = await (await request.get(hooks[0]!)).text()
+    expect(hooksCode).toContain(shared[0]!.split('/').pop()!)
+    expect(hooksCode.includes('gcTime:0'), 'opção embutida no chunk dos hooks').toBe(false)
+  })
+
   test('painel de cenários só baixa depois do load, com o navegador ocioso', async ({ page }) => {
     await page.goto('/')
     await waitForApp(page)

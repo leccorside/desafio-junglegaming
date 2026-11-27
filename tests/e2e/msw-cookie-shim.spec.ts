@@ -1,6 +1,7 @@
 import { expect, test, type Page, type Response } from '@playwright/test'
 
 import { formatEth } from '../../src/lib/eth'
+import { trackApi } from '../fixtures/auth'
 import { apiFetch, resetMocks, waitForApp } from '../fixtures/mocks'
 
 /**
@@ -107,16 +108,24 @@ test.describe('MSW com o stub do tough-cookie', () => {
   test('REST pelo service worker e evento em tempo real continuam chegando à tela', async ({
     page,
   }) => {
+    const heading = page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })
+    const tracker = trackApi(page)
+    await page.goto('/nft/nft-042')
+    await waitForApp(page)
+    await expect(heading).toBeVisible()
+    await resetMocks(page)
+    // Reload só com a API parada: uma busca do documento antigo que sai durante
+    // a troca de documento passa direto para a rede (o service worker do MSW
+    // fica sem cliente ativo nesse instante) e não diz nada sobre a página nova.
+    await tracker.idle()
+    tracker.dispose()
+
     const api: Response[] = []
     page.on('response', (response) => {
       if (new URL(response.url()).pathname.startsWith('/api/')) api.push(response)
     })
-    await page.goto('/nft/nft-042')
-    await waitForApp(page)
-    await resetMocks(page)
     await page.reload()
     await waitForApp(page)
-    const heading = page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })
     await expect(heading).toBeVisible()
     expect(api.length).toBeGreaterThan(0)
     expect(api.every((response) => response.fromServiceWorker())).toBe(true)

@@ -120,6 +120,8 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Performance do Lighthouse da tela inicial no mobile caiu para 89 na produção (meta ≥ 90). Causa: `account/queries.ts` importava `SENSITIVE_MUTATION` de `auth/hooks.ts`, o Rolldown refez a divisão dos chunks e o TBT simulado subiu de cerca de 255 para 356 ms. A opção foi para `src/lib/sensitive-mutation.ts`, sem imports; produção de volta a 92 (início) e 95 (detalhe) no mobile, 100 no desktop. Teste novo em `deferred-loading.spec.ts`; relatórios do Lighthouse e `docs/PERFORMANCE.md` atualizados.
+- `msw-cookie-shim.spec.ts` falhava às vezes: uma busca do documento antigo saía durante o `reload` e passava direto para a rede (o service worker do MSW fica sem cliente ativo na troca de documento). O teste agora recarrega só com a API parada e conta só as respostas da página nova.
 - Na revisão da compra no mobile, "Voltar" aparecia abaixo de "Confirmar e pagar" mas vinha antes no DOM (`flex-col-reverse`), e o Tab subia na tela. Agora "Confirmar e pagar" vem primeiro no DOM e na tela nos dois tamanhos (acima no mobile, à esquerda no desktop), e a revisão abre com o foco no "Voltar" (`onOpenAutoFocus`), para um Enter sem querer não pagar. Teste novo em `a11y.spec.ts`.
 - No desktop, o título da aba em `/login` e `/register` mostrava o slogan da tela inicial que fica atrás do modal. O fundo agora é inerte desde a primeira renderização e o `RouteFocus` ignora títulos em área inerte: a aba mostra "Entrar | KURIO" e "Criar conta | KURIO".
 - As senhas do login, do cadastro e da troca de senha ficavam no cache de mutations do TanStack Query depois do envio. Essas mutations usam `gcTime: 0`, e o fim da sessão também limpa o cache de mutations.

@@ -6,7 +6,7 @@ import { sessionSchema, type Session } from '@/api/contracts'
 import { setScenario } from '@/mocks/scenarios'
 import { setupMockServer } from '@/mocks/test-utils'
 
-import { SENSITIVE_MUTATION } from './hooks'
+import { SENSITIVE_MUTATION } from '@/lib/sensitive-mutation'
 import {
   clearSessionEndReason,
   endSession,

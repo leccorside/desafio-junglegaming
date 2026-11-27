@@ -26,7 +26,7 @@ Toda a autenticação é simulada pelo MSW. O objetivo é reproduzir o comportam
 
 - O banco dos mocks guarda só o hash da senha (SHA-256 com salt, via Web Crypto).
 - Senhas nunca aparecem em log, `localStorage`, `sessionStorage` nem URL. A sessão salva tem só token, validade e dados públicos do usuário.
-- As mutations que levam senha (login, cadastro e troca de senha) usam `gcTime: 0`: a senha fica só na memória do formulário enquanto ele está na tela e sai do cache de mutations do TanStack Query quando ele desmonta. O fim da sessão também limpa o cache de mutations.
+- As mutations que levam senha (login, cadastro e troca de senha) usam `gcTime: 0` (`SENSITIVE_MUTATION`, em `src/lib/sensitive-mutation.ts`): a senha fica só na memória do formulário enquanto ele está na tela e sai do cache de mutations do TanStack Query quando ele desmonta. O fim da sessão também limpa o cache de mutations.
 - Login com credencial errada devolve `INVALID_CREDENTIALS`, e a tela mostra "E-mail ou senha incorretos." sem dizer qual campo errou.
 - As credenciais das fixtures são fictícias.
 

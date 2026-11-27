@@ -29,12 +29,12 @@ Medianas de três medições por página e perfil, em 27/11/2026.
 
 | Página | Perfil | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Início | Mobile | 92 | 100 | 100 | 100 | 2,49 s | 0 | 255 ms |
-| Início | Desktop | 100 | 100 | 100 | 100 | 0,62 s | 0,002 | 1 ms |
-| Detalhe | Mobile | 95 | 100 | 100 | 100 | 2,48 s | 0 | 185 ms |
+| Início | Mobile | 92 | 100 | 100 | 100 | 2,48 s | 0 | 279 ms |
+| Início | Desktop | 100 | 100 | 100 | 100 | 0,62 s | 0,002 | 3 ms |
+| Detalhe | Mobile | 95 | 100 | 100 | 100 | 2,48 s | 0 | 162 ms |
 | Detalhe | Desktop | 100 | 100 | 100 | 100 | 0,56 s | 0 | 0 ms |
 
-Todas as metas foram atingidas, em todas as medições: a menor Performance foi 91 (início mobile; as três deram 91, 92 e 93; no detalhe, 95, 95 e 96).
+Todas as metas foram atingidas, em todas as medições: a menor Performance foi 90 (início mobile; as três deram 90, 92 e 92; no detalhe, 94, 95 e 96). Esta é a medição da versão entregue, depois da correção do grafo de chunks descrita em "Pontos de atenção".
 
 ### `vite preview` local (referência)
 
@@ -59,6 +59,8 @@ Medianas do perfil mobile, no `vite preview` (a coluna de produção só existe 
 | Stub do `tough-cookie` (chunk do MSW: 170 → 46 KB gzip) | 83 | 73 |
 | Painel ocioso, montagem em transição, detalhe com Suspense, fontes sem preload, busca sob demanda, router carregado antes da montagem, renderização por tamanho de tela | 86 | 85 |
 | **Produção (oficial), mesma versão** | **92** | **95** |
+| Troca de senha passou a importar `auth/hooks.ts` (regressão) | 84 (produção: 89) | 85 (produção: 95) |
+| Opção das mutations com senha num módulo próprio (versão entregue) | 86 (produção: **92**) | 85 (produção: **95**) |
 
 ### Ambiente de execução
 
@@ -114,3 +116,5 @@ Medianas do perfil mobile, no `vite preview` (a coluna de produção só existe 
 - O stub do `tough-cookie` é um alias de build sobre o funcionamento interno do MSW 2.15. Ao atualizar o MSW, conferir se o `msw/lib/core/utils/cookieStore.mjs` ainda usa só `Cookie`, `CookieJar` e `MemoryCookieStore`; o `msw-cookie-shim.spec.ts` e os testes unitários do stub pegam a quebra.
 - Como o layout aparece antes dos dados no detalhe, um `nft.updated` pode chegar com a primeira busca do NFT ainda em andamento. O app trata isso (busca de novo quando a primeira termina, `apply-nft-updated.ts`), e os testes de tempo real esperam o NFT na tela antes de mudar o preço.
 - Na medição local (HTTP/1.1) o mobile fica abaixo de 90 (85 e 86). A meta vale para o build entregue, medido na produção.
+- **O TBT simulado depende do grafo de chunks, não só do código.** Depois da revisão final, a tela inicial mobile caiu para 89 na produção (TBT de 255 para 356 ms). A bisseção entre os commits (cada build medido cinco vezes, intercalado com os outros no mesmo Chrome) apontou para uma linha: `account/queries.ts` passou a importar `SENSITIVE_MUTATION` de `auth/hooks.ts`. O código executado era o mesmo e as tarefas observadas tinham a mesma duração, mas o Rolldown embutiu as chaves da sessão no chunk dos hooks e a tela inicial passou a baixar 23 scripts em vez de 24. Como o Lighthouse simula a rede e a CPU a partir do grafo de requisições, as tarefas se juntaram na simulação e o TBT local subiu de 210 para 275 ms. A opção foi para `lib/sensitive-mutation.ts`, um módulo sem imports, e o grafo voltou ao que era (TBT local de 205 ms; produção de volta a 92). O `deferred-loading.spec.ts` confere que esse chunk existe, não tem imports e não foi embutido no chunk dos hooks.
+- A tarefa do `index-*.js` no carregamento da tela inicial tem dois tamanhos possíveis em todas as versões (cerca de 104 ms ou cerca de 190 ms, conforme o ponto em que o React fatia a montagem). Comparar uma única medição dessa tarefa entre duas versões não mostra regressão; o TBT mediano de várias medições, sim.

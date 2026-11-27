@@ -9,9 +9,9 @@ import type {
   Wallet,
   WalletsResponse,
 } from '@/api/contracts'
-import { SENSITIVE_MUTATION } from '@/features/auth/hooks'
 import { sessionKeys } from '@/features/auth/keys'
 import { getSession, updateSessionUser, useSession } from '@/features/auth/session-store'
+import { SENSITIVE_MUTATION } from '@/lib/sensitive-mutation'
 
 import { profileApi, walletsApi } from './api'
 

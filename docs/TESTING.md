@@ -116,7 +116,7 @@ Specs de apoio: `visual.spec.ts` (regressão visual), `infra.spec.ts` (MSW e Soc
 
 ## Estabilidade
 
-454 testes em 22 specs (desktop e mobile); cerca de 36 são pulados de propósito num dos projetos, porque valem só para um tamanho de tela. Na entrega, `npm run test:e2e` passou duas vezes seguidas do zero (build novo, sem servidor reaproveitado, sem novas tentativas), com 418 aprovados, e também a partir de um clone limpo sem `.env`. No CI, `retries: 1` e 2 workers.
+456 testes em 22 specs (desktop e mobile); cerca de 36 são pulados de propósito num dos projetos, porque valem só para um tamanho de tela. Na entrega, `npm run test:e2e` passou duas vezes seguidas do zero (build novo, sem servidor reaproveitado, sem novas tentativas), com 420 aprovados, e também a partir de um clone limpo sem `.env`. No CI, `retries: 1` e 2 workers.
 
 ## Comandos
 
