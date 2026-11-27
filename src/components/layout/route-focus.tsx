@@ -13,9 +13,10 @@ function currentHeading(): HTMLElement | null {
     const id = dialog.getAttribute('aria-labelledby')
     return (id && document.getElementById(id)) || null
   }
-  // A tela inicial tem um `h1` por layout (desktop e mobile); só um aparece.
+  // Só um `h1` aparece; o de um fundo inerte (a tela inicial atrás do modal de
+  // entrar) não conta: o título vem do modal, que monta logo depois.
   const headings = document.querySelectorAll<HTMLElement>('main#conteudo h1')
-  return [...headings].find((h) => h.checkVisibility()) ?? null
+  return [...headings].find((h) => h.checkVisibility() && !h.closest('[inert]')) ?? null
 }
 
 /** Foco em campo de texto ou dentro de um diálogo: a pessoa já está fazendo algo. */

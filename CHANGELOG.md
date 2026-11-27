@@ -112,10 +112,22 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Alterado
 
+- Documentação revisada contra o código entregue (Passo 16): `README.md` com setup, variáveis, credenciais, cenários e como reproduzir cada fluxo de falha; `ARCHITECTURE.md` com contratos, sessão, carrinho, cache, retries e reconciliação; `API.md`, `REALTIME.md`, `STATE_MANAGEMENT.md`, `SECURITY.md`, `MOCKS.md`, `DEPLOYMENT.md`, `TESTING.md` e os demais documentos de `docs/` corrigidos onde divergiam.
+- Fontes do Tailwind fixas em `src/` e `index.html` (`source(none)` no `src/index.css`). A detecção automática também lia a documentação, e o build da Vercel gerava um CSS diferente do local (92 contra 81 KB, com classes que só aparecem em texto). Agora os dois builds têm os mesmos arquivos, com o mesmo hash, e o CSS caiu para 77 KB.
+- Fora da CI, o Playwright grava a baseline visual que falta (`updateSnapshots: 'missing'`); na CI continua falhando sem ela.
 - Página do catálogo com 9 NFTs (grade 3 × 3 do Figma), em vez de 12.
 - Botão do painel de cenários mais alto no mobile, acima da área dos toasts.
 
 ### Corrigido
+
+- No desktop, o título da aba em `/login` e `/register` mostrava o slogan da tela inicial que fica atrás do modal. O fundo agora é inerte desde a primeira renderização e o `RouteFocus` ignora títulos em área inerte: a aba mostra "Entrar | KURIO" e "Criar conta | KURIO".
+- As senhas do login, do cadastro e da troca de senha ficavam no cache de mutations do TanStack Query depois do envio. Essas mutations usam `gcTime: 0`, e o fim da sessão também limpa o cache de mutations.
+
+### Removido
+
+- `PagePlaceholder`, componente que nenhuma tela usava mais.
+
+### Corrigido (etapas anteriores)
 
 - No detalhe, a edição na tela trocava sozinha quando uma mudança de preço tornava outra edição a mais barata. Agora a página fica na edição que mostrou primeiro enquanto está aberta; se ela esgotar ou ficar indisponível, cai na padrão com o aviso "A edição … está esgotada. Mostrando a edição …".
 - O bloco "Estoque" do painel de cenários abria sempre no primeiro NFT da lista. No detalhe, abre no NFT e na edição da página (com o NFT ainda carregando, pelo endereço).

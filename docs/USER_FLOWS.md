@@ -16,7 +16,7 @@
 | `/favorites` | Lista de interesse (favoritos) | Autenticado |
 | `*` | Página não encontrada | Público |
 
-Rotas criadas no Passo 4, com arquivos em `src/routes`. As privadas ficam no layout `_authenticated` e as de entrada no `_guest`. Telas ainda sem conteúdo mostram "Esta tela está em construção" até o passo delas.
+Rotas com arquivos em `src/routes`. As privadas ficam no layout `_authenticated` e as de entrada no `_guest`.
 
 "Lista de interesse" é o nome que o Figma dá aos favoritos, no menu do perfil e no footer. O coração da barra inferior mobile leva a essa rota.
 
@@ -30,7 +30,7 @@ Os parâmetros de `/login` e `/register` são `redirect` (destino depois de entr
 4. Sem resultados: estado vazio com opção de limpar filtros. Falha: mensagem com botão de tentar de novo.
 5. Clica num NFT e vai para o detalhe.
 
-Detalhes implementados no Passo 5:
+Detalhes:
 
 | Parâmetro | Valores | Padrão (fora da URL) |
 | --- | --- | --- |
@@ -55,9 +55,9 @@ Detalhes implementados no Passo 5:
 3. Favoritar como visitante leva ao login e volta ao detalhe. Logado, o coração muda na hora; se a API falhar, volta ao estado anterior com aviso.
 4. Adiciona ao carrinho e recebe confirmação.
 
-Detalhes implementados no Passo 6:
+Detalhes:
 
-- `/nft/$nftId?edition=<id>`: o loader busca o NFT antes da tela (acesso direto e refresh). 404 da API mostra "NFT não encontrado" com "Explorar o catálogo"; outras falhas mostram a página de erro com "Tentar de novo".
+- `/nft/$nftId?edition=<id>`: o loader inicia a busca do NFT e a tela mostra o esqueleto até ele chegar (acesso direto e refresh). 404 da API mostra "NFT não encontrado" com "Explorar o catálogo"; outras falhas mostram a página de erro com "Tentar de novo".
 - Edição padrão: a mais barata disponível (o preço do card), fixada enquanto a página está aberta: uma mudança de preço que torne outra edição mais barata não troca a seleção (ao recarregar, vale a mais barata do momento). Se a edição da tela esgota ou fica indisponível, a página cai na padrão com o mesmo aviso da URL. A escolha vai para a URL com `replace`, sem encher o histórico. Edição esgotada ou indisponível aparece riscada e não pode ser escolhida; na URL, cai na padrão com o aviso "A edição 1/1 está esgotada. Mostrando a edição …". NFT sem nenhuma edição à venda mostra o aviso e desabilita a compra.
 - Quantidade de 1 até a disponibilidade da edição, com aviso "Máximo disponível: N unidades."; trocar de edição volta para 1.
 - Desktop: "COMPRAR" adiciona ao carrinho e leva a `/cart`. Mobile: a barra de compra fixa ("Comprar NFT" e o botão do carrinho) substitui a barra de navegação; o botão do carrinho só adiciona e oferece "Ver carrinho" no toast. Voltar (mobile) usa o histórico do app ou vai ao início.
@@ -73,7 +73,7 @@ Detalhes implementados no Passo 6:
 4. Visitante que faz login mantém os itens, juntados ao carrinho da conta.
 5. Segue para o pagamento (visitante passa pelo login antes).
 
-Detalhes implementados no Passo 7:
+Detalhes:
 
 - `/cart` (público): lista com imagem, nome (link para o detalhe na mesma edição), ID do token e edição, preço, quantidade, total da linha (da cotação) e lixeira. Vazio: "Seu carrinho está vazio." com "Explorar o catálogo". Erro: mensagem com "Tentar de novo".
 - Quantidade de 1 até o estoque da edição; digitar além volta ao máximo. Cada mudança vai à API e o resumo é recalculado pela cotação nova.
@@ -96,7 +96,7 @@ Detalhes implementados no Passo 7:
 8. Recusado: mensagem com motivo, carrinho intacto, opção de tentar de novo.
 9. Confirmado: segue para o recibo.
 
-Como ficou (Passo 10):
+Como ficou:
 
 - `/checkout`: "Perfil do colecionador" (nome de exibição e e-mail, preenchidos com o perfil, e "Observação do colecionador (opcional)"), "Seus NFTs" com os totais da cotação na rede da carteira, e "Carteira e rede" com as carteiras cadastradas (a rede é a da carteira). Sem carteira, o atalho "Cadastrar carteira" leva a `/wallets`.
 - "Confirmar compra" valida os dados, conecta a carteira (simulado: conectada, recusada com "Tentar conectar de novo"), busca a cotação de novo e abre a revisão "Revise sua compra" (itens, totais, carteira, rede e colecionador). Se algo mudou desde a tela anterior, a revisão lista o que mudou e o botão vira "Confirmar com os novos valores".
@@ -111,7 +111,7 @@ Como ficou (Passo 10):
 2. Os valores vêm do snapshot do pedido.
 3. O carrinho mantém o que não foi comprado.
 
-Como ficou (Passo 11):
+Como ficou:
 
 - `/orders/$orderId` confirmado mostra o recibo do Figma num cartão: ícone de agradecimento, "Pagamento confirmado", "Seus NFTs agora estão na sua carteira" e o número do pedido; a faixa com ID da transação (abreviado, `0xA91F…E82C`, inteiro no `title`), data, total e tipo de carteira; "Detalhes da transação" com cada item (imagem, nome, ID do token e, na linha de baixo, a edição, quantidade, subtotal), subtotal e desconto quando houve cupom, taxa de rede e total com "Valores do momento da compra"; a nota "Transação confirmada na Ethereum (simulada)…" (com a rede do pedido) e "Ver no Etherscan" (Polygonscan ou Solscan, conforme a rede), em nova aba.
 - Tudo vem do `Order.snapshot`. Preço ou nome mudados depois no catálogo, pelo tempo real ou com refresh, não mexem no recibo.
@@ -121,14 +121,12 @@ Como ficou (Passo 11):
 
 ## 6. Cadastro e login
 
-Implementado no Passo 4.
-
 1. **Formato:** no desktop, entrar e criar conta abrem em modal sobre a tela inicial, com abas "Entrar | Criar conta". Fechar (X, Esc ou clique fora) volta ao início. No mobile, são telas cheias com o logo grande, sem barra inferior nem footer. O link "Novo na Kurio? Crie uma conta" alterna entre as duas.
 2. **Cadastro:** pede nome de usuário, e-mail, senha e confirmação. A validação no cliente usa as regras do contrato. Um e-mail ou nome de usuário já usado mostra o erro no campo, que recebe o foco.
 3. **Login:** valida os campos e mostra "E-mail ou senha incorretos." sem dizer qual campo está errado.
 4. **Depois de entrar:** a pessoa volta à rota de origem (`redirect`), ou ao início, e recebe uma mensagem de boas-vindas.
 5. **Refresh:** a sessão sobrevive a ele.
-6. **Sessão expirada:** em rota privada, leva ao login com o aviso "Sua sessão expirou..." e depois volta. Em rota pública, mostra só um aviso. Os dados do checkout ficam preservados (Passo 10).
+6. **Sessão expirada:** em rota privada, leva ao login com o aviso "Sua sessão expirou..." e depois volta. Em rota pública, mostra só um aviso. Os dados do checkout ficam preservados.
 7. **Logout:** fica no menu da conta (header) ou no menu lateral (mobile) e limpa todos os dados em cache. Outro usuário que entrar em seguida não vê nada do anterior.
 8. **Fora do escopo:** "Esqueceu a senha?" e "Continuar com Google/Facebook" mostram um aviso de indisponível.
 9. **Já com sessão:** abrir `/login` ou `/register` leva ao destino ou ao início.
@@ -148,7 +146,7 @@ Telas: `/profile` e `/wallets`, com o menu "Meu perfil" do Figma no desktop (Dad
 
 Links de páginas editoriais, suporte, atividade, ofertas e downloads ficam desabilitados com explicação ou indicados como indisponíveis. Nenhum deles mostra mensagem de sucesso.
 
-Como ficou (Passo 13):
+Como ficou:
 
 | Onde | Itens | Comportamento |
 | --- | --- | --- |

@@ -19,19 +19,20 @@ Toda a autenticação é simulada pelo MSW. O objetivo é reproduzir o comportam
 - O token fica no `localStorage` (`kurio:session`) para recuperar a sessão depois do refresh. Num backend real seria um cookie `HttpOnly`; essa diferença está registrada nas limitações de [ARCHITECTURE.md](../ARCHITECTURE.md). O valor salvo é validado pelo `sessionSchema` na leitura, e um valor corrompido é ignorado.
 - No carregamento, o `beforeLoad` da rota raiz chama `ensureSession()`, que consulta `GET /auth/session` uma vez e guarda no cache.
 - Cada entrada em rota privada revalida a sessão na API (`ensureSession({ revalidate: true })`). No preload (passar o mouse num link, `defaultPreload: "intent"`), a raiz e as rotas privadas só conferem a sessão salva e a data de validade, sem requisição: um hover não expira a sessão nem consome cenário.
-- Se a revalidação for cancelada pelo fim da sessão (`CancelledError`) ou falhar por rede, vale a sessão que existe **agora**, nunca a lida antes da espera.
+- Se a revalidação for cancelada pelo fim da sessão (`CancelledError`) ou recusada pela API, o resultado é "sem sessão". Se falhar por rede, vale a sessão que existe **agora**, nunca a lida antes da espera.
 - Um token com `expiresAt` vencido expira localmente, sem requisição.
 
 ## Senhas
 
 - O banco dos mocks guarda só o hash da senha (SHA-256 com salt, via Web Crypto).
-- Senhas nunca aparecem em log, cache do Query, `localStorage` nem URL. A sessão salva tem só token, validade e dados públicos do usuário.
+- Senhas nunca aparecem em log, `localStorage`, `sessionStorage` nem URL. A sessão salva tem só token, validade e dados públicos do usuário.
+- As mutations que levam senha (login, cadastro e troca de senha) usam `gcTime: 0`: a senha fica só na memória do formulário enquanto ele está na tela e sai do cache de mutations do TanStack Query quando ele desmonta. O fim da sessão também limpa o cache de mutations.
 - Login com credencial errada devolve `INVALID_CREDENTIALS`, e a tela mostra "E-mail ou senha incorretos." sem dizer qual campo errou.
 - As credenciais das fixtures são fictícias.
 
 ## Expiração de sessão
 
-- A API responde `401 SESSION_EXPIRED` quando o token vence (ou no cenário `session-expired`).
+- A API responde `401 SESSION_EXPIRED` quando o token vence (ou no cenário `session-expired`), e `401 UNAUTHENTICATED` quando o token não existe mais: por exemplo, depois de um login da mesma conta em outra aba, que invalida a sessão anterior. O cliente trata os dois como fim da sessão.
 - O interceptor chama `expireSession()`, que roda uma vez por sessão, mesmo com várias requisições falhando juntas: avisa os interessados (`onSessionEnd`), apaga a sessão e reinicia o cache. Durante o logout, um 401 não vira expiração.
 - **Destino privado:** o `router.invalidate()` reexecuta a proteção, que leva a `/login?redirect=<rota>&reason=expired`. A tela de login mostra "Sua sessão expirou. Entre de novo para continuar de onde parou." e, depois de entrar, volta à rota de origem. Não há toast: um aviso só.
 - **Destino público:** a pessoa fica onde está, sem sessão, e recebe um aviso (toast).
@@ -56,19 +57,19 @@ A proteção acontece no `beforeLoad` do layout `_authenticated`, que redirecion
 - No logout e na troca de usuário, `endSession` faz, nesta ordem:
   1. avisa os registrados em `onSessionEnd` (o socket da conta fecha aqui, com os listeners removidos);
   2. apaga a sessão;
-  3. cancela as requisições em andamento;
-  4. reinicia o cache: cancela as buscas em andamento, apaga as queries que não estão na tela e reinicia (`resetQueries`) as que estão, que buscam de novo já sem a sessão. Só `clear()` não basta: as telas montadas continuariam mostrando os dados antigos.
+  3. reinicia o cache (`resetCache`): cancela as buscas em andamento, apaga as queries que não estão na tela, limpa as mutations e reinicia (`resetQueries`) as queries que estão, que buscam de novo já sem a sessão. Só `clear()` não basta: as telas montadas continuariam mostrando os dados antigos.
 - O login (`startSession`) faz o mesmo reinício: respostas de visitante ainda em andamento são canceladas e não gravam no cache da conta. Entrar com outra conta sem sair também avisa `onSessionEnd('switch')`.
 - Todos os toasts fecham no fim da sessão (`onSessionEnd(() => toast.dismiss())` em `router.ts`), para uma mensagem como "Que bom ver você, Ana Ribeiro." não ficar na tela de quem entra depois. Os avisos do próprio fim ("Você saiu da sua conta.", "Sua sessão expirou...") são criados depois e continuam visíveis.
 - Eventos com `userId` diferente do usuário atual são descartados. O servidor simulado já não envia evento de pedido para outra conta, e o cliente confere de novo (`createEventGate`).
 - O socket simulado aplica à sessão as mesmas regras da API REST (`sessionUserId`: existente, não revogada e dentro da validade) e confere de novo a cada envio com dono. Token vencido não recebe evento de pedido, e uma conexão só recebe eventos depois de se autenticar.
-- A API responde `403 FORBIDDEN` para pedido ou carteira de outro usuário.
-- O carrinho do visitante é juntado ao do usuário no login (Passo 7) e depois deixa de ser usado.
+- A API responde `403 FORBIDDEN` ao ler um pedido de outro usuário (a tela mostra "Pedido não encontrado.", sem nenhum dado) e ao editar ou conectar a carteira de outro usuário. Em `POST /orders`, uma carteira de outro usuário é recusada com `422 VALIDATION_ERROR` no campo `walletId`, e uma `Idempotency-Key` já usada por outro usuário dá `409 IDEMPOTENCY_CONFLICT`.
+- O carrinho do visitante é juntado ao do usuário no login (`POST /cart/merge`). Depois do merge, o `kurio:guest-cart-id` é apagado e o próximo visitante recebe um carrinho novo; se o merge falhar, o carrinho do visitante continua guardado e entra no próximo login.
+- Carrinho e cotação aceitam visitante, mas um token inválido ou vencido recebe `401` em vez de cair silenciosamente para o carrinho de visitante.
 
 ## Outros cuidados
 
 - Sem `dangerouslySetInnerHTML` com dado vindo da API.
-- Toda resposta passa pelo schema do contrato (`apiRequest`). Resposta fora do contrato vira `INVALID_RESPONSE` e não chega ao cache.
+- Toda resposta passa pelo schema do contrato (`apiRequest`). Resposta de sucesso fora do contrato vira `INVALID_RESPONSE` e não chega ao cache.
 - Upload de avatar validado por tipo e tamanho antes do envio.
 - Links externos abrem com `rel="noopener noreferrer"`.
 - Login social e recuperação de senha estão fora do escopo: os botões avisam que não estão disponíveis e não simulam sucesso.

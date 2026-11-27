@@ -3,7 +3,7 @@
 ## Transporte
 
 - Cliente: `socket.io-client` (`src/features/realtime/socket.ts`), conectado a `VITE_SOCKET_URL` (`ws://localhost/socket`). A URL vira origem `ws://localhost` e caminho `/socket/`, que o Socket.IO completa com `?EIO=4&transport=websocket`.
-- Servidor simulado: `src/mocks/socket/server.ts`, com `@mswjs/socket.io-binding` sobre o `ws.link` do MSW, registrado no mesmo worker da API REST. Ele lê o banco dos mocks: a cada `onDbChange`, compara as versões e emite `nft.updated` (para todos) quando a `version` de um NFT sobe, e `order.updated` (só para o dono) quando a de um pedido sobe. O `eventId` é `<recurso>-<id>-v<version>-e<época>`: a época sobe a cada reset dos mocks, porque as versões voltam às das fixtures e o mesmo `eventId` se repetiria.
+- Servidor simulado: `src/mocks/socket/server.ts`, com `@mswjs/socket.io-binding` sobre o `ws.link` do MSW, registrado no mesmo worker da API REST. Ele lê o banco dos mocks: a cada `onDbChange`, compara as versões e emite `nft.updated` (para todos) quando a `version` de um NFT sobe, e `order.updated` (só para o dono) quando a de um pedido sobe, inclusive na criação do pedido (a versão anterior conta como 0). O `eventId` é `<recurso>-<id>-v<version>-e<época>`: a época sobe a cada reset dos mocks, porque as versões voltam às das fixtures e o mesmo `eventId` se repetiria.
 - O reset dos mocks (`onDbReset`) não emite nada: zera o último evento guardado e o log, ressincroniza as versões e manda um `realtime.sync` novo para cada conexão aberta. A aba aberta volta ao dado inicial sem recarregar.
 - Um timer (500 ms) decide os pagamentos vencidos (`settleDueOrders`). Antes só a próxima requisição REST decidia, e sem tráfego o `order.updated` não saía.
 - O usuário da conexão vem do `auth.token` do handshake (pacote `40{...}` do cliente), com as mesmas regras da API REST: sessão existente, não revogada e dentro da validade (`sessionUserId`). Token vencido vale como visitante, e a sessão é conferida de novo a cada envio com dono.
@@ -25,6 +25,7 @@ Encontradas ao integrar o binding (versões `msw` 2.15 e `@mswjs/socket.io-bindi
 ## Ciclo de vida
 
 - `useRealtime()` (no `RootLayout`) abre uma conexão por sessão: de visitante sem token e, depois do login, autenticada com o token. Trocar o token fecha a conexão anterior e abre outra.
+- A árvore só monta depois do MSW e do `router.load()`, que roda o `beforeLoad` da raiz (`ensureSession`). Por isso, num recarregamento, a primeira conexão já sai com o token validado (ou sem token, se ele expirou), sem uma conexão de visitante antes.
 - No logout, na expiração e na troca de conta, a conexão fecha no início do `endSession` (`onSessionEnd`), antes de apagar a sessão e reiniciar o cache. O fechamento remove todos os listeners (`socket.off()`, `socket.io.off()`) antes do `disconnect()`.
 - Cada conexão tem o próprio registro de eventos (`createEventGate`), então nada da sessão anterior passa para a seguinte.
 - O visitante recebe só eventos públicos (`nft.updated`).
@@ -47,7 +48,7 @@ O servidor manda a cada conexão (a primeira, a de uma sessão nova, cada recone
 
 1. Passa a usar essas versões como referência do porteiro (`gate.sync`): evento com versão menor ou igual é antigo, mesmo que esta conexão nunca o tenha visto. As versões são substituídas, não somadas, porque no reset elas voltam para trás.
 2. Compara com as cópias em cache (`reconcileWithServer`): detalhe, catálogo, destaques, lista de interesse e itens do carrinho (`nftVersion`). Busca de novo só o que tem versão diferente. Sem diferença, nada é buscado, e abrir a página não duplica requisições.
-3. Marca `['orders']` como velho (os pedidos ganham tela no Passo 10).
+3. Marca `['orders']` como velho (um pedido pendente pode ter sido decidido com a conexão fora).
 4. Com `reason: 'connect'`, compara o carrinho da sessão antes e depois da busca (`describeCartDiff`) e mostra o que mudou no mesmo aviso dos eventos ("… o preço mudou de 1.59 ETH para 1.79 ETH. O resumo do carrinho foi atualizado."). Sem isso, uma mudança perdida durante a queda mudava linha e resumo calada.
 5. Com `reason: 'reset'` (só nos mocks), busca de novo tudo (NFTs, lista de interesse, carrinho, cotação e pedidos), porque carrinho e favoritos voltam às fixtures sem mudar a versão dos NFTs, e mostra "Os dados de demonstração foram restaurados.". Não compara o carrinho: o do visitante some com os dados iniciais.
 
@@ -90,6 +91,7 @@ Efeito no cliente (`applyNftUpdated`):
 
 - Atualiza o NFT no cache do detalhe, das páginas do catálogo, dos destaques e da lista de interesse, só onde a cópia tem `version` menor que a do evento.
 - Se algum carrinho em cache tem o NFT numa versão mais antiga que a do evento (`nftVersion`), invalida carrinho e cotação. Evento atrasado em relação ao carrinho não avisa nem invalida nada. A invalidação cancela antes a primeira busca em andamento: sem isso o TanStack reaproveitava essa busca, calculada antes da mudança, e o resumo ficava com a cotação antiga.
+- Consulta de NFT ou de favoritos ainda na primeira busca (sem dado em cache) não recebe o patch: é buscada de novo quando essa busca termina (`refetchAfterFirstFetch`), porque a resposta pode ter sido calculada antes da mudança. Sem cancelar: a tela do detalhe suspende esperando exatamente essa busca.
 - O aviso diz o que mudou no carrinho da sessão atual (não soma o do visitante durante o merge do login): "Violet Nomad #314 (edição aberta): o preço mudou de 1.39 ETH para 1.59 ETH. O resumo do carrinho foi atualizado.", "… esgotou.", "… ficou indisponível." ou "… só N disponíveis.". No pagamento, o aviso também fica no fluxo, acima dos totais ("… O total foi atualizado."), e com a revisão aberta é descartado, porque a revisão já lista a mudança. Com a página do carrinho aberta, ele aparece no fluxo, acima da lista, numa região `role="status"` com o botão "Fechar aviso" (um toast no topo cobria o nome do primeiro item no mobile). Em outras telas, vira toast do Sonner. O carrinho buscado de novo traz `previousUnitPrice`, e a linha do item mostra a mudança. Item esgotado não mostra total na linha, porque fica fora da cotação.
 - No pagamento, a cotação da rede da carteira é da mesma família (`quote`) e é buscada de novo. Com a revisão aberta, uma cotação nova que muda o que se paga entra na revisão como lista do que mudou, e o botão passa a "Confirmar com os novos valores": a compra não sai com os valores antigos.
 

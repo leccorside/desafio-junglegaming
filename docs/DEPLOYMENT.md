@@ -43,13 +43,14 @@ O `mockServiceWorker.js` precisa ser servido como arquivo, sem rewrite e sem cac
 
 ## Cabeçalhos
 
-- Assets com hash: `Cache-Control: public, max-age=31536000, immutable`.
-- `index.html` e `mockServiceWorker.js`: sem cache longo.
+- Assets com hash (`/assets/*`): `Cache-Control: public, max-age=31536000, immutable`.
+- `mockServiceWorker.js`: `Cache-Control: no-cache` e `Service-Worker-Allowed: /`.
+- `index.html`: sem regra no `vercel.json`; segue o padrão da Vercel, sem cache longo.
 
 ## Conferência depois de cada deploy
 
 - [ ] A URL pública abre e o catálogo carrega dos mocks.
-- [ ] Acesso direto e refresh funcionam em `/nft/<id>`, `/cart`, `/checkout`, `/orders/<id>`, `/profile` e `/wallets`.
+- [ ] Acesso direto e refresh funcionam em `/`, `/nft/<id>`, `/cart`, `/checkout`, `/orders/<id>`, `/profile`, `/wallets`, `/favorites`, `/login` e `/register` (as privadas, sem sessão, levam ao login com `redirect`), e uma rota inexistente mostra a página 404.
 - [ ] Login com as credenciais fictícias funciona.
 - [ ] Um evento `nft.updated` disparado pelo painel aparece no carrinho.
 - [ ] O commit publicado corresponde ao código entregue.

@@ -32,8 +32,8 @@ const differs = (sync: RealtimeSync, id: string, version: number) =>
  * evento. Busca de novo só as queries cujas cópias têm versão diferente da
  * do servidor (diferente, e não só menor: no reset dos mocks as versões
  * voltam para trás). Sem diferença, nada é buscado, então abrir a página não
- * duplica requisições. Os pedidos ainda não têm tela (Passo 10) e são
- * sempre marcados como velhos.
+ * duplica requisições. Os pedidos são sempre marcados como velhos: um pedido
+ * pendente pode ter sido decidido enquanto a conexão estava fora.
  *
  * Na reconexão (`reason: 'connect'`), compara o carrinho do dono atual antes e
  * depois da busca e entrega o que mudou a `onCartChanges` (aviso). No reset

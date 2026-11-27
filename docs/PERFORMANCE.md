@@ -53,7 +53,7 @@ Medianas do perfil mobile, no `vite preview` (a coluna de produção só existe 
 
 | Etapa | Início | Detalhe |
 | --- | ---: | ---: |
-| Antes do Passo 15 | 78 | 65 |
+| Antes das otimizações de performance | 78 | 65 |
 | Preload das fontes, `modulepreload` do MSW, `robots.txt` | 78 | 70 |
 | Detalhe em duas renderizações, menus sob demanda | 80 | 71 |
 | Stub do `tough-cookie` (chunk do MSW: 170 → 46 KB gzip) | 83 | 73 |

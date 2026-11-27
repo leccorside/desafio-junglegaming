@@ -44,7 +44,7 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       // Mutations não se repetem sozinhas: a criação de pedido repete com a mesma
-      // Idempotency-Key por conta própria (Passo 10).
+      // Idempotency-Key por conta própria (features/checkout).
       retry: false,
     },
   },

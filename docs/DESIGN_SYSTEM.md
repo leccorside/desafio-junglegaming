@@ -261,7 +261,7 @@ Os ícones do layout vêm do pacote Iconly (variantes Bold, Curved, Two-tone e L
 
 Cada ícone aceita `size` (padrão 20) e `title`. Sem `title` ele é decorativo (`aria-hidden`), que é o caso quando o botão ou link já tem nome acessível. Os componentes do shadcn mantêm os ícones internos do `lucide-react` (fechar, setas do select), e o botão de menu do header usa o `MenuIcon` do lucide, porque o Figma não tem ícone de menu.
 
-O arquivo só tem 4 imagens, reaproveitadas em 81 lugares. As fixtures do catálogo (Passo 3) vão repetir essas imagens.
+O arquivo só tem 4 imagens, reaproveitadas em 81 lugares. As fixtures do catálogo repetem essas imagens.
 
 ## Layout implementado
 
@@ -273,7 +273,7 @@ O arquivo só tem 4 imagens, reaproveitadas em 81 lugares. As fixtures do catál
 
 Toasts (Sonner, `src/components/ui/sonner.tsx`): no canto inferior direito, a 24 px da base, a partir de 768 px. Abaixo disso ficam a `calc(142px + env(safe-area-inset-bottom))` da base, com 16 px nas laterais: acima da barra inferior (126 px) e do botão "Sair" do menu lateral (cerca de 81 px). A regra segue a media query do projeto (768 px), e não a do Sonner (600 px).
 
-### Tela inicial (Passo 5)
+### Tela inicial
 
 | Bloco | Desktop (≥ 1024 px) | Mobile (< 768 px) |
 | --- | --- | --- |
@@ -288,7 +288,7 @@ Toasts (Sonner, `src/components/ui/sonner.tsx`): no canto inferior direito, a 24
 
 O selo de raridade ("RARO", "LENDÁRIO") aparece em `Primary` no canto do card; NFTs comuns não têm selo. NFT esgotado mostra o preço em `Secondary` com "ESGOTADO".
 
-### Detalhe do NFT (Passo 6)
+### Detalhe do NFT
 
 | Bloco | Desktop | Mobile |
 | --- | --- | --- |
@@ -302,7 +302,7 @@ O selo de raridade ("RARO", "LENDÁRIO") aparece em `Primary` no canto do card; 
 | Abas | "Detalhes do NFT" 17/700 `Text/Accent` com traço de 3 px; "Avaliações de colecionadores (N)" 17/400; linha `Primary` 30% | Abas de 15 px, roláveis |
 | Mais desta coleção | Título 17/700 `Text/Accent` com linha, 5 cards em linha | Cards de 175 px em rolagem horizontal |
 
-### Carrinho (Passo 7)
+### Carrinho
 
 | Bloco | Desktop | Mobile |
 | --- | --- | --- |
@@ -334,7 +334,7 @@ Razão de contraste WCAG de cada cor de texto sobre cada superfície. O mínimo 
 
 `Ink` sobre `Primary` (texto dos botões) dá 6,85:1.
 
-Dois pontos não passam. Os ajustes foram aplicados no Passo 1 e estão registrados como desvio em [ARCHITECTURE.md](../ARCHITECTURE.md):
+Dois pontos não passam. Os ajustes estão registrados como desvio em [ARCHITECTURE.md](../ARCHITECTURE.md):
 
 1. **Texto de erro.** `Color/Error` (`#ed1b2e`) fica abaixo de 4,5:1 em todas as superfícies. Aplicado: `#ed1b2e` continua em ícones e bordas de erro (`--destructive`), e o texto da mensagem usa `#ff5c66` (`--destructive-foreground`: 6,39:1 sobre Ink, 5,82:1 sobre Surface Card, 4,97:1 sobre Surface Dark).
 2. **Borda dos campos.** `Color/Border` (`#3f2319`) tem 1,34:1 sobre o fundo, e o critério 1.4.11 da WCAG pede 3:1 para identificar um campo. Aplicado: borda dos inputs em `#8a5c40` (`--input`: 3,38:1 sobre Ink, 3,08:1 sobre Surface Card). `Color/Border` continua nos cards e divisórias, que são decorativos.
@@ -367,10 +367,10 @@ Cada decisão nova fica registrada em [ARCHITECTURE.md](../ARCHITECTURE.md), na 
 - Base `Surface Card` com faixa de brilho em `Surface Raised`, animada em CSS.
 - Animação desligada com `prefers-reduced-motion: reduce`.
 - Usados no catálogo, nos destaques, no detalhe, no resumo do carrinho e no perfil.
-- Catálogo (Passo 5): `NftCardSkeleton` com as proporções do card (175/200 no mobile, 258/300 no desktop), 9 por página, e contagens dos filtros em skeleton até as facetas chegarem.
+- Catálogo: `NftCardSkeleton` com as proporções do card (175/200 no mobile, 258/300 no desktop), 9 por página, e contagens dos filtros em skeleton até as facetas chegarem.
 
 ## Assets
 
-- Imagens dos NFTs, banners, ícones Iconly e logos exportados do Figma no Passo 1, para `public/` ou `src/assets`.
+- Imagens dos NFTs, banners, ícones Iconly e logos exportados do Figma para `public/` ou `src/assets`.
 - Imagens em WebP ou AVIF com largura e altura declaradas.
 - Qualquer substituição de asset é registrada em [ARCHITECTURE.md](../ARCHITECTURE.md).

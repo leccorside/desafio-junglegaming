@@ -1,6 +1,6 @@
 # Requisitos
 
-Requisitos extraídos de [README-DESAFIO.md](../README-DESAFIO.md). Os identificadores servem de referência nos testes e no [CHANGELOG.md](../CHANGELOG.md).
+Requisitos extraídos de [README-DESAFIO.md](../README-DESAFIO.md). Os identificadores organizam os requisitos; a cobertura de testes, por item do enunciado, está em [TESTING.md](TESTING.md).
 
 ## Requisitos funcionais
 

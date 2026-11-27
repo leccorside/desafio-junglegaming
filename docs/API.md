@@ -53,7 +53,7 @@ Toda resposta 4xx/5xx tem o corpo:
 
 | Status | Código | Quando | `details` |
 | --- | --- | --- | --- |
-| 400 | `BAD_REQUEST` | Parâmetro malformado | |
+| 400 | `BAD_REQUEST` | Parâmetro malformado, `Idempotency-Key` ausente ou que não é UUID, `X-Cart-Id` ausente ou inválido para visitante, `status` inválido em `GET /orders` | |
 | 401 | `UNAUTHENTICATED` | Sem token ou token inválido | |
 | 401 | `SESSION_EXPIRED` | Token vencido | |
 | 401 | `INVALID_CREDENTIALS` | E-mail ou senha errados no login | |
@@ -63,17 +63,17 @@ Toda resposta 4xx/5xx tem o corpo:
 | 409 | `USERNAME_TAKEN` | Nome de usuário em uso | |
 | 409 | `AVAILABILITY_CONFLICT` | Quantidade acima do estoque | `{ maxQuantity }` |
 | 409 | `QUOTE_OUTDATED` | Cotação desatualizada ao criar o pedido | `{ quote, changes[] }` |
-| 409 | `IDEMPOTENCY_CONFLICT` | Mesma chave com conteúdo diferente | |
+| 409 | `IDEMPOTENCY_CONFLICT` | Mesma chave com conteúdo diferente, ou chave já usada por outro usuário | |
 | 409 | `WALLET_REJECTED` | O colecionador recusou a conexão da carteira | |
 | 409 | `WALLET_DISCONNECTED` | A carteira desconectou durante o pagamento | |
 | 422 | `VALIDATION_ERROR` | Campos inválidos | |
 | 422 | `INVALID_PASSWORD` | Senha atual incorreta na troca | |
-| 422 | `COUPON_INVALID` | Cupom inexistente | |
+| 422 | `COUPON_INVALID` | Cupom inexistente, ou subtotal abaixo do mínimo do cupom ("Válido a partir de …") | |
 | 422 | `COUPON_EXPIRED` | Cupom fora da validade | |
 | 500 | `INTERNAL_ERROR` | Erro inesperado | |
 | 503 | `SERVICE_UNAVAILABLE` | Falha transitória (`retryable: true`) | |
 
-O status de cada código está em `API_ERROR_STATUS`. Quando não há resposta, o cliente normaliza o erro com códigos próprios (`ClientErrorCode`): `NETWORK_ERROR`, `TIMEOUT`, `CANCELED` e `INVALID_RESPONSE` (resposta que não passa no schema).
+O status de cada código está em `API_ERROR_STATUS`. Quando não há resposta, o cliente normaliza o erro com códigos próprios (`ClientErrorCode`): `NETWORK_ERROR`, `TIMEOUT`, `CANCELED` e `INVALID_RESPONSE` (resposta de sucesso que não passa no schema). Uma resposta de erro fora do envelope vira `INTERNAL_ERROR`, com `retryable: true` quando o status é 5xx.
 
 ## Sessão e conta
 
@@ -185,7 +185,7 @@ type NftListResponse = {
 
 ## Carrinho
 
-Aceita visitante (`X-Cart-Id`) ou usuário autenticado.
+Aceita visitante (`X-Cart-Id`, UUID) ou usuário autenticado. Sem token, o `X-Cart-Id` é obrigatório (`400 BAD_REQUEST` se faltar ou não for UUID). Com token inválido ou vencido, a resposta é `401 UNAUTHENTICATED` ou `SESSION_EXPIRED`, sem cair para o carrinho de visitante. O mesmo vale para a cotação.
 
 | Método | Rota | Corpo | Resposta |
 | --- | --- | --- | --- |
@@ -260,9 +260,9 @@ type QuoteOutdatedDetails = {
 
 | Método | Rota | Resposta |
 | --- | --- | --- |
-| POST | `/orders` (exige `Idempotency-Key`) | `201 Order` na criação, `200 Order` quando a mesma chave recupera o pedido |
+| POST | `/orders` (exige `Idempotency-Key`) | `201 Order` na criação, `200 Order` quando a mesma chave recupera o pedido. Erros: `400` (chave ausente ou inválida), `409 QUOTE_OUTDATED`, `409 IDEMPOTENCY_CONFLICT`, `409 WALLET_DISCONNECTED`, `422 VALIDATION_ERROR` (carteira de outro usuário ou rede diferente da carteira em `walletId`/`network`, cotação sem itens) |
 | GET | `/orders/:id` | `200 Order`, `403 FORBIDDEN` ou `404 NOT_FOUND` |
-| GET | `/orders?status=pending` | `200 { items: Order[] }`, para retomar pedidos pendentes |
+| GET | `/orders` (`?status=` opcional) | `200 { items: Order[] }` do usuário, do mais novo ao mais antigo; com `?status=pending`, retoma os pendentes. Status inválido: `400 BAD_REQUEST` |
 
 ```ts
 type Buyer = { displayName: string; email: string; note?: string }  // "Observação do colecionador (opcional)"
@@ -327,8 +327,8 @@ Avatar: PNG, JPEG ou WebP, até 2 MB (`avatarFileSchema`). O formulário de senh
 | --- | --- | --- | --- |
 | GET | `/me/wallets` | | `200 { items: Wallet[] }` |
 | POST | `/me/wallets` | `CreateWalletRequest` | `201 Wallet` |
-| PATCH | `/me/wallets/:id` | `UpdateWalletRequest` | `200 Wallet` |
-| POST | `/me/wallets/:id/connect` | | `200 WalletConnection` ou `409 WALLET_REJECTED` |
+| PATCH | `/me/wallets/:id` | `UpdateWalletRequest` | `200 Wallet`, `404 NOT_FOUND` ou `403 FORBIDDEN` (carteira de outro usuário) |
+| POST | `/me/wallets/:id/connect` | | `200 WalletConnection`, `409 WALLET_REJECTED`, `404 NOT_FOUND` ou `403 FORBIDDEN` |
 
 ```ts
 // Conexão simulada da carteira na etapa de pagamento.
@@ -356,11 +356,11 @@ O endereço é validado conforme a rede: `0x` + 40 hexadecimais em Ethereum e Po
 
 ## Mocks
 
-Utilitários disponíveis só com os mocks ligados, usados pelo painel de desenvolvimento e pelos testes. Ver [MOCKS.md](MOCKS.md).
+Utilitários disponíveis só com os mocks ligados, usados pelo painel de desenvolvimento e pelos testes. A lista completa, com as rotas de tempo real (`/__mocks/realtime/*`) e de cookies, está em [MOCKS.md](MOCKS.md#rotas-utilitárias).
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
 | POST | `/__mocks/reset` | Restaura as fixtures e o cenário padrão |
 | GET | `/__mocks/scenario` | Cenário ativo |
 | PUT | `/__mocks/scenario` | Ativa cenários `{ names, options }` |
-| POST | `/__mocks/nfts/:id/update` | Altera preço, estoque ou status de uma edição (e emite `nft.updated` a partir do Passo 8) |
+| POST | `/__mocks/nfts/:id/update` | Altera preço, estoque ou status de uma edição (e emite `nft.updated`) |

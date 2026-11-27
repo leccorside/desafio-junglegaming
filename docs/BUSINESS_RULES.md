@@ -38,8 +38,8 @@ Regras aplicadas pela API simulada e respeitadas pela interface. A fonte da verd
 
 - Um carrinho aceita um cupom por vez.
 - Tipos: percentual sobre o subtotal ou valor fixo em ETH, nunca deixando o total negativo.
-- Um cupom pode ter validade, valor mínimo de subtotal e limite de uso.
-- Erros: `COUPON_INVALID` (código não existe) e `COUPON_EXPIRED` (fora da validade). Cupom recusado não altera o carrinho.
+- Um cupom pode ter validade e valor mínimo de subtotal.
+- Erros: `COUPON_INVALID` (código inexistente, ou subtotal abaixo do mínimo: "Válido a partir de …") e `COUPON_EXPIRED` (fora da validade). Cupom recusado não altera o carrinho.
 - Cupons das fixtures: ver [MOCKS.md](MOCKS.md).
 
 ## Cotação

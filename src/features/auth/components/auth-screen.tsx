@@ -57,7 +57,13 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   if (isDesktop) {
     return (
       <>
-        <HomePage search={EMPTY_CATALOG_SEARCH} />
+        {/* Fundo do modal: inerte desde a primeira renderização (o Radix só
+            esconde o resto da página quando o modal monta, num commit
+            seguinte). O título da aba e o foco da troca de tela vêm do modal,
+            não do slogan da tela inicial. */}
+        <div inert>
+          <HomePage search={EMPTY_CATALOG_SEARCH} />
+        </div>
         <Dialog
           open
           onOpenChange={(open) => {

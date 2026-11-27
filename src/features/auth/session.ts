@@ -71,6 +71,8 @@ async function resetCache() {
   const { queryClient } = runtime
   await queryClient.cancelQueries()
   queryClient.removeQueries({ type: 'inactive' })
+  // Mutations da sessão que acabou (inclusive as que levaram senha) saem também.
+  queryClient.getMutationCache().clear()
   void queryClient.resetQueries({ type: 'active' })
 }
 

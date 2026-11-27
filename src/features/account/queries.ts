@@ -9,6 +9,7 @@ import type {
   Wallet,
   WalletsResponse,
 } from '@/api/contracts'
+import { SENSITIVE_MUTATION } from '@/features/auth/hooks'
 import { sessionKeys } from '@/features/auth/keys'
 import { getSession, updateSessionUser, useSession } from '@/features/auth/session-store'
 
@@ -100,6 +101,8 @@ export function useRemoveAvatar() {
 
 export function useChangePassword() {
   return useMutation({
+    // Leva a senha atual e a nova: sai do cache assim que o formulário desmonta.
+    ...SENSITIVE_MUTATION,
     mutationFn: (body: ChangePasswordRequest) => profileApi.changePassword(body),
   })
 }

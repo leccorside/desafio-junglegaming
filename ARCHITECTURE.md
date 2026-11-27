@@ -2,8 +2,6 @@
 
 Visão técnica da solução. Os detalhes de cada área ficam nos documentos de `docs/`, referenciados ao longo do texto.
 
-> Este documento descreve a arquitetura planejada e é corrigido à medida que a implementação avança.
-
 ## Visão geral
 
 A aplicação é uma SPA servida estaticamente. Não existe backend real: o MSW intercepta as chamadas REST e a conexão Socket.IO no navegador, e mantém um banco em memória persistido no `localStorage`.
@@ -34,26 +32,25 @@ src/
     client.ts            instância Axios, interceptors e apiRequest (valida com o schema)
     errors.ts            ApiError e normalizeError
     contracts/           schemas Zod e tipos compartilhados (REST e eventos)
-  hooks/                 hooks genéricos (useMediaQuery)
+  hooks/                 hooks genéricos (useMediaQuery, useIdle, useDebouncedValue)
   features/
     auth/                sessão (store, ciclo de vida), login, cadastro, logout, redirect seguro
     catalog/             início, destaques, busca e filtros
-    nft/                 detalhe, galeria, edição, quantidade
-    favorites/
-    cart/                carrinho, cupom, cotação
+    nft-detail/          detalhe, galeria, edição, quantidade
+    favorites/           lista de interesse e favoritar (inclusive como visitante)
+    cart/                carrinho, cupom, cotação, merge no login
     checkout/            pagamento, revisão, idempotência
     orders/              estado do pedido, recibo
-    profile/
-    wallets/
-    realtime/            cliente Socket.IO e aplicação de eventos no cache
+    account/             perfil, avatar, senha e carteiras
+    realtime/            cliente Socket.IO, porteiro de eventos e reconciliação com o cache
   routes/                rotas do TanStack Router (por arquivo); _authenticated/ privadas, _guest/ entrada
   assets/                formas SVG exportadas do Figma
   components/
     ui/                  componentes shadcn adaptados
     layout/              header, footer, menu lateral, barra inferior mobile
     icons/               ícones do Figma (figma-icons.tsx é gerado)
-    feedback/            páginas de 404 e de erro de rota
-  lib/                   decimal, formatação, utilitários
+    feedback/            páginas de 404 e de erro de rota, região de carregamento
+  lib/                   ETH (big.js), query client, foco, título da página, imagens, utilitários
   mocks/
     db/                  banco em memória, persistência, reset
     fixtures/            NFTs, usuários, cupons, carteiras, pedidos anteriores
@@ -61,22 +58,25 @@ src/
     handlers/            rotas MSW (validação com os contratos → serviço)
     socket/              servidor Socket.IO simulado
     scenarios/           cenários de rede e de negócio
-    panel/               painel de desenvolvimento (cenários e reset)
+    panel/               painel de desenvolvimento (cenários, estoque e reset)
+    shims/               stub do tough-cookie para o MSW no navegador
     http.ts              envelope das rotas: cenários, erros, liquidação de pagamentos
     browser.ts           setup do worker
+    enable.ts            liga o MSW antes da primeira renderização
 public/
-  images/nfts/           imagens do Figma em WebP (480 e 960 px)
-  robots.txt             libera catálogo e detalhe, bloqueia as telas da conta
+  images/nfts/           imagens do Figma em WebP (480, 720 e 960 px)
+  robots.txt             libera catálogo e detalhe; bloqueia carrinho, pagamento, pedidos e conta
+  mockServiceWorker.js   service worker do MSW
 scripts/
   export-figma-assets.mjs  exporta ícones, formas e imagens pela API do Figma
 tests/
-  e2e/                   specs Playwright
-  fixtures/              helpers de cenário, relógio e socket
+  e2e/                   specs Playwright e baselines da regressão visual (__screenshots__)
+  fixtures/              helpers de sessão (auth.ts), API e cenários (mocks.ts) e esperas (wait.ts)
 build/
-  preload-hints.ts       plugin do Vite: preload das fontes e do chunk do MSW
+  preload-hints.ts       plugin do Vite: modulepreload do chunk do MSW no modo mocks
 lighthouse/
-  run.mjs                auditoria (npm run lighthouse)
-  reports/               relatórios HTML/JSON e summary.json
+  run.mjs                auditoria (npm run lighthouse e lighthouse:prod)
+  reports/               relatórios HTML/JSON e summary.json (local e produção)
 docs/
 ```
 
@@ -93,9 +93,9 @@ Cada pasta em `features/` concentra os hooks de query e mutation, as query keys,
 | Contratos em `src/api/contracts` como schemas Zod | Um schema gera o tipo e valida a resposta. O mesmo schema serve aos handlers do MSW, aos formulários (React Hook Form) e aos search params da URL do catálogo. |
 | Sessão fora do React (`session-store.ts`) com `useSyncExternalStore` | O interceptor do Axios precisa do token sem depender de componente. O Axios recebe as funções da sessão por `configureApiClient`, sem import circular. |
 | Rotas privadas num layout `_authenticated` com `beforeLoad` | Uma proteção só, que revalida a sessão na API e guarda o `redirect`. A expiração chama `router.invalidate()`, que reexecuta a proteção. |
-| `queryClient.clear()` no fim de toda sessão | Garante que nenhum dado do usuário anterior sobreviva, sem depender de lembrar quais chaves são privadas. Os dados públicos são buscados de novo. |
+| Cache reiniciado no fim de toda sessão (`resetCache`) | Cancela as buscas em andamento, remove o que não está na tela, reinicia o que está (busca de novo já com a sessão nova) e limpa as mutations. Nenhum dado do usuário anterior sobrevive, sem depender de lembrar quais chaves são privadas. Só `clear()` deixaria as telas montadas presas aos dados antigos. |
 | Login e cadastro no desktop como modal sobre a tela inicial | É como o Figma desenha (frames "Sign In/Up Modal" sobre a "Marketplace Page"). As rotas `/login` e `/register` continuam existindo, então acesso direto e refresh funcionam. |
-| `apiRequest` valida toda resposta com o schema | Uma resposta fora do contrato vira `INVALID_RESPONSE` em vez de dado errado no cache. |
+| `apiRequest` valida toda resposta com o schema | Uma resposta de sucesso fora do contrato vira `INVALID_RESPONSE` em vez de dado errado no cache; um erro 5xx fora do envelope vira `INTERNAL_ERROR` com nova tentativa. |
 | Mocks em camadas: handlers → serviços → banco (`src/mocks`) | Os handlers só traduzem HTTP e validam com os contratos. As regras ficam em serviços testados pela API HTTP real (`msw/node`). Separar isso evita regra de negócio duplicada entre REST e Socket.IO. |
 | Pagamento decidido por prazo (`settleAt`) e liquidado antes de cada requisição | O resultado do pedido sobrevive a refresh e funciona com relógio controlado nos testes, sem depender de `setTimeout` vivo. |
 | Cotação com assinatura do conteúdo | A API percebe qualquer mudança de preço, estoque, cupom ou taxa entre a revisão e a confirmação e devolve `QUOTE_OUTDATED` com o que mudou. |
@@ -104,7 +104,7 @@ Cada pasta em `features/` concentra os hooks de query e mutation, as query keys,
 | Query key do catálogo com todos os parâmetros, `signal` e `keepPreviousData` | A troca de filtro cancela a requisição anterior, e uma resposta atrasada nunca ocupa o lugar da consulta atual (testado com o cenário `jitter`). |
 | 9 NFTs por página | É a grade 3 × 3 do Figma desktop. No mobile, as mesmas 9 em duas colunas. |
 | Slider de preço em `number`, convertido para string com `ethRound` ao aplicar | O Radix Slider só trabalha com número. O valor vai para a URL e para a API como string decimal com 2 casas, e nenhuma conta de dinheiro usa o número. |
-| Vitest para regras puras | Aritmética, contratos e reconciliação de eventos se testam melhor isolados. Os fluxos da interface ficam no Playwright. |
+| Vitest para regras puras e para a API simulada | Aritmética, contratos, cache e reconciliação de eventos se testam melhor isolados; os handlers e serviços dos mocks são testados por HTTP real via `msw/node`. Os fluxos da interface ficam no Playwright. |
 | Banco dos mocks no `localStorage` | Sustenta refresh sem backend, e o reset volta às fixtures. |
 | Carrinho do visitante com `X-Cart-Id` | Permite persistir e depois juntar ao carrinho do usuário no login. |
 | `Idempotency-Key` persistida por tentativa | Recupera o mesmo pedido depois de timeout ou refresh. |
@@ -115,6 +115,49 @@ Cada pasta em `features/` concentra os hooks de query e mutation, as query keys,
 | Modo `mocks` do Vite (`.env.mocks`) | Liga o MSW no `dev:mocks`, nos testes e no deploy sem variável no painel da Vercel. |
 | Playwright contra o build de produção | Os testes exercitam o mesmo bundle publicado, com o service worker real. |
 | Devtools do Router e do Query carregadas sob demanda só em desenvolvimento | Ficam fora do bundle de produção. |
+| Router carregado antes da montagem (`router.load()`) e árvore montada numa transição | A primeira renderização é fatiada pelo React, sem uma tarefa longa só (Lighthouse mobile; ver [docs/PERFORMANCE.md](docs/PERFORMANCE.md)). |
+| Detalhe do NFT com Suspense, sem esperar no loader | A tela entra com o esqueleto e a renderização com os dados também é fatiada; a imagem principal começa a baixar com a resposta da API. |
+| Header, barra inferior e destaque renderizados por tamanho de tela (`useMediaQuery`) | A versão escondida por CSS entrava no DOM e, no celular, baixava a imagem de 450 px do destaque do desktop. |
+| Menus, busca e painel de cenários sob demanda | Radix Menu, Popper, floating-ui e `Dialog` ficam fora do bundle inicial; o painel carrega com o navegador ocioso. |
+| Stub do `tough-cookie` no build do navegador | O MSW 2.15 usa o pacote só no cookie store, e ele traz o `tldts`: 124 kB gzip a menos no caminho crítico. O stub cobre o que o MSW usa e é comparado com o pacote real nos testes unitários. |
+| Fontes do Tailwind fixas em `src/` e `index.html` (`source(none)` no `src/index.css`) | A detecção automática lia o projeto inteiro, inclusive a documentação, que cita classes. Como o upload da Vercel e o disco local não têm os mesmos arquivos, o CSS publicado saía diferente do local. Com as fontes fixas, os dois builds geram os mesmos arquivos. |
+
+## Contratos, sessão, carrinho, cache e tempo real
+
+Resumo de cada área; os detalhes ficam nos documentos citados.
+
+### Contratos REST e eventos
+
+- Os contratos são schemas Zod em `src/api/contracts`: o mesmo schema gera o tipo, valida a resposta no cliente (`apiRequest`), valida a requisição no handler do MSW e serve aos formulários. Valores em ETH trafegam como string decimal.
+- Erros seguem um envelope único `{ error: { code, message, fields?, retryable } }`, com códigos estáveis (`SESSION_EXPIRED`, `QUOTE_OUTDATED`, `IDEMPOTENCY_CONFLICT`, `WALLET_REJECTED`...). Rotas, corpos e erros em [docs/API.md](docs/API.md).
+- Eventos Socket.IO com envelope comum (`eventId`, `type`, `resource`, `version`, `occurredAt`, `data`): `nft.updated` (preço, estoque e status das edições), `order.updated` (resultado do pagamento, só para o dono) e `realtime.sync` (versões do servidor na conexão, na reconexão e no reset). Detalhes em [docs/REALTIME.md](docs/REALTIME.md).
+
+### Sessão
+
+- Token opaco emitido pela API simulada, válido por 30 minutos, uma sessão ativa por usuário (um novo login invalida o anterior). Fica no `localStorage` (`kurio:session`) e num store fora do React (`session-store.ts`), lido pelo interceptor do Axios.
+- A raiz valida a sessão salva uma vez por carregamento (`beforeLoad` → `ensureSession`), antes da montagem. Rotas privadas ficam no layout `_authenticated`, que leva ao login com `redirect`.
+- `401 UNAUTHENTICATED` ou `SESSION_EXPIRED` em qualquer requisição, ou a validade local vencida, encerram a sessão: aviso, cache reiniciado, socket reconectado como visitante e, em rota privada, login com volta à tela de origem.
+- Logout e expiração passam por `endSession`, que reinicia o cache e limpa as mutations. Detalhes em [docs/SECURITY.md](docs/SECURITY.md).
+
+### Estado do carrinho
+
+- O carrinho mora na API simulada, por dono: `user:<id>` com sessão, ou `guest:<X-Cart-Id>` para visitante (UUID gerado no navegador e guardado no `localStorage`). Toda resposta traz a `version` do carrinho.
+- No login, `POST /cart/merge` junta o carrinho do visitante ao da conta, respeitando o estoque, e avisa o que não coube. Depois do merge, o visitante recebe um carrinho novo; se o merge falha, o carrinho do visitante fica guardado para o próximo login.
+- A linha guarda a versão do NFT e o preço da edição; o carrinho é recalculado contra o catálogo atual (preço alterado, estoque insuficiente, esgotado).
+- A cotação (`POST /quotes`) fica em cache por dono, rede e versão do carrinho, vale 10 minutos e carrega a assinatura do conteúdo. Na confirmação, qualquer diferença volta como `QUOTE_OUTDATED` com a cotação nova e a lista do que mudou. Regras em [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md).
+
+### Cache, retries e sincronização
+
+- TanStack Query com `staleTime` de 30 s, `gcTime` de 5 min e sem nova busca ao voltar à janela. As query keys incluem o usuário (ou o dono do carrinho) e todos os parâmetros. O catálogo mantém a página anterior na tela durante a troca de filtro e cancela a busca antiga (`signal`).
+- Retries só para erros com `retryable` (rede, 503, timeout): até 2 novas tentativas, ou 1 para timeout (cada tentativa custa os 15 s do Axios), com backoff de 0,5 s a 4 s. 4xx e sessão inválida nunca repetem. Mutations não repetem sozinhas; a criação de pedido reenvia com a mesma `Idempotency-Key` depois de timeout.
+- Mutations otimistas (favoritos) guardam o estado anterior e voltam atrás em caso de erro. Detalhes em [docs/STATE_MANAGEMENT.md](docs/STATE_MANAGEMENT.md).
+
+### Reconciliação entre REST e Socket.IO
+
+- **Porteiro de eventos** (`event-gate.ts`): descarta evento repetido (`eventId` já visto), antigo (`version` menor ou igual à última do recurso) e de outro usuário. O `realtime.sync` vira a referência de versões de cada conexão.
+- **Aplicação no cache** (`apply-nft-updated.ts`): o `nft.updated` corrige detalhe, páginas do catálogo, destaques e favoritos, cada cópia só se for mais antiga que o evento. Se um carrinho em cache tem o NFT em versão anterior, carrinho e cotação são buscados de novo e a tela avisa o que mudou. Consulta ainda na primeira busca (sem dado) é buscada de novo quando essa busca termina, porque a resposta pode ter sido calculada antes da mudança.
+- **Reconexão** (`reconcile.ts`): o `realtime.sync` traz as versões do servidor; o cliente busca pela API só as queries cujas cópias têm versão diferente, compara o carrinho antes e depois (para avisar o que mudou com a conexão fora) e sempre busca de novo os pedidos, porque um pendente pode ter sido decidido nesse intervalo. Durante a queda, uma faixa avisa que os preços podem ter mudado.
+- **Pedido pendente:** atualiza pelo `order.updated` e, como reserva, por consulta a cada 5 s. Refresh ou queda não criam outro pedido (`Idempotency-Key` no `sessionStorage`).
 
 Os detalhes estão em [docs/STATE_MANAGEMENT.md](docs/STATE_MANAGEMENT.md), [docs/REALTIME.md](docs/REALTIME.md), [docs/SECURITY.md](docs/SECURITY.md) e [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md).
 
@@ -131,8 +174,6 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Contato do rodapé | `contato@email.com` e `+55 11 4002 8922` são dados de exemplo do Figma: texto, sem `mailto:`/`tel:`, que abririam o e-mail ou o discador para um contato que não existe. |
 | Links externos que ficam | Compartilhar o NFT no LinkedIn e no X (compartilham o endereço real) e "Ver no Etherscan" do recibo (transação simulada, dita na nota do recibo). |
 | Newsletter do footer | O envio mostra um toast informativo dizendo que a newsletter não está disponível. Não simula cadastro. |
-| Redes sociais | Abrem a página inicial de cada rede em nova aba (`rel="noopener noreferrer"`), com o aviso no nome acessível. |
-| Contador do carrinho (antes do Passo 7) | O Figma mostra "6". O badge mostra a quantidade real do carrinho e some quando ele está vazio. |
 | Login social e "Esqueceu a senha?" | Fora do escopo. Os botões aparecem como no Figma, mas mostram um aviso de indisponível, sem simular sucesso. |
 | Sessão expirada | Em rota privada, vai ao login com o aviso "Sua sessão expirou. Entre de novo para continuar de onde parou." e volta depois. Em rota pública, fica na página e recebe um aviso. |
 | Fechar o modal de login | X, Esc ou clique fora voltam ao início (a rota de origem pode ser privada, e não dá para voltar a ela sem sessão). |
@@ -151,7 +192,7 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Busca no desktop | O Figma desktop não tem campo de busca, só a lupa do header. Ela abre um diálogo com o campo, que leva ao catálogo com `?q=`. |
 | Diário da Cunhagem (blog) | Fora do escopo. Os cartões aparecem com o texto do Figma, e o "Ler mais" fica como indisponível. |
 | Carrossel do hero | Troca só pelos pontos (sem rotação automática, que atrapalharia a leitura e o leitor de tela). As imagens vêm de `GET /nfts/featured`. Sem destaques (lista vazia ou falha), entra a imagem fixa `nft-01` do Figma, sem link, para o hero não ficar com metade vazia. |
-| NFT inexistente | O loader da rota transforma o 404 da API em `notFound()`: página "NFT não encontrado" (código 404) com "Explorar o catálogo" e "Voltar ao início". Outras falhas usam a página de erro com "Tentar de novo". |
+| NFT inexistente | Quando a API devolve `NOT_FOUND`, o `errorComponent` da rota mostra a página "NFT não encontrado" (código 404) com "Explorar o catálogo" e "Voltar ao início", com a barra de navegação do celular. Outras falhas usam a página de erro com "Tentar de novo". |
 | Edição padrão e edição indisponível | Abre na edição mais barata disponível (o preço do card) e fica nela com a página aberta: se o preço muda e outra edição passa a ser a mais barata, a seleção não troca. Esgotada e indisponível aparecem riscadas e não podem ser escolhidas. Link com uma delas (`?edition=`), ou a edição da tela esgotando com a página aberta, cai na padrão com aviso; sem nenhuma à venda, aviso e compra desabilitada. |
 | Quantidade | Limite = disponibilidade da edição, a mesma regra da API (sem teto próprio da interface). Trocar de edição volta para 1. |
 | "COMPRAR" e o botão do carrinho | O Figma não desenha o resultado. "COMPRAR" adiciona e leva ao carrinho; o botão do carrinho do mobile só adiciona e mostra "Ver carrinho" no toast. |
@@ -165,7 +206,7 @@ Comportamentos definidos por nós em estados que o Figma não desenhou.
 | Item esgotado ou acima do estoque | Fica marcado na linha ("Esgotado: remova…", "Só N disponíveis: ajuste…") e bloqueia "Conectar e finalizar" com aviso. Preço alterado só é avisado ("O preço mudou de X para Y"). |
 | Remover item | Sem confirmação: o toast (10 s na tela) oferece "Desfazer", que adiciona a mesma edição e quantidade de novo e avisa se deu certo ou se a edição não tem mais estoque. |
 | Merge no login | Aviso do que não coube no estoque (10 s na tela). Falha do merge não bloqueia o login: o carrinho do visitante fica guardado para a próxima entrada. |
-| Contador do carrinho | Total de unidades, no header e na barra inferior; só aparece com itens, e o número vai no nome do link ("Carrinho, 3 unidades"). |
+| Contador do carrinho | O Figma mostra "6". O badge mostra o total real de unidades, no header e na barra inferior; só aparece com itens, e o número vai no nome do link ("Carrinho, 3 unidades"). |
 | Servidor demorando (timeout) | Depois da primeira tentativa que estoura os 15 s, o status (`aria-live`) troca "Carregando NFTs…" por "O servidor está demorando para responder. Ainda estamos tentando…", em âmbar. Com a página anterior na tela, o mesmo texto substitui o "Atualizando…". Timeout se repete só uma vez, então o erro aparece em cerca de 31 s. |
 | Faixa de preço sem faixa | Catálogo vazio, um único preço ou API fora do ar: "Faixa de preço indisponível no momento.", sem slider e sem "Aplicar" (um slider de 0,00 a 0,00 não deixa escolher nada). |
 | Página 404 e erro de rota | Mesmo layout das outras telas, com o código em `Primary`, texto e botão "Voltar ao início". O erro de rota oferece "Tentar de novo" sem recarregar a página. |
@@ -221,9 +262,8 @@ Nenhum asset foi substituído. Ícones, a forma da barra inferior e as imagens v
 - Os eventos saem do navegador de quem acessa: só a própria aba recebe a mudança feita nela (painel ou rota `/__mocks`). Duas abas não trocam eventos.
 - Os dados vivem no navegador de quem acessa. Dois navegadores não compartilham estado.
 - O pacote `shadcn`, que fornece o `shadcn/tailwind.css`, traz um `minimatch` antigo (via `ts-morph`) com alerta moderado de DoS no `npm audit`. Ele só roda no build e não chega ao navegador. O `npm audit fix --force` trocaria a versão do shadcn por uma incompatível.
-- Nada renderiza antes de o MSW estar ativo (nenhuma requisição pode sair dos mocks), e o chunk dele (157 kB, 46 kB gzip) entra no carregamento inicial. Na produção, o Lighthouse mobile fica em 92 e 95; no `vite preview` local, sem HTTP/2 nem brotli, fica em 85 a 87. Medições e motivo da diferença em [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
-- O carregamento inicial carrega o router (`router.load()`) e só então monta a árvore, numa transição do React, para a primeira renderização ser fatiada. A tela do detalhe suspende até o NFT chegar, em vez de o loader esperar por ele.
-- Header, barra inferior e destaque da tela inicial são renderizados só no tamanho de tela em que aparecem (`useMediaQuery`), não escondidos por CSS.
-- No build do navegador, o `tough-cookie` do MSW é trocado por `src/mocks/shims/tough-cookie.ts` (alias no `vite.config.ts`), o que tira ele e o `tldts` do bundle (124 kB gzip). O stub cobre só o que o cookie store do MSW 2.15 usa; atualizar o MSW pede conferir isso (ver [docs/PERFORMANCE.md](docs/PERFORMANCE.md)). Causa e medições em [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+- Nada renderiza antes de o MSW estar ativo (nenhuma requisição pode sair dos mocks), e o chunk dele (157 kB, 46 kB gzip) entra no carregamento inicial. Na produção (HTTP/2), o Lighthouse mobile fica em 92 e 95; no `vite preview` local (HTTP/1.1), em 85 a 87. Medições e motivo da diferença em [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+- O stub do `tough-cookie` cobre só o que o cookie store do MSW 2.15 usa. Atualizar o MSW pede conferir isso; os testes do stub e o `msw-cookie-shim.spec.ts` pegam a quebra.
+- As baselines da regressão visual versionadas são do Windows. Em outro sistema, a primeira execução grava as do sistema (ver o README).
 - O `Link` do TanStack Router põe `aria-current="page"` em todo link ativo e, por padrão, compara a busca de forma parcial: o link `/` sem `page` fica ativo em qualquer página do catálogo. Links que mudam só a busca (paginação, abas, atalhos para `#catalogo`) usam `activeOptions={{ exact: true }}`.
 - O `Link` do TanStack Router concatena `className` com `activeProps` sem tailwind-merge. Cores que mudam com o estado vão só em `activeClassName`/`inactiveClassName` (ver `NavLink`).

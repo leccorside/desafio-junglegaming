@@ -89,6 +89,27 @@ test.describe('SEO e carregamento', () => {
     }
   })
 
+  test('entrar e criar conta: título da aba vem da tela, não do slogan atrás do modal', async ({
+    page,
+  }) => {
+    // Desktop: modal sobre a tela inicial (inerte). Mobile: tela cheia.
+    const desktop = !(page.viewportSize()!.width < 768)
+    for (const [path, title] of [
+      ['/login', 'Entrar | KURIO'],
+      ['/register', desktop ? 'Criar conta | KURIO' : 'Criar perfil de colecionador | KURIO'],
+    ] as const) {
+      await page.goto(path)
+      await expect(page).toHaveTitle(title)
+      await page.reload()
+      await expect(page).toHaveTitle(title)
+      if (desktop) {
+        // A tela inicial atrás do modal fica inerte: não recebe foco nem clique.
+        await expect(page.locator('main#conteudo [inert]')).toHaveCount(1)
+        await expect(page.getByRole('dialog')).toBeVisible()
+      }
+    }
+  })
+
   test('descrição da página acompanha a rota', async ({ page }) => {
     await page.goto('/')
     await waitForApp(page)

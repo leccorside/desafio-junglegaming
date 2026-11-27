@@ -130,32 +130,11 @@ No build do navegador, o `tough-cookie` que o MSW usa no cookie store é o stub 
 
 ## Como reproduzir as falhas
 
-As telas chegam a partir do Passo 4. Até lá, os cenários podem ser conferidos pelo console do navegador com `fetch('/api/...')`.
-
-| Falha | Como reproduzir | Resultado esperado |
-| --- | --- | --- |
-| Carregamento lento | `/?scenario=slow` | Skeletons por 2,5 s em cada tela com dados |
-| Respostas fora de ordem | `/?scenario=jitter` e mudar filtros rápido | A lista mostra sempre o resultado do último filtro |
-| Falha transitória | `/?scenario=server-error` | Mensagem de erro com "Tentar de novo" |
-| Recuperação após nova tentativa | `/?scenario=flaky` | A primeira carga falha e o "Tentar de novo" funciona |
-| Sem conexão | `/?scenario=offline` | Aviso de conexão e nova tentativa |
-| Timeout | `/?scenario=timeout` | Aviso de tempo esgotado depois do timeout do cliente |
-| Catálogo vazio | `/?scenario=empty-catalog` | Estado vazio com opção de limpar filtros |
-| Sessão expirada | Entrar e ativar `session-expired` | Volta ao login e retoma o fluxo depois |
-| Conflito de cadastro | `/register?scenario=register-conflict` | Erro no campo e-mail |
-| Erro de validação | `?scenario=validation-error` no cadastro, perfil ou carteiras | Erro no campo apontado pela API |
-| Falha ao favoritar | `?scenario=favorite-fails` e clicar no coração (com `slow` e `scenarioRoutes=/me/favorites` dá para ver o coração mudar antes de voltar) | O coração volta ao estado anterior, com aviso |
-| Cupom inválido ou expirado | Aplicar `NADA` ou `EXPIRADO` no carrinho | Erro no campo do cupom |
-| Preço alterado no checkout | `?scenario=price-changed-on-checkout` e confirmar a compra | A diferença aparece e é preciso confirmar de novo |
-| Edição esgotada no checkout | `?scenario=sold-out-on-checkout` e confirmar | Item bloqueado e nova confirmação |
-| Timeout após criar o pedido | `?scenario=order-timeout` e confirmar | Nova tentativa recupera o mesmo pedido, sem duplicar |
-| Pagamento recusado | `?scenario=payment-rejected` e confirmar | Recusa com motivo, carrinho intacto |
-| Carteira recusada | `?scenario=wallet-rejected` e conectar a carteira | Aviso de recusa e nova tentativa |
-| Carteira desconectada | `?scenario=wallet-disconnected` e confirmar | Aviso para reconectar |
+O passo a passo de cada falha (rede, sessão, compra e tempo real) está no [README](../README.md#como-reproduzir-os-fluxos-de-falha), num lugar só, para as duas versões não divergirem.
 
 ## Testes
 
-- `src/mocks/api.test.ts`: 43 testes de integração que fazem `fetch` real contra os handlers via `msw/node` e validam cada resposta com o schema do contrato.
+- `src/mocks/api.test.ts`: 44 testes de integração que fazem `fetch` real contra os handlers via `msw/node` e validam cada resposta com o schema do contrato.
 - `src/mocks/fixtures/fixtures.test.ts`: determinismo, conformidade com os contratos, NFTs do Figma, casos fixos, hash das senhas e hash hexadecimal dos pedidos de exemplo.
 - `src/mocks/db/store.test.ts`: persistência entre carregamentos, persistência quando a regra termina em erro, fallback para as fixtures e reset.
 - `src/mocks/scenarios/scenarios.test.ts`: leitura da URL, opções mantidas pelo painel, sequência reproduzível do `jitter`, plano de cada cenário de rede e valor corrompido no storage.

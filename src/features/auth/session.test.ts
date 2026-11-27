@@ -1,4 +1,4 @@
-import { QueryClient, QueryObserver } from '@tanstack/react-query'
+import { MutationObserver, QueryClient, QueryObserver } from '@tanstack/react-query'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { apiClient, apiRequest } from '@/api/client'
@@ -6,6 +6,7 @@ import { sessionSchema, type Session } from '@/api/contracts'
 import { setScenario } from '@/mocks/scenarios'
 import { setupMockServer } from '@/mocks/test-utils'
 
+import { SENSITIVE_MUTATION } from './hooks'
 import {
   clearSessionEndReason,
   endSession,
@@ -66,6 +67,37 @@ describe('fim da sessão', () => {
     await vi.waitFor(() => expect(observer.getCurrentResult().data).toBe('resposta 2'))
     expect(calls).toBe(2)
     unsubscribe()
+  })
+
+  it('mutations com senha saem do cache: ao desmontar o formulário e no fim da sessão', async () => {
+    const variables = { email: 'ana@example.com', password: 'Senha@123' }
+    // Formulário desmontado: com gcTime 0, a mutation sai logo do cache.
+    const form = new MutationObserver(queryClient, {
+      ...SENSITIVE_MUTATION,
+      mutationFn: async (body: typeof variables) => body.email,
+    })
+    const stop = form.subscribe(() => {})
+    await form.mutate(variables)
+    expect(
+      JSON.stringify(
+        queryClient
+          .getMutationCache()
+          .getAll()
+          .map((m) => m.state.variables),
+      ),
+    ).toContain('Senha@123')
+    stop()
+    form.reset()
+    await vi.waitFor(() => expect(queryClient.getMutationCache().getAll()).toHaveLength(0))
+
+    // Sem o gcTime 0 (ex.: outra mutation da conta), o fim da sessão limpa o cache.
+    await queryClient
+      .getMutationCache()
+      .build(queryClient, { mutationFn: async () => 'ok' })
+      .execute(variables)
+    expect(queryClient.getMutationCache().getAll()).toHaveLength(1)
+    await endSession('logout')
+    expect(queryClient.getMutationCache().getAll()).toHaveLength(0)
   })
 
   it('o login cancela buscas de visitante em andamento e busca de novo com a sessão', async () => {

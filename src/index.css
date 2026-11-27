@@ -1,4 +1,11 @@
-@import 'tailwindcss';
+/*
+ * Fontes do Tailwind fixas: só o código do app. A detecção automática varria
+ * os arquivos do projeto, e o build da Vercel (que recebe outro conjunto de
+ * arquivos) gerava classes a mais que o build local.
+ */
+@import 'tailwindcss' source(none);
+@source '../index.html';
+@source '.';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
