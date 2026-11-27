@@ -400,6 +400,14 @@ const mocksHandlers = [
     apiPath(`${MOCKS_PREFIX}/realtime/log`),
     route(() => ({ events: sentEvents() }), { network: false }),
   ),
+  // Cookie store do MSW (no navegador, o tough-cookie é o stub de
+  // src/mocks/shims): grava o Set-Cookie e devolve os cookies que o MSW vê na
+  // requisição seguinte. A API do app não usa cookie; é só para os testes.
+  http.post(apiPath(`${MOCKS_PREFIX}/cookies`), async ({ request }) => {
+    const { header } = await readBody(request, z.object({ header: z.string().min(1).max(300) }))
+    return HttpResponse.json({ ok: true }, { headers: { 'Set-Cookie': header } })
+  }),
+  http.get(apiPath(`${MOCKS_PREFIX}/cookies`), ({ cookies }) => HttpResponse.json({ cookies })),
 ]
 
 export const handlers: RequestHandler[] = [

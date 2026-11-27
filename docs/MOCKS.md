@@ -119,6 +119,10 @@ Sempre sem cenários de rede, para o painel e os testes funcionarem mesmo com `o
 | POST | `/api/__mocks/realtime/auth-delay` | Atrasa por `ms` a leitura do CONNECT das próximas conexões (handshake lento): a conexão abre, mas não recebe nada até se autenticar. `{ "ms": 0 }` desliga; o reset também |
 | GET | `/api/__mocks/realtime/peers` | Conexões que já se autenticaram, com o `userId` de cada uma (`null` para visitante) e o `url` aberto pelo cliente (`ws://localhost/socket/?EIO=4&transport=websocket`, o handshake do `socket.io-client`) |
 | GET | `/api/__mocks/realtime/log` | Últimos 50 envios `{ type, eventId, recipients }` (`recipients` = `userId` de quem recebeu). Zerado no reset |
+| POST | `/api/__mocks/cookies` | Responde com `Set-Cookie: <header>` (`{ "header": "a=1; Path=/" }`), para testar o cookie store do MSW. A API do app não usa cookie |
+| GET | `/api/__mocks/cookies` | Cookies que o MSW vê na requisição (`{ cookies }`): `document.cookie` mais o cookie store dele |
+
+No build do navegador, o `tough-cookie` que o MSW usa no cookie store é o stub de `src/mocks/shims/tough-cookie.ts` (alias no `vite.config.ts`), sem o `tldts`. Os testes unitários usam o pacote real.
 
 ## Reset
 

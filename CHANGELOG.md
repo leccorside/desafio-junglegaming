@@ -6,6 +6,11 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Stub do `tough-cookie` no build do navegador (`src/mocks/shims/tough-cookie.ts`, alias no `vite.config.ts`): o MSW continua com o cookie store, sem o `tough-cookie` e o `tldts` no bundle. O chunk do MSW caiu de 170 para 46 KB gzip, e o Lighthouse mobile foi de 80 para 83 no início e de 71 para 73 no detalhe. Rotas de teste `/api/__mocks/cookies`, testes unitários que comparam o stub com o pacote real e `msw-cookie-shim.spec.ts` (chunk sem os dois pacotes, cookie store no navegador, cookies salvos pelo pacote real, REST pelo service worker e evento em tempo real).
+- Detalhe do NFT em duas renderizações: abas e "Mais desta coleção" entram depois da primeira pintura, numa transição, com uma reserva que mantém o rodapé fora da tela no desktop. A maior tarefa do carregamento do detalhe mobile caiu de 379 para 306 ms e o TBT, de 535 para 475 ms.
+- Menu da conta e menu lateral carregados sob demanda: o módulo baixa quando o ponteiro passa ou o foco chega ao botão, e o menu monta já aberto, com o mesmo foco de antes. O Radix Menu, o Popper e o floating-ui saíram do bundle inicial (116 → 110 KB gzip).
+- `deferred-loading.spec.ts` confere o bundle inicial sem os menus, o download só depois do ponteiro ou do foco, a primeira abertura pelo mouse e pelo teclado, as duas renderizações do detalhe e a ausência de deslocamento.
+- `npm run lighthouse` usa um Chrome novo por medição, com tempo limite e nova tentativa se o Chrome cair ou travar.
 - Performance e Lighthouse (Passo 15):
   - `lighthouse/run.mjs` (`npm run lighthouse`) audita início e detalhe, mobile e desktop, três vezes cada, no build com mocks; relatórios HTML/JSON da medição mediana e `summary.json` em `lighthouse/reports/`. Substitui o `lhci autorun` (`@lhci/cli` saiu; `lighthouse` e `chrome-launcher` entraram como dependências de desenvolvimento);
   - `build/preload-hints.ts`, plugin do Vite que injeta `preload` das fontes e, no modo mocks, `modulepreload` do chunk do MSW;

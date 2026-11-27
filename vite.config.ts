@@ -16,9 +16,16 @@ export default defineConfig(({ mode }) => ({
     preloadHints(mode),
   ],
   resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
+    alias: [
+      { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+      // O MSW só usa o tough-cookie para o cookie store dele; o pacote real traz
+      // junto o tldts (lista de sufixos públicos), uns 50 KB gzip no caminho
+      // crítico. Os testes unitários (vitest.config.ts) seguem com o real.
+      {
+        find: /^tough-cookie$/,
+        replacement: fileURLToPath(new URL('./src/mocks/shims/tough-cookie.ts', import.meta.url)),
+      },
+    ],
   },
   server: {
     port: 5173,

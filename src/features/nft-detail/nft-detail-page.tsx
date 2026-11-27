@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { nftDetailQuery } from '@/features/catalog/queries'
 import { FavoriteButton } from '@/features/favorites/components/favorite-button'
 import { formatEth } from '@/lib/eth'
+import { useAfterFirstPaint } from '@/lib/use-after-first-paint'
 import { cn } from '@/lib/utils'
 
 import { EditionSelector } from './components/edition-selector'
@@ -85,6 +86,7 @@ export function NftDetailPage({
   const router = useRouter()
   const canGoBack = useCanGoBack()
   const navigate = useNavigate()
+  const belowFold = useAfterFirstPaint()
   const soldOut = !edition
   const price = edition?.price ?? nft.priceFrom
 
@@ -227,8 +229,20 @@ export function NftDetailPage({
         </div>
       </div>
 
-      <NftInfoTabs nft={nft} />
-      <RelatedNfts nft={nft} />
+      {/* Abaixo da dobra: entram depois da primeira pintura, numa transição,
+          fora da tarefa longa da primeira renderização (as abas do Radix leem
+          o estilo calculado ao montar, o que força um recálculo de estilo). */}
+      {belowFold ? (
+        <>
+          <NftInfoTabs nft={nft} />
+          <RelatedNfts nft={nft} />
+        </>
+      ) : (
+        // Reserva menor que as abas e "Mais desta coleção" juntos: no desktop
+        // o rodapé fica fora da tela até elas entrarem e só desce, fora da
+        // vista, sem deslocamento visível (antes, CLS de 0,097).
+        <div aria-hidden="true" data-below-fold-placeholder="" className="min-h-[600px]" />
+      )}
 
       {/* Mobile: barra de compra fixa (frame "Buy Bar"), no lugar da barra de navegação. */}
       <div
