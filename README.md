@@ -56,6 +56,14 @@ As imagens abaixo foram capturadas com o Playwright no build com mocks (desktop 
     <th width="28%">Mobile</th>
   </tr>
   <tr>
+    <td><img src="docs/images/inicio-desktop.png" alt="Página inicial no desktop, com destaque e catálogo filtrável" /></td>
+    <td><img src="docs/images/inicio-mobile.png" alt="Página inicial no mobile" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Início:</b> destaque, filtros por coleção, abas e ordenação</sub></td>
+    <td align="center"><sub><b>Início</b> no celular</sub></td>
+  </tr>
+  <tr>
     <td><img src="docs/images/detalhe-desktop.png" alt="Detalhe do NFT no desktop, com galeria, edições, quantidade e botões de comprar e favoritar" /></td>
     <td><img src="docs/images/detalhe-mobile.png" alt="Detalhe do NFT no mobile, com barra fixa de quantidade e compra" /></td>
   </tr>
@@ -94,14 +102,6 @@ As imagens abaixo foram capturadas com o Playwright no build com mocks (desktop 
   <tr>
     <td align="center"><sub><b>Recibo:</b> pagamento confirmado, com os valores do momento da compra</sub></td>
     <td align="center"><sub><b>Recibo</b> no celular</sub></td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><img src="docs/images/inicio-mobile.png" alt="Página inicial no mobile" /></td>
-  </tr>
-  <tr>
-    <td></td>
-    <td align="center"><sub><b>Início</b> no celular</sub></td>
   </tr>
 </table>
 
