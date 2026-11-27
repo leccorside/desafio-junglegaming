@@ -61,7 +61,12 @@ export function preloadHints(mode: string): Plugin {
             injectTo: 'head' as const,
           }))
 
-        return [...fonts, ...scripts]
+        // Fontes sem preload: no 4G lento do Lighthouse mobile, os 39 KB delas
+        // disputavam banda com o JavaScript e atrasavam o LCP em 0,3 s. Com as
+        // abas do detalhe entrando depois da primeira pintura, a troca de
+        // fonte não desloca mais nada visível (CLS 0 a 0,004 sem o preload).
+        void fonts
+        return [...scripts]
       },
     },
   }

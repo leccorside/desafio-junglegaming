@@ -8,6 +8,7 @@ import { cartLabel } from '@/features/cart/cart-label'
 import { CartBadge } from '@/features/cart/components/cart-badge'
 import { useCartCount } from '@/features/cart/queries'
 import { SearchDialog } from '@/features/catalog/components/search-dialog'
+import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query'
 
 import { Logo } from './logo'
 import { MobileMenu } from './mobile-menu'
@@ -24,6 +25,10 @@ export function SiteHeader() {
   const session = useSession()
   const location = useLocation()
   const cartCount = useCartCount()
+  // Abaixo de 768 px o header não aparece: nem entra no DOM (menos trabalho na
+  // primeira renderização do celular).
+  const desktop = useMediaQuery(DESKTOP_QUERY)
+  if (!desktop) return null
 
   return (
     <header className="hidden pt-6 md:block">

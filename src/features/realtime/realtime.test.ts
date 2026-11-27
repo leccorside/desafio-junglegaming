@@ -250,6 +250,36 @@ describe('aplicação do nft.updated no cache', () => {
       stop()
     }
   })
+
+  it('detalhe ainda na primeira busca: termina e busca de novo, ficando com o preço do evento', async () => {
+    const client = new QueryClient()
+    const key = nftKeys.detail(emerald.id)
+    const changed = { ...emerald, version: 2, priceFrom: '1.55' }
+    let calls = 0
+    let resolveFirst: (value: Nft) => void = () => {}
+    const observer = new QueryObserver(client, {
+      queryKey: key,
+      queryFn: () => {
+        calls += 1
+        // A primeira resposta foi calculada antes da mudança de preço.
+        return calls === 1
+          ? new Promise<Nft>((resolve) => (resolveFirst = resolve))
+          : Promise.resolve(changed)
+      },
+    })
+    const stop = observer.subscribe(() => {})
+    try {
+      await vi.waitFor(() => expect(calls).toBe(1))
+      // Sem dado em cache, o evento não tem onde ser aplicado.
+      applyNftUpdated(client, updated(emerald, { version: 2, price: '1.55' }), OWNER)
+      resolveFirst(emerald)
+      await vi.waitFor(() => expect(client.getQueryData<Nft>(key)?.priceFrom).toBe('1.55'))
+      // A primeira busca não foi cancelada (a tela suspensa espera por ela).
+      expect(calls).toBe(2)
+    } finally {
+      stop()
+    }
+  })
 })
 
 describe('tratamento do evento recebido', () => {

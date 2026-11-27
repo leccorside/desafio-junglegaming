@@ -19,7 +19,8 @@
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
-    "lighthouse": "node lighthouse/run.mjs"
+    "lighthouse": "node lighthouse/run.mjs",
+    "lighthouse:prod": "node lighthouse/run.mjs --base=https://desafio-junglegaming-two.vercel.app"
   },
   "msw": {
     "workerDirectory": [

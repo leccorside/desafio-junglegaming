@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ArrowRightIcon } from '@/components/icons/figma-icons'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query'
 import { nftImageSources } from '@/lib/images'
 import { cn } from '@/lib/utils'
 
@@ -78,70 +79,79 @@ export function HomeHero() {
   const nft = items[index]
   const second = items[(index + 1) % Math.max(items.length, 1)]
   const names = items.map((item) => item.name)
+  // Só a versão do tamanho de tela atual: escondida por CSS, a outra ainda
+  // entrava no DOM e baixava a imagem de 450 px (com prioridade alta) no celular.
+  const desktop = useMediaQuery(DESKTOP_QUERY)
 
-  return (
-    <section aria-labelledby="hero-title">
-      {/* Desktop */}
-      <div className="hidden min-h-[450px] items-center justify-between gap-12 md:flex">
-        <div className="flex max-w-[560px] flex-col gap-6">
-          <p className="text-body-sm font-medium text-accent-foreground">Bem-vindo à Kurio</p>
-          <h1
-            id="hero-title"
-            className="text-display leading-[1.15] font-bold text-foreground uppercase"
-          >
-            Seja dono do futuro
-            <br />
-            da arte digital
-          </h1>
-          <p className="max-w-[460px] text-body-sm text-muted-foreground">
-            Descubra NFTs selecionados de criadores emergentes e consagrados. Colecione arte digital
-            rara, apoie artistas e tenha uma parte da cultura da internet.
-          </p>
-          <Button asChild className="h-10 w-[140px] rounded-md font-bold">
-            <Link to="/" hash="catalogo" activeOptions={IN_PAGE_LINK}>
-              EXPLORAR
+  if (desktop) {
+    return (
+      <section aria-labelledby="hero-title">
+        {/* Desktop */}
+        <div className="flex min-h-[450px] items-center justify-between gap-12">
+          <div className="flex max-w-[560px] flex-col gap-6">
+            <p className="text-body-sm font-medium text-accent-foreground">Bem-vindo à Kurio</p>
+            <h1
+              id="hero-title"
+              className="text-display leading-[1.15] font-bold text-foreground uppercase"
+            >
+              Seja dono do futuro
+              <br />
+              da arte digital
+            </h1>
+            <p className="max-w-[460px] text-body-sm text-muted-foreground">
+              Descubra NFTs selecionados de criadores emergentes e consagrados. Colecione arte
+              digital rara, apoie artistas e tenha uma parte da cultura da internet.
+            </p>
+            <Button asChild className="h-10 w-[140px] rounded-md font-bold">
+              <Link to="/" hash="catalogo" activeOptions={IN_PAGE_LINK}>
+                EXPLORAR
+              </Link>
+            </Button>
+            <Dots count={items.length} current={index} onSelect={setCurrent} names={names} />
+          </div>
+          {featured.isPending ? (
+            <Skeleton className="size-[450px] shrink-0 rounded-3xl" />
+          ) : nft?.images[0] ? (
+            <Link
+              to="/nft/$nftId"
+              params={{ nftId: nft.id }}
+              aria-label={`Ver ${nft.name}`}
+              className="shrink-0"
+            >
+              <img
+                key={nft.id}
+                {...nftImageSources(nft.images[0].url, '450px')}
+                alt=""
+                width={450}
+                height={450}
+                fetchPriority="high"
+                decoding="async"
+                className="size-[450px] rounded-3xl object-cover"
+              />
             </Link>
-          </Button>
-          <Dots count={items.length} current={index} onSelect={setCurrent} names={names} />
-        </div>
-        {featured.isPending ? (
-          <Skeleton className="size-[450px] shrink-0 rounded-3xl" />
-        ) : nft?.images[0] ? (
-          <Link
-            to="/nft/$nftId"
-            params={{ nftId: nft.id }}
-            aria-label={`Ver ${nft.name}`}
-            className="shrink-0"
-          >
+          ) : (
             <img
-              key={nft.id}
-              {...nftImageSources(nft.images[0].url, '450px')}
+              {...nftImageSources(HERO_FALLBACK_IMAGE, '450px')}
               alt=""
               width={450}
               height={450}
-              fetchPriority="high"
               decoding="async"
-              className="size-[450px] rounded-3xl object-cover"
+              data-hero-fallback=""
+              className="size-[450px] shrink-0 rounded-3xl object-cover"
             />
-          </Link>
-        ) : (
-          <img
-            {...nftImageSources(HERO_FALLBACK_IMAGE, '450px')}
-            alt=""
-            width={450}
-            height={450}
-            decoding="async"
-            data-hero-fallback=""
-            className="size-[450px] shrink-0 rounded-3xl object-cover"
-          />
-        )}
-      </div>
+          )}
+        </div>
+      </section>
+    )
+  }
 
+  return (
+    <section aria-labelledby="hero-title">
       {/* Mobile */}
-      <div className="relative flex h-[190px] overflow-hidden rounded-xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_20%,transparent),color-mix(in_srgb,var(--primary)_10%,transparent))] p-4 md:hidden">
+      <div className="relative flex h-[190px] overflow-hidden rounded-xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_20%,transparent),color-mix(in_srgb,var(--primary)_10%,transparent))] p-4">
         <div className="relative z-10 flex max-w-[54%] flex-col gap-1">
           <p className="text-caption-sm font-medium text-accent-foreground">Bem-vindo à Kurio</p>
-          <h1 className="text-lead font-bold text-foreground uppercase">
+          <h1 id="hero-title" className="text-lead font-bold text-foreground uppercase">
             Seja dono da
             <br />
             cultura digital

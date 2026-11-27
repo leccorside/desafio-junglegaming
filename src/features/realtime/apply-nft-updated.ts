@@ -90,6 +90,8 @@ export function applyNftUpdated(
       ? { ...favorites, items: favorites.items.map((nft) => patchNft(nft, event)) }
       : favorites,
   )
+  refetchAfterFirstFetch(queryClient, [...nftKeys.all])
+  refetchAfterFirstFetch(queryClient, ['favorites'])
 
   const carts = queryClient.getQueriesData<Cart>({ queryKey: cartKeys.all })
   if (!carts.some(([, cart]) => outdatedItems(cart, event).length)) return []
@@ -98,6 +100,24 @@ export function applyNftUpdated(
   refreshQueries(queryClient, cartKeys.all)
   refreshQueries(queryClient, quoteKeys.all)
   return messages
+}
+
+/**
+ * Consultas ainda na primeira busca (sem dado em cache) não recebem o evento,
+ * e a resposta delas pode ter sido calculada antes da mudança. Quando essa
+ * busca termina, busca de novo. Sem cancelar: a tela do detalhe está suspensa
+ * esperando exatamente essa busca, e cancelá-la derrubaria a tela.
+ */
+function refetchAfterFirstFetch(queryClient: QueryClient, queryKey: readonly unknown[]) {
+  const pending = queryClient
+    .getQueryCache()
+    .findAll({ queryKey })
+    .filter((query) => query.state.data === undefined && query.state.fetchStatus === 'fetching')
+  for (const query of pending) {
+    void query.promise
+      ?.catch(() => {})
+      .finally(() => void queryClient.invalidateQueries({ queryKey: query.queryKey, exact: true }))
+  }
 }
 
 /**

@@ -14,6 +14,7 @@ import { waitForApp } from '../fixtures/mocks'
 
 const USER_MENU_CHUNK = /\/assets\/user-menu-dropdown-[\w-]+\.js$/
 const MOBILE_MENU_CHUNK = /\/assets\/mobile-menu-panel-[\w-]+\.js$/
+const SEARCH_CHUNK = /\/assets\/search-dialog-panel-[\w-]+\.js$/
 
 /** Scripts pedidos pela página a partir de agora. */
 function trackScripts(page: Page) {
@@ -36,7 +37,7 @@ const settled = async (page: Page) => {
 }
 
 test.describe('carregamento sob demanda', () => {
-  test('bundle inicial sem o menu da conta e o painel do menu lateral', async ({ request }) => {
+  test('bundle inicial sem o menu da conta, o menu lateral e a busca', async ({ request }) => {
     const html = await (await request.get('/')).text()
     const initial = [
       ...html.matchAll(/<script type="module"[^>]*src="([^"]+)"/g),
@@ -53,9 +54,82 @@ test.describe('carregamento sob demanda', () => {
       code.includes('Navegação principal do marketplace'),
       'painel do menu lateral no bundle inicial',
     ).toBe(false)
-    expect(initial.some((url) => USER_MENU_CHUNK.test(url) || MOBILE_MENU_CHUNK.test(url))).toBe(
+    expect(code.includes('Procure por nome, criador ou coleção'), 'busca no bundle inicial').toBe(
       false,
     )
+    expect(code.includes('DialogContent'), 'Dialog do Radix no bundle inicial').toBe(false)
+    expect(
+      initial.some(
+        (url) =>
+          USER_MENU_CHUNK.test(url) ||
+          MOBILE_MENU_CHUNK.test(url) ||
+          SEARCH_CHUNK.test(url) ||
+          /\/assets\/mock-panel-/.test(url),
+      ),
+    ).toBe(false)
+  })
+
+  test('painel de cenários só baixa depois do load, com o navegador ocioso', async ({ page }) => {
+    await page.goto('/')
+    await waitForApp(page)
+    // O botão do painel fica escondido no navegador automatizado; vale o download do chunk.
+    const timing = () =>
+      page.evaluate(() => {
+        const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
+        const panel = performance
+          .getEntriesByType('resource')
+          .find((entry) => /\/assets\/mock-panel-[\w-]+\.js$/.test(new URL(entry.name).pathname))
+        return { loadEnd: nav.loadEventEnd, panelStart: panel?.startTime ?? null }
+      })
+    await expect.poll(async () => (await timing()).panelStart).not.toBeNull()
+    const { loadEnd, panelStart } = await timing()
+    expect(loadEnd).toBeGreaterThan(0)
+    expect(panelStart!).toBeGreaterThanOrEqual(loadEnd)
+  })
+
+  test('busca do header: baixa sob demanda e abre pelo teclado com o foco no campo', async ({
+    page,
+  }) => {
+    test.skip(isMobileViewport(page), 'A busca fica no header do desktop')
+    const scripts = trackScripts(page)
+    await page.goto('/')
+    await settled(page)
+    expect(scripts.has(SEARCH_CHUNK)).toBe(false)
+
+    const lupa = page.getByRole('button', { name: 'Buscar NFTs' })
+    await expect(lupa).toHaveAttribute('aria-haspopup', 'dialog')
+    await lupa.focus()
+    await expect.poll(() => scripts.has(SEARCH_CHUNK)).toBe(true)
+    await page.keyboard.press('Enter')
+    const dialog = page.getByRole('dialog', { name: 'Buscar NFTs' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByRole('searchbox', { name: 'Buscar NFTs' })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+    await expect(page.getByRole('button', { name: 'Buscar NFTs' })).toBeFocused()
+
+    // A busca continua levando ao catálogo filtrado.
+    await page.getByRole('button', { name: 'Buscar NFTs' }).click()
+    await page.getByRole('searchbox', { name: 'Buscar NFTs' }).fill('Emerald')
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/[?&]q=Emerald/)
+  })
+
+  test('imagem do detalhe oferece a versão de 720 px para o celular', async ({ page }) => {
+    await page.goto('/nft/nft-042')
+    const image = page.getByRole('img', { name: 'Arte do NFT Emerald Ape #042' })
+    await expect(image).toBeVisible()
+    const srcset = (await image.getAttribute('srcset')) ?? ''
+    expect(srcset).toMatch(/-480\.webp 480w, .*-720\.webp 720w, .*-960\.webp 960w/)
+    // O arquivo de 720 existe e é bem menor que o de 960.
+    const sizes = await page.evaluate(async (set) => {
+      const urls = set.split(',').map((part) => part.trim().split(' ')[0]!)
+      return Promise.all(
+        urls.map(async (url) => (await (await fetch(url)).arrayBuffer()).byteLength),
+      )
+    }, srcset)
+    expect(sizes[1]).toBeGreaterThan(0)
+    expect(sizes[1]!).toBeLessThan(sizes[2]! * 0.7)
   })
 
   test('menu da conta: baixa ao passar o ponteiro e abre pelo mouse como antes', async ({

@@ -33,3 +33,8 @@ const twMerge = extendTailwindMerge({
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/** Faz a primeira chamada do tailwind-merge, que monta a configuração dele (ver main.tsx). */
+export function warmUpClassMerge() {
+  twMerge('px-1 px-2 text-body text-foreground')
+}

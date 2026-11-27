@@ -13,6 +13,10 @@
  *
  * Uso: `npm run lighthouse` (gera o build antes) ou
  * `node lighthouse/run.mjs --skip-build`.
+ *
+ * `--base=https://…` audita uma URL já publicada (sem build nem preview), com
+ * os relatórios em `lighthouse/reports/<host>/`. `npm run lighthouse:prod`
+ * audita a produção na Vercel.
  */
 import { spawn } from 'node:child_process'
 import { mkdir, readdir, rm, writeFile } from 'node:fs/promises'
@@ -26,9 +30,12 @@ import lighthouse from 'lighthouse'
 import desktopConfig from 'lighthouse/core/config/desktop-config.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const REPORTS = path.join(ROOT, 'lighthouse', 'reports')
 const PORT = 4174
-const BASE = `http://localhost:${PORT}`
+const REMOTE_BASE = process.argv.find((arg) => arg.startsWith('--base='))?.slice('--base='.length)
+const BASE = REMOTE_BASE?.replace(/\/$/, '') ?? `http://localhost:${PORT}`
+const REPORTS = REMOTE_BASE
+  ? path.join(ROOT, 'lighthouse', 'reports', new URL(BASE).host)
+  : path.join(ROOT, 'lighthouse', 'reports')
 const RUNS = 3
 // Uma medição leva de 15 a 30 s; acima disso o Chrome travou (já aconteceu).
 const AUDIT_TIMEOUT_MS = 120_000
@@ -137,15 +144,16 @@ async function audit(url, config) {
 }
 
 async function main() {
-  if (!process.argv.includes('--skip-build'))
+  if (!REMOTE_BASE && !process.argv.includes('--skip-build'))
     await run('npm', ['run', 'build', '--', '--mode', 'mocks'])
 
   await mkdir(REPORTS, { recursive: true })
-  for (const file of await readdir(REPORTS)) {
-    if (file !== '.gitkeep') await rm(path.join(REPORTS, file))
+  // Só os arquivos desta pasta: as subpastas são de outras origens (--base).
+  for (const entry of await readdir(REPORTS, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name !== '.gitkeep') await rm(path.join(REPORTS, entry.name))
   }
 
-  const preview = await startPreview()
+  const preview = REMOTE_BASE ? null : await startPreview()
 
   const results = []
   let environment = null
@@ -192,7 +200,7 @@ async function main() {
       }
     }
   } finally {
-    stopPreview(preview)
+    if (preview) stopPreview(preview)
   }
 
   const summary = {
@@ -204,7 +212,9 @@ async function main() {
       cpu: os.cpus()[0]?.model.trim(),
       memoryGb: Math.round(os.totalmem() / 1024 ** 3),
       runsPerPage: RUNS,
-      build: 'npm run build -- --mode mocks + vite preview, cenário padrão dos mocks',
+      build: REMOTE_BASE
+        ? `${BASE} (build publicado, cenário padrão dos mocks)`
+        : 'npm run build -- --mode mocks + vite preview, cenário padrão dos mocks',
     },
     results,
   }

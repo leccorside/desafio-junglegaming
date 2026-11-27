@@ -294,12 +294,16 @@ export function NftDetailPage({
   )
 }
 
-/** Mesmo esqueleto da página, para o carregamento não deslocar o layout. */
+/**
+ * Mesmo esqueleto da página, para o carregamento não deslocar o layout. Ocupa
+ * ao menos a altura da tela: a página pronta é mais alta, e o rodapé tem de
+ * ficar fora da vista até ela entrar (senão desce à vista e conta como CLS).
+ */
 export function NftDetailSkeleton() {
   return (
     <LoadingRegion
       label="Carregando NFT…"
-      className="mx-auto flex max-w-content flex-col gap-6 px-4 pt-4 md:gap-8 md:px-6 md:pt-[60px] lg:flex-row xl:px-0"
+      className="mx-auto flex min-h-dvh max-w-content flex-col gap-6 px-4 pt-4 md:gap-8 md:px-6 md:pt-[60px] lg:flex-row xl:px-0"
     >
       <div className="flex gap-7">
         <div className="hidden flex-col gap-4 md:flex">

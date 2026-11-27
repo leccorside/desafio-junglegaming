@@ -1,6 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { useMatches, useMatchRoute } from '@tanstack/react-router'
 
 import { useCartCount } from '@/features/cart/queries'
+import { nftDetailQuery } from '@/features/catalog/queries'
 
 /**
  * Barra fixa na base da tela abaixo de 768 px, conforme a tela (Figma mobile):
@@ -18,11 +20,17 @@ export const BUY_BAR_HEIGHT = 164
 export function useBottomBar(): BottomBar {
   const matchRoute = useMatchRoute()
   // Só com o detalhe carregado: no 404, no erro e no carregamento não há barra
-  // de compra, e a de navegação continua.
-  const detailLoaded = useMatches({
-    select: (matches) =>
-      matches.some((match) => match.routeId === '/nft/$nftId' && match.status === 'success'),
+  // de compra, e a de navegação continua. A rota não espera o NFT (a página
+  // suspende até ele chegar), então vale o estado da consulta, não o da rota.
+  const nftId = useMatches({
+    select: (matches) => {
+      const match = matches.find((m) => m.routeId === '/nft/$nftId')
+      return match ? (match.params as { nftId: string }).nftId : null
+    },
   })
+  // Só lê o cache: quem busca é a rota do detalhe.
+  const detail = useQuery({ ...nftDetailQuery(nftId ?? ''), enabled: false })
+  const detailLoaded = nftId !== null && detail.status === 'success'
   // Só com itens: carrinho vazio, carregando ou com erro não tem resumo, e a
   // navegação (abas e menu) precisa continuar na tela.
   const cartCount = useCartCount()

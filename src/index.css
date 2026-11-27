@@ -8,6 +8,24 @@
 @import '@fontsource/roboto-mono/latin-700.css';
 
 /*
+ * Reserva com as métricas da Roboto Mono enquanto ela não chega (as fontes não
+ * têm preload: no 4G lento disputavam banda com o JavaScript). Courier New e
+ * as equivalentes (Liberation Mono, Cousine) têm a mesma largura de caractere
+ * (0,6 em); a altura da linha é ajustada para a da Roboto Mono (ascendente
+ * 2146 e descendente 555 em 2048). Medido no Chromium: mesma largura e mesma
+ * altura de linha, no normal e no negrito. Sem isso a reserva era a Consolas
+ * (0,55 em), e a troca de fonte deslocava o texto (CLS de até 0,25).
+ */
+@font-face {
+  font-family: 'Roboto Mono Fallback';
+  src: local('Courier New'), local('CourierNewPSMT'), local('Liberation Mono'), local('Cousine');
+  size-adjust: 100%;
+  ascent-override: 104.79%;
+  descent-override: 27.1%;
+  line-gap-override: 0%;
+}
+
+/*
  * Tokens do design system (docs/DESIGN_SYSTEM.md), extraídos do Figma.
  * Tema único escuro: não há variante clara.
  */
@@ -81,8 +99,10 @@
   --color-ring: var(--ring);
 
   /* Tipografia */
-  --font-sans: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans:
+    'Roboto Mono', 'Roboto Mono Fallback', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-mono:
+    'Roboto Mono', 'Roboto Mono Fallback', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --text-display: 2.6875rem; /* 43px */
   --text-display--line-height: 4.375rem; /* 70px */

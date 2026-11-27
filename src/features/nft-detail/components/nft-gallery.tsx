@@ -1,7 +1,7 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
 
 import type { NftImage } from '@/api/contracts'
-import { nftImageSources } from '@/lib/images'
+import { GALLERY_IMAGE_SIZES, nftImageSources } from '@/lib/images'
 import { cn } from '@/lib/utils'
 
 const NEXT_KEYS = ['ArrowDown', 'ArrowRight']
@@ -85,7 +85,7 @@ export function NftGallery({
       <div className="relative w-full md:size-[444px] md:shrink-0 md:rounded-md md:bg-card md:p-4">
         <img
           key={current.url + index}
-          {...nftImageSources(current.url, '(min-width: 768px) 412px, 100vw')}
+          {...nftImageSources(current.url, GALLERY_IMAGE_SIZES)}
           alt={current.alt}
           width={current.width}
           height={current.height}

@@ -32,15 +32,11 @@ test.describe('SEO e carregamento', () => {
     expect(body).not.toContain('<html')
   })
 
-  test('index.html pré-carrega as três fontes e o chunk do MSW', async ({ request }) => {
+  test('index.html pré-carrega o chunk do MSW e não as fontes', async ({ request }) => {
     const html = await (await request.get('/')).text()
-    for (const weight of ['400', '500', '700']) {
-      expect(html).toMatch(
-        new RegExp(
-          `<link rel="preload" href="/assets/roboto-mono-latin-${weight}-normal-[\\w-]+\\.woff2" as="font" type="font/woff2" crossorigin`,
-        ),
-      )
-    }
+    // Sem preload de fonte: no 4G lento do Lighthouse mobile, os 39 KB delas
+    // disputavam banda com o JavaScript (docs/PERFORMANCE.md).
+    expect(html).not.toMatch(/rel="preload"[^>]*as="font"/)
     const browserChunk = html.match(/href="(\/assets\/browser-[\w-]+\.js)"/)?.[1]
     expect(browserChunk, 'modulepreload do chunk do MSW').toBeTruthy()
     expect(html).toContain(`rel="modulepreload" crossorigin="" href="${browserChunk}"`)
@@ -49,7 +45,7 @@ test.describe('SEO e carregamento', () => {
     expect(new Set(preloads).size).toBe(preloads.length)
   })
 
-  test('as fontes da página são as pré-carregadas, sem segundo download', async ({ page }) => {
+  test('as três fontes carregam uma vez cada e são aplicadas', async ({ page }) => {
     const fonts: string[] = []
     page.on('request', (request) => {
       if (request.resourceType() === 'font') fonts.push(new URL(request.url()).pathname)
@@ -61,6 +57,36 @@ test.describe('SEO e carregamento', () => {
     expect(await page.evaluate(() => document.fonts.check('700 16px "Roboto Mono"'))).toBe(true)
     expect(fonts.sort()).toEqual([...new Set(fonts)].sort())
     expect(fonts).toHaveLength(3)
+  })
+
+  test('fonte reserva tem as medidas da Roboto Mono: a troca de fonte não desloca o texto', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await waitForApp(page)
+    await page.evaluate(() => document.fonts.ready)
+    const sizes = await page.evaluate(() => {
+      const measure = (family: string, weight: number) => {
+        const span = document.createElement('span')
+        span.textContent = 'Emerald Ape #042 ÁÇÕ 1.19 ETH'
+        span.style.cssText = `font-family:${family};font-weight:${weight};font-size:40px;line-height:normal;white-space:nowrap;display:inline-block;position:absolute;visibility:hidden`
+        document.body.append(span)
+        const box = span.getBoundingClientRect()
+        span.remove()
+        return { width: Math.round(box.width * 10) / 10, height: Math.round(box.height) }
+      }
+      return [400, 500, 700].map((weight) => ({
+        weight,
+        roboto: measure("'Roboto Mono'", weight),
+        fallback: measure("'Roboto Mono Fallback'", weight),
+        // A reserva de antes, para mostrar que o teste distingue.
+        consolas: measure('Consolas, monospace', weight),
+      }))
+    })
+    for (const { weight, roboto, fallback, consolas } of sizes) {
+      expect(fallback, `peso ${weight}`).toEqual(roboto)
+      expect(consolas, `peso ${weight}`).not.toEqual(roboto)
+    }
   })
 
   test('descrição da página acompanha a rota', async ({ page }) => {

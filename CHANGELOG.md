@@ -6,6 +6,17 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Adicionado
 
+- Metas do Lighthouse atingidas nos quatro casos, medidas na produção (`npm run lighthouse:prod`, mediana de 3): Performance 92 e 95 no mobile, 100 no desktop; Accessibility, Best Practices e SEO em 100. Mudanças:
+  - painel de cenários carregado só depois do `load`, com o navegador ocioso (`hooks/use-idle.ts`);
+  - router carregado antes da montagem (`router.load()`) e árvore montada numa transição: a primeira renderização é fatiada, sem uma tarefa longa só;
+  - `tailwind-merge` aquecido numa tarefa à parte, fora da primeira renderização;
+  - detalhe sem esperar o NFT no loader: a página suspende até ele chegar (a renderização com os dados também é fatiada) e a imagem principal começa a baixar com a resposta da API; esqueleto com a altura da tela; NFT inexistente tratado no `errorComponent`;
+  - versão de 720 px das imagens dos NFTs para o detalhe no celular;
+  - busca do header carregada sob demanda, como os menus (o `Dialog` do Radix saiu do bundle inicial);
+  - header, barra inferior e destaque da tela inicial renderizados só no tamanho de tela em que aparecem (antes, a versão escondida entrava no DOM e baixava a imagem de 450 px no celular);
+  - fontes sem preload e com uma reserva de mesmas medidas (`Roboto Mono Fallback`, sobre Courier New e equivalentes): a troca de fonte não desloca o texto;
+  - `npm run lighthouse:prod` (`--base=`) audita a URL publicada.
+- `deferred-loading.spec.ts`, `seo-performance.spec.ts` e `realtime.test.ts` ganharam casos para painel ocioso, busca sob demanda, imagem de 720 px, medidas da fonte reserva e evento durante a primeira busca.
 - Stub do `tough-cookie` no build do navegador (`src/mocks/shims/tough-cookie.ts`, alias no `vite.config.ts`): o MSW continua com o cookie store, sem o `tough-cookie` e o `tldts` no bundle. O chunk do MSW caiu de 170 para 46 KB gzip, e o Lighthouse mobile foi de 80 para 83 no início e de 71 para 73 no detalhe. Rotas de teste `/api/__mocks/cookies`, testes unitários que comparam o stub com o pacote real e `msw-cookie-shim.spec.ts` (chunk sem os dois pacotes, cookie store no navegador, cookies salvos pelo pacote real, REST pelo service worker e evento em tempo real).
 - Detalhe do NFT em duas renderizações: abas e "Mais desta coleção" entram depois da primeira pintura, numa transição, com uma reserva que mantém o rodapé fora da tela no desktop. A maior tarefa do carregamento do detalhe mobile caiu de 379 para 306 ms e o TBT, de 535 para 475 ms.
 - Menu da conta e menu lateral carregados sob demanda: o módulo baixa quando o ponteiro passa ou o foco chega ao botão, e o menu monta já aberto, com o mesmo foco de antes. O Radix Menu, o Popper e o floating-ui saíram do bundle inicial (116 → 110 KB gzip).
@@ -105,6 +116,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 - Botão do painel de cenários mais alto no mobile, acima da área dos toasts.
 
 ### Corrigido
+
+- `nft.updated` que chegava durante a primeira busca de um NFT (sem dado em cache) se perdia, e a resposta antiga ficava na tela. Agora, quando essa busca termina, o NFT é buscado de novo.
+- Na tela de NFT inexistente do celular, a barra inferior sumia: a escolha entre barra de navegação e de compra passou a olhar a consulta do NFT, não o loader da rota.
 
 - CLS de 0,256 no detalhe do NFT (desktop): as fontes só eram descobertas depois do CSS e a troca de fonte deslocava as abas. Agora têm `preload` no `index.html`.
 - `/robots.txt` devolvia o `index.html` (SEO 92 no Lighthouse). Agora existe um `robots.txt` que libera o catálogo e bloqueia as telas da conta.

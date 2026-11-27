@@ -8,6 +8,7 @@ import { HeartIcon, HomeIcon, ScanIcon, ShopIcon, UserIcon } from '@/components/
 import { cartLabel } from '@/features/cart/cart-label'
 import { CartBadge } from '@/features/cart/components/cart-badge'
 import { useCartCount } from '@/features/cart/queries'
+import { DESKTOP_QUERY, useMediaQuery } from '@/hooks/use-media-query'
 
 import { useBottomBar } from './bottom-bar'
 import { MobileMenu } from './mobile-menu'
@@ -38,8 +39,10 @@ const rightTabs: TabItem[] = [
 export function MobileTabBar() {
   const bottomBar = useBottomBar()
   const cartCount = useCartCount()
+  // A partir de 768 px a barra não aparece: nem entra no DOM.
+  const desktop = useMediaQuery(DESKTOP_QUERY)
   // No detalhe do NFT e no carrinho, a barra de compra ou o resumo ocupam o lugar dela (Figma mobile).
-  if (bottomBar !== 'tabs') return null
+  if (desktop || bottomBar !== 'tabs') return null
 
   const renderTab = ({ label, to, icon: Icon }: TabItem) => {
     const isCart = to === '/cart'

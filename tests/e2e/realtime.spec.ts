@@ -135,10 +135,15 @@ test.describe('tempo real', () => {
       cartId: GUEST_CART,
       body: { nftId: 'nft-314', editionId: 'nft-314-open', quantity: 1 },
     })
+    // O aviso compara com o carrinho em cache: espera ele chegar. (No celular o
+    // header nem entra no DOM, então não há contador para observar no detalhe.)
+    const cartLoaded = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === '/api/cart' && response.ok(),
+    )
     await page.goto('/nft/nft-314')
     await waitForApp(page)
-    // O aviso compara com o carrinho em cache: o contador só aparece depois dele.
-    await expect(page.locator('a[aria-label="Carrinho, 1 unidade"]').first()).toBeAttached()
+    await cartLoaded
+    await expect(detailPrice(page)).toHaveText(/1\.39 ETH/)
     await connected(page)
     await updateNft(page, 'nft-314', { price: '1.59' })
     await expect(detailPrice(page)).toHaveText(/1\.59 ETH/)
@@ -169,6 +174,9 @@ test.describe('tempo real', () => {
   test('na reconexão, o que mudou com a conexão fora é buscado pela API', async ({ page }) => {
     await page.goto('/nft/nft-042')
     await waitForApp(page)
+    // O layout aparece antes do NFT (a página suspende até ele chegar): espera
+    // a primeira busca, senão ela pode já trazer o preço novo.
+    await expect(detailPrice(page)).toHaveText(/1\.19 ETH/)
     await connected(page)
 
     // Conexão cai e fica fora por 2 s; a mudança desse intervalo não chega por evento.
@@ -241,6 +249,7 @@ test.describe('tempo real: correções do review', () => {
   }) => {
     await page.goto('/nft/nft-042')
     await waitForApp(page)
+    await expect(detailPrice(page)).toHaveText(/1\.19 ETH/)
     await connected(page)
     await updateNft(page, 'nft-042', { price: '1.55' })
     await expect(detailPrice(page)).toHaveText(/1\.55 ETH/)
@@ -258,6 +267,7 @@ test.describe('tempo real: correções do review', () => {
   }) => {
     await page.goto('/nft/nft-042')
     await waitForApp(page)
+    await expect(detailPrice(page)).toHaveText(/1\.19 ETH/)
     await connected(page)
     await updateNft(page, 'nft-042', { price: '1.55' })
     await expect(detailPrice(page)).toHaveText(/1\.55 ETH/)
@@ -487,6 +497,7 @@ test.describe('tempo real: avisos de queda, reconexão e reset', () => {
   }) => {
     await page.goto('/nft/nft-042')
     await waitForApp(page)
+    await expect(detailPrice(page)).toHaveText(/1\.19 ETH/)
     await connected(page)
     const banner = page.locator('[data-offline-banner]')
 
@@ -580,6 +591,7 @@ test.describe('tempo real: avisos de queda, reconexão e reset', () => {
     // Fora do carrinho, o mesmo aviso vem por toast.
     await page.goto('/nft/nft-042')
     await waitForApp(page)
+    await expect(detailPrice(page)).toHaveText(/1\.19 ETH/)
     await connected(page)
     await resetMocks(page)
     await expect(

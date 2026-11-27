@@ -15,6 +15,7 @@ import { PendingFavoriteRunner } from '@/features/favorites/components/pending-f
 import { useOrderEvents } from '@/features/orders/use-order-events'
 import { RealtimeStatusBanner } from '@/features/realtime/components/realtime-status-banner'
 import { useRealtime } from '@/features/realtime/use-realtime'
+import { useIdle } from '@/hooks/use-idle'
 import { env } from '@/lib/env'
 
 export interface RouterContext {
@@ -40,8 +41,16 @@ const Devtools = import.meta.env.DEV
     })
   : () => null
 
-// Painel de cenários dos mocks: carregado sob demanda, só com os mocks ligados.
-const MockPanel = env.enableMocks ? lazy(() => import('@/mocks/panel/mock-panel')) : () => null
+// Painel de cenários dos mocks: só com os mocks ligados, e só quando o
+// navegador fica ocioso depois do carregamento. É ferramenta de demonstração:
+// não pode disputar rede e CPU com a primeira tela (ver docs/PERFORMANCE.md).
+const LazyMockPanel = lazy(() => import('@/mocks/panel/mock-panel'))
+const MockPanel = env.enableMocks
+  ? function IdleMockPanel() {
+      const idle = useIdle()
+      return idle ? <LazyMockPanel /> : null
+    }
+  : () => null
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   // Valida a sessão salva uma vez por carregamento (depois fica em cache).

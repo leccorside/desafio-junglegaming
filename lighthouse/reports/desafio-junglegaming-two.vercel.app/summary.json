@@ -1,0 +1,268 @@
+{
+  "date": "2026-11-27T03:56:51.078Z",
+  "environment": {
+    "lighthouse": "13.6.0",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.0.0 Safari/537.36",
+    "benchmarkIndex": 1693.5,
+    "node": "v24.13.1",
+    "os": "Windows_NT 10.0.26200 (x64)",
+    "cpu": "Intel(R) Core(TM) i7-10700F CPU @ 2.90GHz",
+    "memoryGb": 32,
+    "runsPerPage": 3,
+    "build": "https://desafio-junglegaming-two.vercel.app (build publicado, cenário padrão dos mocks)"
+  },
+  "results": [
+    {
+      "page": "Início",
+      "path": "/",
+      "profile": "Mobile",
+      "median": {
+        "scores": {
+          "performance": 92,
+          "accessibility": 100,
+          "best-practices": 100,
+          "seo": 100
+        },
+        "metrics": {
+          "lcp": 2490.929,
+          "cls": 0,
+          "tbt": 255,
+          "fcp": 938.929
+        }
+      },
+      "runs": [
+        {
+          "scores": {
+            "performance": 91,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 2715.042,
+            "cls": 0,
+            "tbt": 255,
+            "fcp": 1164.542
+          }
+        },
+        {
+          "scores": {
+            "performance": 92,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 2490.929,
+            "cls": 0,
+            "tbt": 258.0000000000001,
+            "fcp": 938.929
+          }
+        },
+        {
+          "scores": {
+            "performance": 93,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 2485.6620000000003,
+            "cls": 0,
+            "tbt": 247.50000000000023,
+            "fcp": 936.662
+          }
+        }
+      ]
+    },
+    {
+      "page": "Início",
+      "path": "/",
+      "profile": "Desktop",
+      "median": {
+        "scores": {
+          "performance": 100,
+          "accessibility": 100,
+          "best-practices": 100,
+          "seo": 100
+        },
+        "metrics": {
+          "lcp": 617.92,
+          "cls": 0.002428807165797714,
+          "tbt": 1,
+          "fcp": 284.41999999999996
+        }
+      },
+      "runs": [
+        {
+          "scores": {
+            "performance": 100,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 614.966,
+            "cls": 0.002428807165797714,
+            "tbt": 1,
+            "fcp": 277.966
+          }
+        },
+        {
+          "scores": {
+            "performance": 100,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 617.92,
+            "cls": 0.002428807165797714,
+            "tbt": 0,
+            "fcp": 284.41999999999996
+          }
+        },
+        {
+          "scores": {
+            "performance": 100,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 631.062,
+            "cls": 0.002428807165797714,
+            "tbt": 3,
+            "fcp": 295.062
+          }
+        }
+      ]
+    },
+    {
+      "page": "Detalhe",
+      "path": "/nft/nft-042",
+      "profile": "Mobile",
+      "median": {
+        "scores": {
+          "performance": 95,
+          "accessibility": 100,
+          "best-practices": 100,
+          "seo": 100
+        },
+        "metrics": {
+          "lcp": 2483.024,
+          "cls": 0,
+          "tbt": 184.9999999999999,
+          "fcp": 942.024
+        }
+      },
+      "runs": [
+        {
+          "scores": {
+            "performance": 96,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 2479.987,
+            "cls": 0,
+            "tbt": 152,
+            "fcp": 939.987
+          }
+        },
+        {
+          "scores": {
+            "performance": 95,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 2483.024,
+            "cls": 0,
+            "tbt": 184.9999999999999,
+            "fcp": 942.024
+          }
+        },
+        {
+          "scores": {
+            "performance": 95,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 2492.453,
+            "cls": 0,
+            "tbt": 196,
+            "fcp": 953.453
+          }
+        }
+      ]
+    },
+    {
+      "page": "Detalhe",
+      "path": "/nft/nft-042",
+      "profile": "Desktop",
+      "median": {
+        "scores": {
+          "performance": 100,
+          "accessibility": 100,
+          "best-practices": 100,
+          "seo": 100
+        },
+        "metrics": {
+          "lcp": 560.222,
+          "cls": 0,
+          "tbt": 0,
+          "fcp": 280.689
+        }
+      },
+      "runs": [
+        {
+          "scores": {
+            "performance": 100,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 565.6890000000001,
+            "cls": 0,
+            "tbt": 0,
+            "fcp": 280.689
+          }
+        },
+        {
+          "scores": {
+            "performance": 100,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 556.67,
+            "cls": 0,
+            "tbt": 0,
+            "fcp": 279.66999999999996
+          }
+        },
+        {
+          "scores": {
+            "performance": 100,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "lcp": 560.222,
+            "cls": 0,
+            "tbt": 0,
+            "fcp": 281.222
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -73,7 +73,8 @@ O arquivo `.env.mocks`, versionado, liga os mocks no modo `mocks`, usado pelo `d
 | `npm run test:unit` | Testes unitários (Vitest) das regras puras: aritmética em ETH e contratos. `test:unit:watch` roda em modo observação. |
 | `npm run test:e2e` | Testes Playwright (gera o build com mocks e roda contra o `preview`), com relatório HTML. |
 | `npm run test:e2e:update` | Atualiza as baselines de regressão visual. |
-| `npm run lighthouse` | Auditoria Lighthouse do início e do detalhe, mobile e desktop, três medições cada (gera o build com mocks; relatórios em `lighthouse/reports/`). |
+| `npm run lighthouse` | Auditoria Lighthouse do início e do detalhe, mobile e desktop, três medições cada, no build local com mocks (`vite preview`; relatórios em `lighthouse/reports/`). |
+| `npm run lighthouse:prod` | A mesma auditoria contra a produção na Vercel, a medição oficial (relatórios em `lighthouse/reports/desafio-junglegaming-two.vercel.app/`). |
 
 ## Credenciais fictícias
 

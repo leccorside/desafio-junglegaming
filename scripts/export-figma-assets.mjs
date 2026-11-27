@@ -72,7 +72,9 @@ const IMAGES = {
   '9df2ff42': 'nft-03',
   '87580f2d': 'nft-04',
 }
-const IMAGE_WIDTHS = [480, 960]
+// 720: a imagem do detalhe no celular (cerca de 380 px CSS com densidade 1,75 a 2)
+// pediria a de 960 sem uma largura intermediária.
+const IMAGE_WIDTHS = [480, 720, 960]
 
 async function readToken() {
   const env = await readFile(resolve(ROOT, '.env'), 'utf8').catch(() => '')

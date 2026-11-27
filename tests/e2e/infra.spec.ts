@@ -1,4 +1,4 @@
-import { expect, test, type Response } from '@playwright/test'
+import { expect, test, type Request, type Response } from '@playwright/test'
 
 import { loginViaUi } from '../fixtures/auth'
 import { apiFetch, resetMocks, waitForApp } from '../fixtures/mocks'
@@ -22,6 +22,21 @@ test.describe('infraestrutura dos testes', () => {
     page.on('response', (response) => {
       if (new URL(response.url()).pathname.startsWith('/api/')) api.push(response)
     })
+    // Na troca de documento (`page.goto`), a página que sai já se desligou do
+    // MSW e a nova ainda não ligou; o worker deixa passar o que a página antiga
+    // pedir nesse intervalo (`activeClientIds.size === 0` em
+    // mockServiceWorker.js). A resposta morre com ela, sem chegar ao app.
+    // A página nova só faz requisições depois do `worker.start()`.
+    const leftBehind = new Set<Request>()
+    let leaving = false
+    page.on('request', (request) => {
+      if (request.isNavigationRequest() && request.frame() === page.mainFrame()) leaving = true
+      else if (leaving && new URL(request.url()).pathname.startsWith('/api/'))
+        leftBehind.add(request)
+    })
+    page.on('framenavigated', (frame) => {
+      if (frame === page.mainFrame()) leaving = false
+    })
 
     // Catálogo, detalhe, login, carrinho e pagamento.
     await page.goto('/')
@@ -44,7 +59,9 @@ test.describe('infraestrutura dos testes', () => {
     await expect(page.getByRole('button', { name: 'Confirmar compra' })).toBeEnabled()
 
     expect(api.length).toBeGreaterThan(10)
-    const outside = api.filter((r) => !r.fromServiceWorker()).map((r) => r.url())
+    const outside = api
+      .filter((r) => !r.fromServiceWorker() && !leftBehind.has(r.request()))
+      .map((r) => r.url())
     expect(outside).toEqual([])
     // Rotas de dados e utilitárias, não só uma.
     const paths = new Set(api.map((r) => new URL(r.url()).pathname))
@@ -73,6 +90,10 @@ test.describe('infraestrutura dos testes', () => {
 
     await page.goto('/nft/nft-042')
     await waitForApp(page)
+    // O layout aparece antes do NFT (a página suspende até ele chegar). Com o
+    // evento chegando durante a primeira busca, o app busca de novo por REST;
+    // aqui o NFT já precisa estar na tela.
+    await expect(page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })).toBeVisible()
     // Handshake do Engine.IO v4 por WebSocket: o do socket.io-client.
     await expect.poll(async () => (await peers()).length, { timeout: 15_000 }).toBe(1)
     const [peer] = await peers()
