@@ -48,7 +48,7 @@ A versão publicada corresponde à branch `main`. Repositório: [github.com/lecc
 
 ## Telas
 
-As imagens abaixo são as baselines da regressão visual do Playwright (desktop a 1440 px, mobile a 390 px), geradas a partir do build com mocks.
+As imagens abaixo foram capturadas com o Playwright no build com mocks (desktop a 1440 px, mobile a 390 px). As de início, detalhe, carrinho e pagamento são as baselines da regressão visual; as da confirmação e do recibo vêm de uma compra completa com a Ana.
 
 <table>
   <tr>
@@ -76,8 +76,24 @@ As imagens abaixo são as baselines da regressão visual do Playwright (desktop 
     <td><img src="docs/images/pagamento-mobile.png" alt="Pagamento no mobile" /></td>
   </tr>
   <tr>
-    <td align="center"><sub><b>Pagamento:</b> escolha da carteira e confirmação</sub></td>
+    <td align="center"><sub><b>Pagamento:</b> dados do colecionador e escolha da carteira</sub></td>
     <td align="center"><sub><b>Pagamento</b> no celular</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/revisao-desktop.png" alt="Diálogo Revise sua compra no desktop, com itens, total, carteira e botão Confirmar e pagar" /></td>
+    <td><img src="docs/images/revisao-mobile.png" alt="Diálogo Revise sua compra no mobile" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Confirmação:</b> revisão de itens, total e carteira antes de pagar</sub></td>
+    <td align="center"><sub><b>Confirmação</b> no celular</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/recibo-desktop.png" alt="Recibo do pedido ord-0003 com Pagamento confirmado, transação, itens e total" /></td>
+    <td><img src="docs/images/recibo-mobile.png" alt="Recibo do pedido no mobile" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Recibo:</b> pagamento confirmado, com os valores do momento da compra</sub></td>
+    <td align="center"><sub><b>Recibo</b> no celular</sub></td>
   </tr>
   <tr>
     <td></td>
@@ -197,7 +213,7 @@ O arquivo `.env.mocks`, versionado, liga os mocks no modo `mocks`, usado pelo `d
 | `npm run lighthouse:prod` | A mesma auditoria contra a produção na Vercel, a medição oficial (relatórios em `lighthouse/reports/desafio-junglegaming-two.vercel.app/`). |
 
 > [!NOTE]
-> **Regressão visual em outro sistema.** As baselines versionadas são do Windows (`*-win32.png`), porque a renderização de fontes muda entre sistemas. Em Linux ou macOS, a primeira execução do `test:e2e` grava as baselines do sistema em vez de falhar, e as seguintes comparam com elas (na CI, com `CI=true`, a baseline precisa existir). As imagens de [docs/images/](docs/images/) são cópias dessas baselines.
+> **Regressão visual em outro sistema.** As baselines versionadas são do Windows (`*-win32.png`), porque a renderização de fontes muda entre sistemas. Em Linux ou macOS, a primeira execução do `test:e2e` grava as baselines do sistema em vez de falhar, e as seguintes comparam com elas (na CI, com `CI=true`, a baseline precisa existir). As imagens de início, detalhe, carrinho e pagamento em [docs/images/](docs/images/) são cópias dessas baselines.
 
 ## Credenciais fictícias
 
