@@ -41,7 +41,7 @@ Meta: WCAG 2.2 nível AA nas telas da entrega e Lighthouse Accessibility ≥ 95.
 - Avisos de sucesso de formulário (perfil e carteiras, `formSuccessToast`) saem da tela quando um formulário mostra erros (`centerFocusedField` chama `dismissFormSuccessToasts`): no mobile, "Carteira principal salva." cobria o erro de um campo da secundária. O aviso de "salvo em parte" do perfil, criado depois do erro, continua.
 - Campos sem anel próprio corrigidos: "Observação do colecionador" (pagamento) e os seletores de rede e tipo (carteiras) só trocavam a cor da borda de 1 px; agora usam o anel global.
 - Itens do carrinho (desktop), do pagamento, da revisão e do recibo: ID do token e edição em linhas próprias (lidos como "ID do token: #0042, Edição aberta"), sem corte.
-- Revisão da compra: abre pelo código (depois de validar e conectar a carteira), então devolve o foco ao "Confirmar compra" ao fechar (`returnFocusTo`).
+- Revisão da compra: abre pelo código (depois de validar e conectar a carteira), então devolve o foco ao "Confirmar compra" ao fechar (`returnFocusTo`). Abre com o foco no "Voltar" (`onOpenAutoFocus`), para um Enter sem querer não pagar. "Confirmar e pagar" vem antes do "Voltar" no DOM e na tela (acima no mobile, à esquerda no desktop), então a ordem do Tab segue a ordem visual.
 - Listas de valores (`dl`): cada par fica num `div` com `dt` e `dd` como filhos diretos; a dica de uma linha ("Taxa estimada", "Valores do momento da compra") é um segundo `dd` do mesmo termo.
 
 ## Movimento
@@ -76,6 +76,7 @@ Todo ajuste de contraste, tamanho de alvo de toque ou texto adicionado por acess
 | Erro de campo ligado por `aria-describedby`, `aria-invalid` e foco no primeiro campo com erro da API | Formulários (shadcn `Form` + `applyApiError`) | Leitor de tela anuncia o erro junto com o campo |
 | Erro geral do formulário com `role="alert"` | Login e cadastro (ex.: credenciais erradas) | Anúncio imediato sem mover o foco |
 | Foco inicial no primeiro campo do modal de login | Modal desktop (`onOpenAutoFocus`) | O Radix focaria o botão de fechar |
+| Foco inicial no "Voltar" da revisão, com "Confirmar e pagar" antes dele no DOM e na tela | Revisão da compra (`onOpenAutoFocus`) | Um Enter sem querer não paga, e a ordem do Tab segue a ordem visual (antes, o `flex-col-reverse` do mobile invertia as duas) |
 | Botão de mostrar senha com `aria-label` e `aria-pressed` | Campos de senha | O ícone "Hide" não tem texto |
 | Aviso de sessão expirada com `role="status"` | Tela de login | Explica por que a pessoa voltou ao login |
 | Botões de login social e "Esqueceu a senha?" com `aria-disabled` e aviso oculto | Entrar e criar conta | Fora do escopo: focáveis, mas anunciados como indisponíveis |

@@ -781,6 +781,66 @@ test.describe('acessibilidade: teclado e foco', () => {
     await expect(review).toBeVisible()
     await checkLines(review)
   })
+
+  test('revisão: "Confirmar e pagar" antes do "Voltar" no DOM e na tela, foco inicial no "Voltar"', async ({
+    page,
+  }) => {
+    await loginViaUi(page, 'ana@example.com')
+    await anaCart(page)
+    await page.goto('/checkout')
+    await settled(page)
+    const orderIds = async (p: Page) => {
+      const token = await p.evaluate(
+        () => (JSON.parse(localStorage.getItem('kurio:session')!) as { token: string }).token,
+      )
+      const { json } = await apiFetch(p, 'GET', '/orders', { token })
+      return (json as { items: { id: string }[] }).items.map((o) => o.id)
+    }
+    const ordersBefore = await orderIds(page)
+
+    const openReview = page.getByRole('button', { name: 'Confirmar compra' })
+    await tabTo(page, openReview)
+    await page.keyboard.press('Enter')
+    const review = page.getByRole('dialog', { name: 'Revise sua compra' })
+    await expect(review).toBeVisible()
+    await animationsDone(page)
+    const pay = review.getByRole('button', { name: 'Confirmar e pagar' })
+    const back = review.getByRole('button', { name: 'Voltar' })
+
+    // Abre com o foco no "Voltar": um Enter sem querer não paga.
+    await expect(back).toBeFocused()
+
+    // Ordem do DOM: "Confirmar e pagar" primeiro.
+    expect(
+      await pay.evaluate(
+        (el, other) =>
+          Boolean(el.compareDocumentPosition(other!) & Node.DOCUMENT_POSITION_FOLLOWING),
+        await back.elementHandle(),
+      ),
+    ).toBe(true)
+
+    // Ordem visual igual à do DOM: acima no mobile, à esquerda no desktop.
+    const [p, b] = [(await pay.boundingBox())!, (await back.boundingBox())!]
+    if (isMobileViewport(page)) {
+      expect(p.y + p.height).toBeLessThanOrEqual(b.y)
+    } else {
+      expect(Math.abs(p.y - b.y)).toBeLessThan(2)
+      expect(p.x + p.width).toBeLessThanOrEqual(b.x)
+    }
+
+    // Shift+Tab a partir do "Voltar" volta ao botão de cima / da esquerda.
+    await page.keyboard.press('Shift+Tab')
+    await expect(pay).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(back).toBeFocused()
+
+    // Enter no foco inicial fecha a revisão sem criar pedido.
+    await page.keyboard.press('Enter')
+    await expect(review).toBeHidden()
+    await expect(page).toHaveURL(/\/checkout$/)
+    await expect(openReview).toBeFocused()
+    expect(await orderIds(page)).toEqual(ordersBefore)
+  })
 })
 
 test.describe('acessibilidade: validação de formulários', () => {

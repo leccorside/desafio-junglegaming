@@ -120,6 +120,7 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- Na revisão da compra no mobile, "Voltar" aparecia abaixo de "Confirmar e pagar" mas vinha antes no DOM (`flex-col-reverse`), e o Tab subia na tela. Agora "Confirmar e pagar" vem primeiro no DOM e na tela nos dois tamanhos (acima no mobile, à esquerda no desktop), e a revisão abre com o foco no "Voltar" (`onOpenAutoFocus`), para um Enter sem querer não pagar. Teste novo em `a11y.spec.ts`.
 - No desktop, o título da aba em `/login` e `/register` mostrava o slogan da tela inicial que fica atrás do modal. O fundo agora é inerte desde a primeira renderização e o `RouteFocus` ignora títulos em área inerte: a aba mostra "Entrar | KURIO" e "Criar conta | KURIO".
 - As senhas do login, do cadastro e da troca de senha ficavam no cache de mutations do TanStack Query depois do envio. Essas mutations usam `gcTime: 0`, e o fim da sessão também limpa o cache de mutations.
 

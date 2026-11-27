@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+
 import {
   NETWORK_LABELS,
   WALLET_TYPE_LABELS,
@@ -63,6 +65,7 @@ export function ReviewDialog({
 }) {
   const busy = phase !== 'idle'
   const empty = quote.lines.length === 0
+  const backRef = useRef<HTMLButtonElement>(null)
   return (
     <Dialog
       open={open}
@@ -73,6 +76,14 @@ export function ReviewDialog({
     >
       <DialogContent
         showCloseButton={!busy}
+        // Foco inicial no "Voltar": um Enter sem querer não paga. Sem isso o
+        // Radix focaria o primeiro botão do DOM, o "Confirmar e pagar".
+        onOpenAutoFocus={(event) => {
+          const back = backRef.current
+          if (!back || back.disabled) return
+          event.preventDefault()
+          back.focus()
+        }}
         onCloseAutoFocus={(event) => {
           const target = returnFocusTo?.current
           if (!target?.isConnected) return
@@ -152,16 +163,10 @@ export function ReviewDialog({
           </p>
         ) : null}
 
-        <DialogFooter className="flex-col-reverse gap-3 sm:flex-row">
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={busy}
-            onClick={() => onOpenChange(false)}
-            className="h-10"
-          >
-            Voltar
-          </Button>
+        {/* "Confirmar" vem primeiro no DOM e na tela, nos dois tamanhos: a
+            ordem do Tab acompanha a ordem visual (no mobile, de cima para
+            baixo; no desktop, da esquerda para a direita). */}
+        <DialogFooter className="flex-col gap-3 sm:flex-row">
           {problem?.kind === 'disconnected' ? (
             <Button type="button" onClick={onReconnect} className="h-10 font-bold">
               Reconectar carteira
@@ -183,6 +188,16 @@ export function ReviewDialog({
                     : 'Confirmar e pagar'}
             </Button>
           )}
+          <Button
+            ref={backRef}
+            type="button"
+            variant="ghost"
+            disabled={busy}
+            onClick={() => onOpenChange(false)}
+            className="h-10"
+          >
+            Voltar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
