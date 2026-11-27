@@ -1,8 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, useCanGoBack, useNavigate, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { NFT_CATEGORY_LABELS, RARITY_LABELS, type NftEdition } from '@/api/contracts'
+import { NFT_CATEGORY_LABELS, RARITY_LABELS, type Nft, type NftEdition } from '@/api/contracts'
 import { LoadingRegion } from '@/components/feedback/loading-region'
 import { ArrowLeftIcon, ShopIcon } from '@/components/icons/figma-icons'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ import { RatingPill, RatingStars } from './components/rating-stars'
 import { RelatedNfts } from './components/related-nfts'
 import { ShareLinks } from './components/share-links'
 import { clampQuantity, maxQuantity, resolveEdition } from './editions'
+import { setShownEdition } from './shown-edition'
 import { usePurchase } from './use-purchase'
 
 function TokenInfo({
@@ -66,6 +67,30 @@ function useQuantity(edition: NftEdition | null) {
 }
 
 /**
+ * Edição em uso. A escolhida pela pessoa vai para a URL (`?edition=`). Sem ela,
+ * a página fica na edição que mostrou primeiro (a mais barata naquele momento):
+ * se os preços mudam com a página aberta e outra edição passa a ser a mais
+ * barata, a seleção não troca sozinha. Esgotada ou indisponível, cai na padrão
+ * com aviso, como a da URL.
+ */
+function useShownEdition(nft: Nft, editionId: string | undefined) {
+  const [pinned, setPinned] = useState<string | undefined>(undefined)
+  const choice = resolveEdition(nft, editionId ?? pinned)
+  if (editionId === undefined && pinned === undefined && choice.edition) {
+    setPinned(choice.edition.id)
+  }
+
+  // O painel de cenários abre o bloco "Estoque" no NFT e na edição da página.
+  const shownId = choice.edition?.id
+  useEffect(() => {
+    setShownEdition(shownId ? { nftId: nft.id, editionId: shownId } : null)
+    return () => setShownEdition(null)
+  }, [nft.id, shownId])
+
+  return choice
+}
+
+/**
  * Detalhe do NFT (frames "Desktop / Detalhes do NFT" e "Mobile / Detalhes do
  * NFT"). A edição escolhida vai para a URL (`?edition=`), para o link levar à
  * mesma escolha; edição esgotada ou indisponível na URL cai na padrão com aviso.
@@ -80,7 +105,7 @@ export function NftDetailPage({
   onEditionChange: (edition: NftEdition) => void
 }) {
   const { data: nft } = useSuspenseQuery(nftDetailQuery(nftId))
-  const { edition, requestedUnavailable } = resolveEdition(nft, editionId)
+  const { edition, requestedUnavailable } = useShownEdition(nft, editionId)
   const quantity = useQuantity(edition)
   const purchase = usePurchase(nft, edition, quantity.value)
   const router = useRouter()

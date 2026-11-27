@@ -162,6 +162,124 @@ test.describe('painel de cenários visível (como para o avaliador)', () => {
     expect(cart.items).toHaveLength(0)
   })
 
+  test('no detalhe, o Estoque abre no NFT e na edição da página', async ({ page }) => {
+    // Edição escolhida na página (1/10) e, sem escolha, a que a página mostra (aberta).
+    for (const [url, label] of [
+      ['/nft/nft-042?edition=nft-042-1-10', /^1\/10 · /],
+      ['/nft/nft-042', /^Aberta · /],
+    ] as const) {
+      await page.goto(url)
+      await expect(page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })).toBeVisible()
+      await page.getByRole('button', { name: /^Cenários de teste/ }).click()
+      const stock = page
+        .getByRole('dialog', { name: 'Cenários de teste' })
+        .getByRole('group', { name: 'Estoque' })
+      await expect(
+        stock.getByRole('combobox', { name: 'NFT' }).locator('option:checked'),
+      ).toHaveText('Emerald Ape #042')
+      await expect(
+        stock.getByRole('combobox', { name: 'Edição' }).locator('option:checked'),
+      ).toHaveText(label)
+      await page.keyboard.press('Escape')
+      await expect(page.getByRole('dialog', { name: 'Cenários de teste' })).toBeHidden()
+    }
+
+    // Detalhe ainda carregando (NFT lento): o NFT vem do endereço e a edição é
+    // a que a página vai mostrar.
+    await setScenario(page, ['slow'], { routes: ['/nfts/nft-042'], latencyMs: 6000 })
+    await page.goto('/nft/nft-042')
+    await expect(page.getByText('Carregando NFT…')).toBeAttached()
+    await page.getByRole('button', { name: /^Cenários de teste/ }).click()
+    const loading = page
+      .getByRole('dialog', { name: 'Cenários de teste' })
+      .getByRole('group', { name: 'Estoque' })
+    await expect(
+      loading.getByRole('combobox', { name: 'NFT' }).locator('option:checked'),
+    ).toHaveText('Emerald Ape #042')
+    await expect(
+      loading.getByRole('combobox', { name: 'Edição' }).locator('option:checked'),
+    ).toHaveText(/^Aberta · /)
+    // A página ainda está carregando.
+    await expect(page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    await setScenario(page, [])
+
+    // Fora do detalhe, o primeiro NFT da lista, como antes.
+    await page.goto('/')
+    await waitForApp(page)
+    await page.getByRole('button', { name: /^Cenários de teste/ }).click()
+    const stock = page
+      .getByRole('dialog', { name: 'Cenários de teste' })
+      .getByRole('group', { name: 'Estoque' })
+    const first = await stock
+      .getByRole('combobox', { name: 'NFT' })
+      .locator('option')
+      .first()
+      .textContent()
+    await expect(stock.getByRole('combobox', { name: 'NFT' }).locator('option:checked')).toHaveText(
+      first!,
+    )
+  })
+
+  test('preço mudado com a página aberta: a edição na tela não troca, mesmo deixando de ser a mais barata', async ({
+    page,
+  }) => {
+    await page.goto('/nft/nft-042')
+    const heading = page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })
+    await expect(heading).toBeVisible()
+    const open = page.getByRole('radio', { name: /^Edição aberta,/ }).filter({ visible: true })
+    await expect(open).toHaveAttribute('aria-checked', 'true')
+    await expect(open).toHaveAccessibleName('Edição aberta, 1.19 ETH')
+
+    // Pelo painel: a aberta passa a 1.88, mais cara que a 1/50 (1.79).
+    await page.getByRole('button', { name: /^Cenários de teste/ }).click()
+    const stock = page
+      .getByRole('dialog', { name: 'Cenários de teste' })
+      .getByRole('group', { name: 'Estoque' })
+    await stock.getByLabel('Novo preço (ETH)').fill('1.88')
+    await stock.getByRole('button', { name: 'Alterar preço' }).click()
+    await expect(stock.getByRole('status')).toHaveText(
+      'Preço da edição aberta de Emerald Ape #042 alterado para 1.88 ETH.',
+    )
+    await page.keyboard.press('Escape')
+
+    // O preço novo chega pelo tempo real e a seleção continua na aberta.
+    await expect(open).toHaveAccessibleName('Edição aberta, 1.88 ETH')
+    await expect(open).toHaveAttribute('aria-checked', 'true')
+    const price = page
+      .locator('p')
+      .filter({ hasText: /^Preço:/ })
+      .filter({ visible: true })
+      .first()
+    await expect(price).toHaveText(/1\.88 ETH/)
+    await expect(page).toHaveURL(/\/nft\/nft-042$/)
+    // Sem aviso de edição esgotada: nada saiu de venda.
+    await expect(page.getByText(/está esgotada|está indisponível/)).toHaveCount(0)
+
+    // Recarregando, a página volta à mais barata do momento (a 1/50).
+    await page.reload()
+    await expect(heading).toBeVisible()
+    await expect(
+      page.getByRole('radio', { name: /^Edição 1\/50,/ }).filter({ visible: true }),
+    ).toHaveAttribute('aria-checked', 'true')
+  })
+
+  test('a edição da tela esgota com a página aberta: cai na mais barata e avisa', async ({
+    page,
+  }) => {
+    await page.goto('/nft/nft-042')
+    await expect(page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })).toBeVisible()
+    await apiFetch(page, 'POST', '/__mocks/nfts/nft-042/update', {
+      body: { editionId: 'nft-042-open', available: 0 },
+    })
+    await expect(
+      page.getByText('A edição Aberta está esgotada. Mostrando a edição 1/50.'),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('radio', { name: /^Edição 1\/50,/ }).filter({ visible: true }),
+    ).toHaveAttribute('aria-checked', 'true')
+  })
+
   test('o nome do botão concorda com o número de cenários ativos', async ({ page }) => {
     const button = page.getByRole('button', { name: /^Cenários de teste/ })
     await expect(button).toHaveAccessibleName('Cenários de teste')

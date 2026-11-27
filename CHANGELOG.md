@@ -117,6 +117,9 @@ Mudanças relevantes do projeto. O formato segue o [Keep a Changelog](https://ke
 
 ### Corrigido
 
+- No detalhe, a edição na tela trocava sozinha quando uma mudança de preço tornava outra edição a mais barata. Agora a página fica na edição que mostrou primeiro enquanto está aberta; se ela esgotar ou ficar indisponível, cai na padrão com o aviso "A edição … está esgotada. Mostrando a edição …".
+- O bloco "Estoque" do painel de cenários abria sempre no primeiro NFT da lista. No detalhe, abre no NFT e na edição da página (com o NFT ainda carregando, pelo endereço).
+
 - `nft.updated` que chegava durante a primeira busca de um NFT (sem dado em cache) se perdia, e a resposta antiga ficava na tela. Agora, quando essa busca termina, o NFT é buscado de novo.
 - Na tela de NFT inexistente do celular, a barra inferior sumia: a escolha entre barra de navegação e de compra passou a olhar a consulta do NFT, não o loader da rota.
 

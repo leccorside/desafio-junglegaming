@@ -3,6 +3,8 @@ import { useId, useState } from 'react'
 import type { Nft } from '@/api/contracts'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { resolveEdition } from '@/features/nft-detail/editions'
+import { getShownEdition, type ShownEdition } from '@/features/nft-detail/shown-edition'
 import { formatEth } from '@/lib/eth'
 
 import { getDb } from '../db/store'
@@ -11,6 +13,20 @@ const STATUS_LABELS = { available: 'à venda', sold_out: 'esgotada', unavailable
 
 const editionLabel = (edition: Nft['editions'][number]) =>
   `${edition.name === 'Aberta' ? 'Aberta' : edition.name} · ${STATUS_LABELS[edition.status]} · ${edition.available} disp.`
+
+/**
+ * Detalhe ainda carregando (a página só publica a edição depois que o NFT
+ * chega): o NFT vem do endereço, e a edição do `?edition=` ou, sem ele, da
+ * padrão, que é a que a página vai mostrar.
+ */
+function editionFromUrl(nfts: Nft[]): ShownEdition | null {
+  const id = window.location.pathname.match(/^\/nft\/([^/]+)\/?$/)?.[1]
+  const nft = id ? nfts.find((n) => n.id === decodeURIComponent(id)) : undefined
+  if (!nft) return null
+  const requested = new URLSearchParams(window.location.search).get('edition') ?? undefined
+  const editionId = resolveEdition(nft, requested).edition?.id ?? nft.editions[0]?.id
+  return editionId ? { nftId: nft.id, editionId } : null
+}
 
 const selectClass =
   'h-10 w-full rounded-control border border-input bg-background px-2 text-body-sm text-foreground focus-visible:outline-2 focus-visible:outline-primary'
@@ -30,9 +46,17 @@ export function StockControl() {
   const [nfts, setNfts] = useState<Nft[]>(() =>
     [...getDb().nfts].sort((a, b) => a.name.localeCompare(b.name)),
   )
-  const [selectedNft, setSelectedNft] = useState(() => nfts[0]?.id ?? '')
+  // No detalhe, abre no NFT e na edição da página; fora dele, no primeiro da lista.
+  const [shown] = useState(() => getShownEdition() ?? editionFromUrl(nfts))
+  const [selectedNft, setSelectedNft] = useState(() =>
+    shown && nfts.some((n) => n.id === shown.nftId) ? shown.nftId : (nfts[0]?.id ?? ''),
+  )
   const nft = nfts.find((n) => n.id === selectedNft)
-  const [selectedEdition, setSelectedEdition] = useState(() => nft?.editions[0]?.id ?? '')
+  const [selectedEdition, setSelectedEdition] = useState(() =>
+    shown && nft?.id === shown.nftId && nft.editions.some((e) => e.id === shown.editionId)
+      ? shown.editionId
+      : (nft?.editions[0]?.id ?? ''),
+  )
   const edition = nft?.editions.find((e) => e.id === selectedEdition)
   const priceId = useId()
   const priceErrorId = useId()
